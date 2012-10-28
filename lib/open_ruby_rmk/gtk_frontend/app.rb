@@ -11,9 +11,14 @@ $application = nil
 # instanciation always available in the global variable
 # $application.
 class OpenRubyRMK::GTKFrontend::App
+  include R18n::Helpers
 
   # The application’s main window.
   attr_reader :mainwindow
+  # The parsed contents of the configuration file. A hash
+  # of form:
+  #   {:key => value}
+  attr_reader :config
 
   # Create the one and only instance of this class. Pass the
   # commandline options you want it to (destructively) parse.
@@ -23,6 +28,9 @@ class OpenRubyRMK::GTKFrontend::App
     @argv        = argv
     @mainwindow  = nil
     $application = self
+
+    parse_config
+    set_locale
   end
 
   # Starts the main application loop, handing over the control
@@ -30,10 +38,27 @@ class OpenRubyRMK::GTKFrontend::App
   # else and want to let the event handling begin.
   def main_loop
     Gtk.init
-    GLib.application_name = "OpenRubyRMK (GTK frontend)"
+    GLib.application_name = t.general.application_name
     @mainwindow = OpenRubyRMK::GTKFrontend::MainWindow.new
     @mainwindow.show_all
     Gtk.main
+  end
+
+  private
+
+  # Parse GTKFrontend::base_config.
+  def parse_config
+    # Turn the string keys to symbols
+    @config = Hash[OpenRubyRMK::GTKFrontend.bare_config.to_a.map{|k, v| [k.to_sym, v]}]
+  end
+
+  # Set the application’s locale.
+  def set_locale
+    if @config[:locale]
+      R18n.from_env(OpenRubyRMK::GTKFrontend::LOCALE_DIR.to_s, @config[:locale])
+    else
+      R18n.from_env(OpenRubyRMK::GTKFrontend::LOCALE_DIR.to_s)
+    end
   end
 
 end

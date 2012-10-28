@@ -3,6 +3,7 @@
 # The GUI’s main application window.
 class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include Gtk
+  include R18n::Helpers
   include OpenRubyRMK::GTKFrontend::MenuBuilder
 
   # Creates the application window.
@@ -22,18 +23,18 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def create_menu
     @menubar = MenuBar.new
 
-    menu @menubar, "File" do |file|
-      append_menu_item file, "New", :file_new
-      append_menu_item file, "Open...", :file_open
+    menu @menubar, t.menus.file.name do |file|
+      append_menu_item file, t.menus.file.entries.new, :file_new
+      append_menu_item file, t.menus.file.entries.open, :file_open
       append_menu_separator file
-      append_menu_item file, "Quit", :file_quit
+      append_menu_item file, t.menus.file.entries.quit, :file_quit
     end
 
-    menu @menubar, "Edit" do |edit|
+    menu @menubar, t.menus.edit.name do |edit|
     end
 
-    menu @menubar, "Help" do |help|
-      append_menu_item help, "About", :help_about
+    menu @menubar, t.menus.help.name do |help|
+      append_menu_item help, t.menus.help.entries.about, :help_about
     end
 
   end

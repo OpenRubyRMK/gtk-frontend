@@ -1,0 +1,21 @@
+# English locale for the GTK GUI of the OpenRubyRMK.
+
+# General stuff needed at different places
+general:
+  application_name: OpenRubyRMK (GTK frontend)
+
+# Menu entries.
+menus:
+  file:
+    name: File
+    entries:
+      new: New
+      open: Open...
+      quit: Quit
+  edit:
+    name: Edit
+    entries:
+  help:
+    name: Help
+    entries:
+      about: About...

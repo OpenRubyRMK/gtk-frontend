@@ -6,6 +6,7 @@ gem "openrubyrmk-backend", :git => "http://git.pegasus-alpha.eu/openrubyrmk/back
 
 # GUI
 gem "gtk2"
+gem "r18n-desktop"
 
 group :development do
   gem "paint"

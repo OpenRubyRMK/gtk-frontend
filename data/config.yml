@@ -1,0 +1,8 @@
+# Global configuration file for the OpenRubyRMK.
+# Default values are indicated with double hash signs ##.
+
+# Locale to display the GUI in. Leave empty to determine the
+# value from the environment. Example:
+# locale: de
+## locale:
+locale:

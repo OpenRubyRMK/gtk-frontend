@@ -2,6 +2,7 @@
 require "pathname"
 require "yaml"
 require "gtk2"
+require "r18n-desktop"
 
 module OpenRubyRMK
 
@@ -15,6 +16,12 @@ module OpenRubyRMK
     AUTHORS_FILE = ROOT_DIR + "AUTHORS"
     # Path to the COPYING file.
     LICENSE_FILE = ROOT_DIR + "COPYING"
+    # Directory containing non-code info.
+    DATA_DIR = ROOT_DIR + "data"
+    # The directory containing the locale files.
+    LOCALE_DIR = DATA_DIR + "locales"
+    # The path to the configuration file.
+    CONFIG_FILE = DATA_DIR + "config.yml"
 
     # The version of this software.
     def self.version
@@ -33,6 +40,13 @@ module OpenRubyRMK
     # The complete license text.
     def self.license
       LICENSE_FILE.read
+    end
+
+    # The contents of the configuration file as a hash,
+    # merely unparsed. Use App#config to get a more meaningful
+    # value.
+    def self.bare_config
+      YAML.load_file(CONFIG_FILE)
     end
 
   end
