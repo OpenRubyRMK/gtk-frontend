@@ -1,0 +1,6 @@
+= OpenRubyRMK frontend
+
+This is the GUI frontend component of the OpenRubyRMK, building upon the
+facilities that the
+{openrubyrmk-backend}[http://devel.pegasus-alpha.eu/projects/openrubyrmk-backend]
+library provides.

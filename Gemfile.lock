@@ -1,0 +1,45 @@
+GIT
+  remote: http://git.pegasus-alpha.eu/openrubyrmk/backend.git
+  revision: 79f394c42c22b702b84027a1b500c04cc78e99c1
+  specs:
+    openrubyrmk-backend (0.0.1.dev)
+      nokogiri
+      ruby-tmx
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ansi (1.4.3)
+    atk (1.1.5)
+      glib2 (>= 1.1.5)
+    cairo (1.12.2)
+      pkg-config
+    gdk_pixbuf2 (1.1.5)
+      glib2 (>= 1.1.5)
+    glib2 (1.1.5)
+      pkg-config
+    gtk2 (1.1.5)
+      atk (>= 1.1.5)
+      gdk_pixbuf2 (>= 1.1.5)
+      pango (>= 1.1.5)
+    nokogiri (1.5.5)
+    paint (0.8.5)
+    pango (1.1.5)
+      cairo (>= 1.10.0)
+      glib2 (>= 1.1.5)
+    pkg-config (1.1.4)
+    rake (0.9.2.2)
+    ruby-tmx (0.0.1.dev)
+      nokogiri
+    turn (0.9.6)
+      ansi
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  gtk2
+  openrubyrmk-backend!
+  paint
+  rake
+  turn

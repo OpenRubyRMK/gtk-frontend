@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+require_relative "../lib/open_ruby_rmk/gtk_frontend"
+
+OpenRubyRMK::GTKFrontend::App.new(ARGV).main_loop
