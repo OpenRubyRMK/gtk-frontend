@@ -3,7 +3,7 @@
 # This variable holds the global application instance. There will
 # only ever be one instance of the App class, which rejects to
 # instanciate if this is already set. A global should be safe here.
-$application = nil
+$app = nil
 
 # This class represents the entire GUI application with all its
 # windows, configuration, etc. It is only instanciated once
@@ -24,10 +24,10 @@ class OpenRubyRMK::GTKFrontend::App
   # commandline options you want it to (destructively) parse.
   # Raises a RuntimeError if you call this more than once.
   def initialize(argv)
-    raise("GUI already running!") if $application
+    raise("GUI already running!") if $app
     @argv        = argv
     @mainwindow  = nil
-    $application = self
+    $app         = self
 
     parse_config
     set_locale
@@ -42,6 +42,36 @@ class OpenRubyRMK::GTKFrontend::App
     @mainwindow = OpenRubyRMK::GTKFrontend::MainWindow.new
     @mainwindow.show_all
     Gtk.main
+  end
+
+  # Displays a message box modal to the given window. The
+  # dialog is automatically destoyed for you.
+  # == Parameters
+  # [parent]
+  #   The parent to block while the dialog is shown. +nil+
+  #   should also work (untested).
+  # [msg]
+  #   The message to display.
+  # [type (:info)]
+  #   The type of the message box. One of :error, :question,
+  #   :info, :warning, :other.
+  # [buttons (:ok)]
+  #   The buttons to display. One of :cancel, :close, :ok,
+  #   :none (don’t use this), :ok_cancel, :yes_no.
+  # [hsh ({})]
+  #   Sprintf parameters to inject into +msg+. Most useful
+  #   in combination with translations.
+  # == Return value
+  #   The return value of MessageDialog#run.
+  def msgbox(parent, msg, type = :info, buttons = :ok, hsh = {})
+    md = Gtk::MessageDialog.new(parent,
+                                Gtk::Dialog::DESTROY_WITH_PARENT,
+                                Gtk::MessageDialog.const_get(type.upcase),
+                                Gtk::MessageDialog.const_get(:"BUTTONS_#{buttons.upcase}"),
+                                sprintf(msg, hsh))
+    result = md.run
+    md.destroy
+    result
   end
 
   private

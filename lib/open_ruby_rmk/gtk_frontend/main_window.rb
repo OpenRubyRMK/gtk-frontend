@@ -4,6 +4,7 @@
 class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
+  include OpenRubyRMK::Backend
   include OpenRubyRMK::GTKFrontend::MenuBuilder
 
   # Creates the application window.
@@ -15,6 +16,27 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_widgets
     create_layout
     setup_event_handlers
+
+    self.project = nil
+  end
+
+  # Set or delete the current project. Enables/disables
+  # menu entries accordingly.
+  def project=(proj)
+    if proj
+      menu_items[:file_new].sensitive  = false
+      menu_items[:file_open].sensitive = false
+    else
+      menu_items[:file_new].sensitive  = true
+      menu_items[:file_open].sensitive = true
+    end
+
+    @project = proj
+  end
+
+  # Get the current project.
+  def project
+    @project
   end
 
   private
@@ -74,10 +96,52 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # File -> New
   def on_menu_file_new(event)
+    fd = FileChooserDialog.new(t.dialogs.new_project,
+                               self,
+                               FileChooser::ACTION_SELECT_FOLDER,
+                               nil,
+                               [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                               [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+
+    if fd.run == Dialog::RESPONSE_ACCEPT
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      fd.destroy
+    else
+      fd.destroy
+      return
+    end
+
+    unless path.children.empty?
+      $app.msgbox(self, t.dialogs.not_empty, :error, :close, :dir => path)
+      return
+    end
+
+    self.project = Project.new(path)
   end
 
   # File -> Open
   def on_menu_file_open(event)
+    fd = FileChooserDialog.new(t.dialogs.new_project,
+                               self,
+                               FileChooser::ACTION_SELECT_FOLDER,
+                               nil,
+                               [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                               [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+
+    if fd.run == Dialog::RESPONSE_ACCEPT
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      fd.destroy
+    else
+      fd.destroy
+      return
+    end
+
+    begin
+      self.project = Project.load_dir(path)
+    rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
+      $app.msgbox(self, t.dialogs.dir_not_found, :error, :close, :dir => e.path)
+      self.project = nil # Ensure we have a clean state
+    end
   end
 
   # File -> Quit

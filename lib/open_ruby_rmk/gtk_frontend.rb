@@ -3,6 +3,7 @@ require "pathname"
 require "yaml"
 require "gtk2"
 require "r18n-desktop"
+require "open_ruby_rmk/backend"
 
 module OpenRubyRMK
 
