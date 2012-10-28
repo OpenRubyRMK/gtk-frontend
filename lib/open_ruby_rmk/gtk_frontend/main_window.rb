@@ -15,9 +15,17 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_menu
     create_widgets
     create_layout
+    create_extra_windows
     setup_event_handlers
 
     self.project = nil
+  end
+
+  # As superclass method, but also calls
+  # #show_all on all child windows.
+  def show_all
+    super
+    @map_window.show_all
   end
 
   # Set or delete the current project. Enables/disables
@@ -55,6 +63,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.edit.name do |edit|
     end
 
+    menu @menubar, t.menus.windows.name do |windows|
+      append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
+    end
+
     menu @menubar, t.menus.help.name do |help|
       append_menu_item help, t.menus.help.entries.about, :help_about
     end
@@ -74,6 +86,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
   end
 
+  # Instanciates the helper windows.
+  def create_extra_windows
+    @map_window = OpenRubyRMK::GTKFrontend::MapWindow.new(self)
+  end
+
   # Connects the previously created widgets with event handlers.
   def setup_event_handlers
     # Generic window events
@@ -83,6 +100,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_new].signal_connect(:activate, &method(:on_menu_file_new))
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
+    menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
 
@@ -147,6 +165,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # File -> Quit
   def on_menu_file_quit(event)
     Gtk.main_quit
+  end
+
+  def on_menu_windows_map_tree(event)
+    if @map_window.visible?
+      @map_window.hide
+    else
+      @map_window.show
+    end
   end
 
   # Help -> About

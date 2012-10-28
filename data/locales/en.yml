@@ -3,12 +3,16 @@
 
 # General stuff needed at different places
 general:
-  application_name: OpenRubyRMK (GTK frontend)
+  application_name: "OpenRubyRMK (GTK frontend)"
 
 dialogs:
   new_project: "Create a new project"
   not_empty: "The directory %{dir} is not empty."
   dir_not_found: "The directory %{dir} couldn’t be found."
+
+windows:
+  map_tree:
+    title: "Map tree"
 
 # Menu entries.
 menus:
@@ -21,6 +25,10 @@ menus:
   edit:
     name: Edit
     entries:
+  windows:
+    name: Windows
+    entries:
+      map_tree: "Map tree"
   help:
     name: Help
     entries:
