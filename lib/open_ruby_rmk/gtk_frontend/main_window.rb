@@ -18,7 +18,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_extra_windows
     setup_event_handlers
 
-    self.project = nil
+    # Ensure we get notified when the project we’re working
+    # on gets changed.
+    $app.add_observer(self, :app_changed)
   end
 
   # As superclass method, but also calls
@@ -28,23 +30,21 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @map_window.show_all
   end
 
-  # Set or delete the current project. Enables/disables
-  # menu entries accordingly.
-  def project=(proj)
-    if proj
+  # Event handler triggered by the observed App.
+  # The observer is created in #initialize.
+  #
+  # It enables/disables menu entries as required.
+  def app_changed(event, project) # :nodoc:
+    return unless event == :global_project_changed
+
+    # Menu entries
+    if project
       menu_items[:file_new].sensitive  = false
       menu_items[:file_open].sensitive = false
     else
       menu_items[:file_new].sensitive  = true
       menu_items[:file_open].sensitive = true
     end
-
-    @project = proj
-  end
-
-  # Get the current project.
-  def project
-    @project
   end
 
   private
@@ -134,7 +134,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       return
     end
 
-    self.project = Project.new(path)
+    $app.project = Project.new(path)
   end
 
   # File -> Open
@@ -155,10 +155,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     begin
-      self.project = Project.load_dir(path)
+      $app.project = Project.load_dir(path)
     rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
       $app.msgbox(self, t.dialogs.dir_not_found, :error, :close, :dir => e.path)
-      self.project = nil # Ensure we have a clean state
+      $app.project = nil # Ensure we have a clean state
     end
   end
 

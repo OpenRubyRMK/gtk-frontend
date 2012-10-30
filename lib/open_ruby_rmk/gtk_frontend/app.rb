@@ -10,8 +10,15 @@ $app = nil
 # (further tries will cause an error) and is after the
 # instanciation always available in the global variable
 # $application.
+#
+# The instance of this class includes the Eventable module,
+# which allows you to listen for certain events; which events
+# are emitted is documented in the respective methods issuing
+# it. See the Eventable module’s documentation for how to
+# add a listener (it’s part of the backend documentation).
 class OpenRubyRMK::GTKFrontend::App
   include R18n::Helpers
+  include OpenRubyRMK::Backend::Eventable
 
   # The application’s main window.
   attr_reader :mainwindow
@@ -27,10 +34,28 @@ class OpenRubyRMK::GTKFrontend::App
     raise("GUI already running!") if $app
     @argv        = argv
     @mainwindow  = nil
+    @project     = nil
     $app         = self
 
     parse_config
     set_locale
+  end
+
+  # Set the project we’re currently working on. Be *very*
+  # careful when setting this, as it most likely affects
+  # your whole UI.
+  #
+  # This method notifies event listeners with the
+  # :project_changed event.
+  def project=(proj)
+    changed
+    @project = proj
+    notify_observers(:project_changed, @project)
+  end
+
+  # The project we’re currently working on.
+  def project
+    @project
   end
 
   # Starts the main application loop, handing over the control
