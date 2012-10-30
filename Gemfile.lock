@@ -1,6 +1,6 @@
 GIT
   remote: http://git.pegasus-alpha.eu/openrubyrmk/backend.git
-  revision: 0d0054b24fb4afa4c1eae1de2bc03cf8342e0e48
+  revision: bdfb8832c507b1221f541ad35c95f73ce1ec9931
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
