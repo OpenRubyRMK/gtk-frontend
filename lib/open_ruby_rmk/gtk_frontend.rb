@@ -23,6 +23,8 @@ module OpenRubyRMK
     LOCALE_DIR = DATA_DIR + "locales"
     # The path to the configuration file.
     CONFIG_FILE = DATA_DIR + "config.yml"
+    # The directory where GUI icons are kept.
+    ICONS_DIR = DATA_DIR + "icons"
 
     # The version of this software.
     def self.version

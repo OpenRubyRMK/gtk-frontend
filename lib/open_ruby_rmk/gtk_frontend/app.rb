@@ -20,6 +20,9 @@ class OpenRubyRMK::GTKFrontend::App
   include R18n::Helpers
   include OpenRubyRMK::Backend::Eventable
 
+  # Usual number of pixels between widgets
+  THE_SPACE = 4
+
   # The application’s main window.
   attr_reader :mainwindow
   # The parsed contents of the configuration file. A hash
@@ -39,6 +42,13 @@ class OpenRubyRMK::GTKFrontend::App
 
     parse_config
     set_locale
+  end
+
+  # Shortcut for dereferencing the THE_SPACE constant.
+  # Returns the usual number of pixels between widgets;
+  # this is read-only.
+  def space
+    THE_SPACE
   end
 
   # Set the project we’re currently working on. Be *very*
@@ -66,6 +76,12 @@ class OpenRubyRMK::GTKFrontend::App
     GLib.application_name = t.general.application_name
     @mainwindow = OpenRubyRMK::GTKFrontend::MainWindow.new
     @mainwindow.show_all
+
+    # GTK settings adjustments
+    Gtk::Settings.default.tap do |settings|
+      settings.gtk_button_images = true
+    end
+
     Gtk.main
   end
 

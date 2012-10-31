@@ -111,14 +111,50 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     id_col                   = TreeViewColumn.new("Map ID", id_renderer, text: 1)     # model[1] => Map ID
     @map_tree.append_column(name_col)
     @map_tree.append_column(id_col)
+
+    @add_button            = Button.new
+    @del_button            = Button.new
+    @settings_button       = Button.new
+
+    @add_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("plus.png").to_s))
+    @del_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("minus.png").to_s))
+    @settings_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("gear.png").to_s))
+
+    # On startup, when no projects are loaded, these
+    # buttons are disabled.
+    @add_button.sensitive      = false
+    @del_button.sensitive      = false
+    @settings_button.sensitive = false
+
+    # Enable/Disable buttons depending on the project state
+    $app.observe(:project_changed) do |event, project|
+      [@add_button, @del_button, @settings_button].each do |button|
+        button.sensitive = !!project
+      end
+    end
   end
 
   def create_layout
-    add(@map_tree) # We only have a single widget, so it may occupy all available window space
+    t = VBox.new(false, $app.space).tap do |vbox|
+      b = HBox.new(false, $app.space).tap do |row|
+        row.pack_end(@settings_button, false)
+        row.pack_end(@del_button, false)
+        row.pack_end(@add_button, false)
+      end
+
+      b.border_width = $app.space
+      vbox.pack_start(b, false)
+      vbox.pack_start(@map_tree, true, true)
+    end
+
+    add(t)
   end
 
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
+    @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
+    @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
+    @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
   end
 
   ########################################
@@ -127,6 +163,15 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   def on_delete_event(*)
     hide
     true # Do not destroy the window, just hide it
+  end
+
+  def on_add_button_clicked(event)
+  end
+
+  def on_del_button_clicked(event)
+  end
+
+  def on_settings_button_clicked(event)
   end
 
 end

@@ -35,7 +35,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   #
   # It enables/disables menu entries as required.
   def app_changed(event, project) # :nodoc:
-    return unless event == :global_project_changed
+    return unless event == :project_changed
 
     # Menu entries
     if project
