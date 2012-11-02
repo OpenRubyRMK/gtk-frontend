@@ -46,8 +46,7 @@
 #     include OpenRubyRMK::GTKFrontend::MenuBuilder
 #     # ...
 #   end
-module OpenRubyRMK::GTKFrontend::MenuBuilder
-
+module OpenRubyRMK::GTKFrontend::GtkHelper  
   # Initialises the internal menu item storage.
   # Hooks into the +initialize+ chain properly.
   def initialize(*) # :nodoc:
@@ -126,4 +125,10 @@ module OpenRubyRMK::GTKFrontend::MenuBuilder
     @__gtk_menu_items
   end
 
+end
+
+class R18n::TranslatedString
+  def to_label
+    Gtk::Label.new(self.to_s)
+  end
 end

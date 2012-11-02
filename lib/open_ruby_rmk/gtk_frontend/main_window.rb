@@ -5,7 +5,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::Backend
-  include OpenRubyRMK::GTKFrontend::MenuBuilder
+  include OpenRubyRMK::GTKFrontend::GtkHelper
 
   # Creates the application window.
   def initialize
@@ -27,7 +27,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # #show_all on all child windows.
   def show_all
     super
-    @map_window.show_all
+    @map_tree_window.show_all
+    @settings_window.show_all
   end
 
   # Event handler triggered by the observed App.
@@ -65,6 +66,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
+      append_menu_item windows, t.menus.windows.entries.map_tree, :windows_settings
     end
 
     menu @menubar, t.menus.help.name do |help|
@@ -88,7 +90,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the helper windows.
   def create_extra_windows
-    @map_window = OpenRubyRMK::GTKFrontend::MapWindow.new(self)
+    @map_tree_window = OpenRubyRMK::GTKFrontend::MapWindow.new(self)
+    @settings_window = OpenRubyRMK::GTKFrontend::SettingsEditor.new(self)
   end
 
   # Connects the previously created widgets with event handlers.
@@ -101,6 +104,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
+    menu_items[:windows_settings].signal_connect(:activate, &method(:on_menu_windows_settings))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
 
@@ -113,6 +117,13 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   end
 
   # File -> New
+  # I expect the creation of a new epic, one-in-a-million super fantistic game/project to
+  # be a bit more exicting, than just type a short name and hit enter which just creates
+  # a new directory. In my mind I see a little guy full of dreams and ideas who wants to
+  # write his thoughts down in that very first step. Of course that things will change
+  # a few times before the final release, so the dialog should be reusable as "change
+  # project settings" - dialog. 
+  # There might be an embedded-in-main-window-than-create-thousands-of-popupwindows-mode
   def on_menu_file_new(event)
     fd = FileChooserDialog.new(t.dialogs.new_project,
                                self,
@@ -167,13 +178,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     Gtk.main_quit
   end
 
-  def on_menu_windows_map_tree(event)
-    if @map_window.visible?
-      @map_window.hide
-    else
-      @map_window.show
+  def self.toggleable_window(name)
+    define_method "on_menu_windows_#{name.to_s}" do |event|
+      hook = instance_variable_get("@#{name.to_s}_window")
+      hook.send(hook.visible? ? :hide : :show)
     end
   end
+  toggleable_window :map_tree
+  toggleable_window :settings
 
   # Help -> About
   def on_menu_help_about(event)

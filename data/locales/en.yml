@@ -13,6 +13,13 @@ dialogs:
 windows:
   map_tree:
     title: "Map tree"
+  settings:
+    title: "Settings"
+    general:
+      title: "General"
+      name: "Name"
+      descr: "Description"
+      base_path: "Project-Path"
 
 # Menu entries.
 menus:

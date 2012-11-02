@@ -57,6 +57,7 @@ module OpenRubyRMK
 end
 
 require_relative "gtk_frontend/app"
-require_relative "gtk_frontend/menu_builder"
+require_relative "gtk_frontend/gtk_helper"
 require_relative "gtk_frontend/main_window"
 require_relative "gtk_frontend/map_window"
+require_relative "gtk_frontend/settings_editor"
