@@ -116,10 +116,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def on_menu_file_new(event)
     fd = FileChooserDialog.new(t.dialogs.new_project,
                                self,
-                               FileChooser::ACTION_SELECT_FOLDER,
+                               FileChooser::ACTION_CREATE_FOLDER,
                                nil,
                                [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
-                               [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+                               [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
 
     if fd.run == Dialog::RESPONSE_ACCEPT
       path = Pathname.new(GLib.filename_to_utf8(fd.filename))
