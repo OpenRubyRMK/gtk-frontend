@@ -13,10 +13,13 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   # map tree. To keep it in sync with the actual map tree
   # in the Projcet instance, we use its observing functionality.
   #
-  # This model is always layouted in two columns: The first one
-  # being a String column for the map name, the second one an
-  # Integer column for the Map ID. Use the usual TreeStore
-  # methods to access them (index 0 => name, index 1 => ID).
+  # This model is always layouted in three columns: The
+  # Backend::Map instance wrapped, the map’s ID and the
+  # map’s name. The latter two values may seem redundant as
+  # they’re available from the Map instance directly, but
+  # they are there for convenience so we can fill the
+  # TreeView’s view columns with ruby-gtk’s native (→ C)
+  # methods without having to resort to virtual columns.
   class MapTreeStore < TreeStore
 
     # Create a new instance of this class, mirroring +project+’s
@@ -24,7 +27,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     # empty store, so you can easily pass the currently active
     # object to this method, even if no project is active currently.
     def initialize(project)
-      super(String, Integer) # Map name, Map ID
+      super(OpenRubyRMK::Backend::Map, Integer, String) # Map, Map ID, Map name
       @project = project
 
       # Spy on the project, so we can act accordingly if
@@ -67,8 +70,9 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     # the process for all child maps found.
     def traverse_map(map, parent = nil)
       row = append(parent)
-      row[0] = map[:name]
+      row[0] = map
       row[1] = map.id
+      row[2] = map[:name]
       map.children.each{|child_map| traverse_map(child_map, map)}
     end
 
@@ -96,21 +100,19 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     # map storage for the current project; if the current
     # project changes, resync it with the new project’s
     # map tree storage.
-    @storage  = MapTreeStore.new($app.project)
-    @map_tree = TreeView.new(@storage)
+    @map_tree = TreeView.new(MapTreeStore.new($app.project))
     $app.observe(:project_changed) do |event, project|
-      @storage = MapTreeStore.new(project)
-      @map_tree.model = @storage
+      @map_tree.model = MapTreeStore.new(project)
     end
 
     # Lay out the tree view.
     @map_tree.selection.mode = SELECTION_SINGLE
     name_renderer            = CellRendererText.new
     id_renderer              = CellRendererText.new
-    name_col                 = TreeViewColumn.new("Map name", name_renderer, text: 0) # model[0] => Map name
-    id_col                   = TreeViewColumn.new("Map ID", id_renderer, text: 1)     # model[1] => Map ID
-    @map_tree.append_column(name_col)
+    name_col                 = TreeViewColumn.new(t.windows.map_tree.labels.map_name, name_renderer, text: 2) # model[2] => Map name
+    id_col                   = TreeViewColumn.new(t.windows.map_tree.labels.map_id, id_renderer, text: 1)     # model[1] => Map ID
     @map_tree.append_column(id_col)
+    @map_tree.append_column(name_col)
 
     @add_button            = Button.new
     @del_button            = Button.new
@@ -172,6 +174,13 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   end
 
   def on_settings_button_clicked(event)
+    return unless @map_tree.cursor[0] # if no path is available, nothing is selected and we cannot do anything.
+    map = @map_tree.model.get_iter(@map_tree.cursor[0])[0] # model[0] => Map instance
+
+    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(map)
+    msd.run do |response|
+      msd.destroy
+    end
   end
 
 end

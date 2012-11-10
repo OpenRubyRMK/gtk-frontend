@@ -13,6 +13,9 @@ dialogs:
 windows:
   map_tree:
     title: "Map tree"
+    labels:
+      map_name: "Map name"
+      map_id: "Map ID"
 
 # Menu entries.
 menus:
