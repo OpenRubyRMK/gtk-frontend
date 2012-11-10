@@ -55,6 +55,11 @@ class OpenRubyRMK::GTKFrontend::MapSettingsDialog < Gtk::Dialog
     @name_field   = Entry.new
     @width_field  = SpinButton.new(1, 99999, 5) # GTK doesn’t like Float::INFINITY as the max value
     @height_field = SpinButton.new(1, 99999, 5) # GTK doesn’t like Float::INFINITY as the max value
+
+    # Load values from the associated map
+    @width_field.value  = @map.tmx_map.width
+    @height_field.value = @map.tmx_map.height
+    @name_field.text    = @map[:name]
   end
 
   def create_layout
@@ -88,9 +93,9 @@ class OpenRubyRMK::GTKFrontend::MapSettingsDialog < Gtk::Dialog
     if res == Gtk::Dialog::RESPONSE_ACCEPT
       raise(Errors::ValidationError, t.dialogs.map_settings.errors.map_name_empty) if @name_field.text.empty?
 
-      @map.tiled_map.width  = @width_field.value
-      @map.tiled_map.height = @height_field.value
-      @map[:name] = @name_field.text
+      @map.tmx_map.width  = @width_field.value
+      @map.tmx_map.height = @height_field.value
+      @map[:name]         = @name_field.text
     end
 
     destroy
