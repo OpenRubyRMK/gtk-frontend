@@ -26,23 +26,30 @@ windows:
       map_name: "Map name"
       map_id: "Map ID"
 
-# Menu entries.
+# Menu entries. Pro tip: Prefixing a letter with an underscore
+# (_) makes that letter a so-called "mnemonic". These are generally
+# underlined in the UI and allow to navigate the menus by only using
+# the keyboard, i.e. [ALT]+<mnemonic> to activate an entry. Each
+# menu entry should have such a mnemonic letter, and they should
+# be unique within a submenu. You don’t have to copy the exact
+# mnemonics from the English version for your translation, choose
+# more apropriate ones.
 menus:
   file:
-    name: File
+    name: F_ile
     entries:
-      new: New
-      open: Open...
-      save: Save
-      quit: Quit
+      new: Ne_w
+      open: O_pen...
+      save: Sav_e
+      quit: _Quit
   edit:
-    name: Edit
+    name: E_dit
     entries:
   windows:
-    name: Windows
+    name: _Windows
     entries:
       map_tree: "Map tree"
   help:
-    name: Help
+    name: _Help
     entries:
-      about: About...
+      about: A_bout...
