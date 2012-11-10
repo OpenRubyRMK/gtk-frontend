@@ -2,7 +2,7 @@
 source "https://rubygems.org"
 
 # Backend library
-gem "openrubyrmk-backend", :git => "http://git.pegasus-alpha.eu/openrubyrmk/backend.git"
+gem "openrubyrmk-backend", :git => "git://github.com/OpenRubyRMK/backend.git"
 
 # GUI
 gem "gtk2"

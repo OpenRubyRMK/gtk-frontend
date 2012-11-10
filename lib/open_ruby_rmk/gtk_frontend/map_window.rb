@@ -178,9 +178,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     map = @map_tree.model.get_iter(@map_tree.cursor[0])[0] # model[0] => Map instance
 
     msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(map)
-    msd.run do |response|
-      msd.destroy
-    end
+    msd.run
   end
 
 end

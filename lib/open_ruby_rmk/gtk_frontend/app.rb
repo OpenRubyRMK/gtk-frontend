@@ -88,28 +88,35 @@ class OpenRubyRMK::GTKFrontend::App
   # Displays a message box modal to the given window. The
   # dialog is automatically destoyed for you.
   # == Parameters
-  # [parent]
-  #   The parent to block while the dialog is shown. +nil+
-  #   should also work (untested).
   # [msg]
   #   The message to display.
-  # [type (:info)]
-  #   The type of the message box. One of :error, :question,
-  #   :info, :warning, :other.
-  # [buttons (:ok)]
-  #   The buttons to display. One of :cancel, :close, :ok,
-  #   :none (don’t use this), :ok_cancel, :yes_no.
-  # [hsh ({})]
-  #   Sprintf parameters to inject into +msg+. Most useful
-  #   in combination with translations.
+  # [opts ({})]
+  #   An options hash with the following parameters:
+  #   [parent (application main window)]
+  #     The parent to block while the dialog is shown. +nil+
+  #     should also work (untested).
+  #   [type (:info)]
+  #     The type of the message box. One of :error, :question,
+  #     :info, :warning, :other.
+  #   [buttons (:ok)]
+  #     The buttons to display. One of :cancel, :close, :ok,
+  #     :none (don’t use this), :ok_cancel, :yes_no.
+  #   [params ({})]
+  #     Sprintf parameters to inject into +msg+. Most useful
+  #     in combination with translations.
   # == Return value
   #   The return value of MessageDialog#run.
-  def msgbox(parent, msg, type = :info, buttons = :ok, hsh = {})
-    md = Gtk::MessageDialog.new(parent,
-                                Gtk::Dialog::DESTROY_WITH_PARENT,
-                                Gtk::MessageDialog.const_get(type.upcase),
-                                Gtk::MessageDialog.const_get(:"BUTTONS_#{buttons.upcase}"),
-                                sprintf(msg, hsh))
+  def msgbox(msg, opts = {})
+    opts[:type]    ||= :info
+    opts[:buttons] ||= :ok
+    opts[:parent]  ||= @mainwindow
+    opts[:params]  ||= {}
+
+    md = Gtk::MessageDialog.new(opts[:parent],
+                                Gtk::Dialog::DESTROY_WITH_PARENT | Gtk::Dialog::MODAL,
+                                Gtk::MessageDialog.const_get(opts[:type].upcase),
+                                Gtk::MessageDialog.const_get(:"BUTTONS_#{opts[:buttons].upcase}"),
+                                sprintf(msg, opts[:params]))
     result = md.run
     md.destroy
     result

@@ -130,7 +130,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     unless path.children.empty?
-      $app.msgbox(self, t.dialogs.not_empty, :error, :close, :dir => path)
+      $app.msgbox(t.dialogs.not_empty,
+                  type: :error,
+                  buttons: :close,
+                  params: {:dir => path})
       return
     end
 
@@ -157,7 +160,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     begin
       $app.project = Project.load_dir(path)
     rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
-      $app.msgbox(self, t.dialogs.dir_not_found, :error, :close, :dir => e.path)
+      $app.msgbox(t.dialogs.dir_not_found, type: :error, buttons: :close, params: {:dir => e.path})
       $app.project = nil # Ensure we have a clean state
     end
   end
