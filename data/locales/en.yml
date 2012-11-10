@@ -33,6 +33,7 @@ menus:
     entries:
       new: New
       open: Open...
+      save: Save
       quit: Quit
   edit:
     name: Edit

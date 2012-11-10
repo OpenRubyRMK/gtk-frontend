@@ -21,6 +21,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     # Ensure we get notified when the project we’re working
     # on gets changed.
     $app.add_observer(self, :app_changed)
+    app_changed(:project_changed, nil) # Imitate a close-project event so all the menu entries are correctly enabled/disabled at the beginning
   end
 
   # As superclass method, but also calls
@@ -41,9 +42,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     if project
       menu_items[:file_new].sensitive  = false
       menu_items[:file_open].sensitive = false
+      menu_items[:file_save].sensitive = true
     else
       menu_items[:file_new].sensitive  = true
       menu_items[:file_open].sensitive = true
+      menu_items[:file_save].sensitive = false
     end
   end
 
@@ -56,6 +59,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.file.name do |file|
       append_menu_item file, t.menus.file.entries.new, :file_new
       append_menu_item file, t.menus.file.entries.open, :file_open
+      append_menu_item file, t.menus.file.entries.save, :file_save
       append_menu_separator file
       append_menu_item file, t.menus.file.entries.quit, :file_quit
     end
@@ -99,6 +103,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     # Menus
     menu_items[:file_new].signal_connect(:activate, &method(:on_menu_file_new))
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
+    menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
@@ -163,6 +168,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       $app.msgbox(t.dialogs.dir_not_found, type: :error, buttons: :close, params: {:dir => e.path})
       $app.project = nil # Ensure we have a clean state
     end
+  end
+
+  # File -> Save
+  def on_menu_file_save(event)
+    $app.project.save
   end
 
   # File -> Quit
