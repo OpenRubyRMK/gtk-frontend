@@ -74,13 +74,10 @@ class OpenRubyRMK::GTKFrontend::MapTreeView < Gtk::TreeView
         # OK some map’s name has changed. Find the data model
         # row that corresponds with the changed map and update
         # that row’s name entry.
-        find_iter_for(emitter){|iter| iter[2] = info[:new_value]} # model[2] => Map name
-      when :child_added
+        find_iter_for(emitter)[2] = info[:new_value] # model[2] => Map name
+      when :child_added, :child_removed
         # Resynchronise the affected part of the map tree.
         rebuild_map_tree!(emitter)
-      when :child_removed
-        # Delete the affected part of the map tree.
-        find_iter_for(emitter){|iter| untraverse_row(iter)}
       end
     end
 
@@ -101,16 +98,17 @@ class OpenRubyRMK::GTKFrontend::MapTreeView < Gtk::TreeView
         # Find the iter for the start map, remove all its children
         # and rebuild the map tree from that iter/map combination
         # on downwards. DANGER: Low-level GTK iteration manipulation!
-        find_iter_for(start_map) do |iter|
-          if iter.has_child?
-            child_iter = iter.first_child
-            untraverse_row(child_iter) while iter_is_valid?(child_iter)
+        iter = find_iter_for(start_map) || raise("Map not found in storage model: #{start_map.inspect}")
+        if iter.has_child?
+          child_iter = iter.first_child
+          iter.n_children.times do
+            untraverse_row(child_iter) # Advances child_iter by 1
           end
+        end
 
-          # Rebuild all child trees for this map.
-          start_map.children.each do |map|
-            traverse_map(map, iter)
-          end
+        # Rebuild all child trees for this map.
+        start_map.children.each do |map|
+          traverse_map(map, iter)
         end
       else
         # Since we want to remove all rows, we can take a neat shortcut
@@ -127,26 +125,37 @@ class OpenRubyRMK::GTKFrontend::MapTreeView < Gtk::TreeView
 
     # Recursively searches through the storage and tries
     # to find the row that corresponds to +target_map+.
-    # If one is found, it is yielded to the block.
     # == Parameters
     # [target_map]
     #   The Backend::Map instance to look for.
     # == Return value
-    # The return value of your block.
+    # The Gtk::TreeIter for +target_map+ if one is found,
+    # +nil+ otherwise.
     # == Remarks
-    # Gtk::TreeIter objects are very short-lived objects.
-    # They wouldn’t be valid after TreeView#each returns,
-    # so you have to do you work with them in the block
-    # supplied to this method, which is then called inside
-    # the actual iteration where the TreeIter object is
-    # valid. Adding/removing rows inside the block is fine
-    # and won’t confuse GTK.
-    def find_iter_for(target_map)
-      each do |model, path, iter|
-        if iter[0] == target_map # model[0] => Map instance
-          break(yield(iter))
+    # Gtk::TreeIter objects are very short-lived objects,
+    # so don’t store the return value of this method somewhere.
+    def find_iter_for(target_map, iter = nil)
+      iter = iter || iter_first
+
+      # First check if we’re ourselve the target
+      return iter if iter[0] == target_map
+
+      # Now check all of our children.
+      if iter.has_child?
+        if result = find_iter_for(target_map, iter.first_child)
+          return result
         end
       end
+
+      # Still nothing, so try all the following rows.
+      while iter.next!
+        if result = find_iter_for(target_map, iter)
+          return result
+        end
+      end
+
+      # Nothing found. This is not here. Terminate.
+      nil
     end
 
     private
@@ -188,9 +197,9 @@ class OpenRubyRMK::GTKFrontend::MapTreeView < Gtk::TreeView
       # DANGER! Low-level GTK iterator manipulation!
       if row.has_child?
         child_iter = row.first_child
-        until child_iter == iter_first # End of children reached
-          untraverse_row(child_iter)
-          child_iter.next!
+
+        row.n_children.times do
+          untraverse_row(child_iter) # Advances child_iter by 1
         end
       end
 

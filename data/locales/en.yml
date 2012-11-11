@@ -18,6 +18,7 @@ dialogs:
       width_height: "Width ✕ Height"
     errors:
       map_name_empty: "The map name cannot be empty."
+  delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
 
 windows:
   map_tree:

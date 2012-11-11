@@ -90,6 +90,17 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
 
   # - button
   def on_del_button_clicked(event)
+    return unless @map_tree.selected_map
+
+    map = @map_tree.selected_map
+    result = $app.msgbox(t.dialogs.delete_map,
+                         type: :question,
+                         buttons: :yes_no,
+                         params: {:name => map[:name], :id => map.id})
+    return unless result == Dialog::RESPONSE_YES
+
+    $app.project.remove_root_map(map) if map.root?
+    map.unmount
   end
 
   def on_settings_button_clicked(event)
