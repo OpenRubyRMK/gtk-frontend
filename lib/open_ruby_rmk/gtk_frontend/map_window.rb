@@ -35,9 +35,12 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
       # and will always be an empty store (b/c there’s
       # no active project, which would have to be loaded
       # first, causing another instance of this class to
-      # be created), hence there’s no need for an observer
+      # be created), hence there’s no need for observers
       # then).
-      @project.add_observer(self, :project_changed) if @project
+      if @project
+        @project.add_observer(self, :project_changed)
+        @project.root_maps.each{|root_map| root_map.traverse(true){|map| map.add_observer(self, :map_property_changed)}}
+      end
 
       rebuild_map_tree!
     end
@@ -45,9 +48,25 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     # Triggered by the observed project whenever an event
     # occurs. However, as the method name indicates, only
     # map-related events will be processed by it.
-    def project_changed(event, *args)
+    def project_changed(event, emitter, info)
       case event
-      when :root_map_added then raise("TODO")
+      when :root_map_added then raise(NotImplementedError, "TODO")
+      end
+    end
+
+    # Triggered by any observed map when its properties change.
+    def map_property_changed(event, emitter, info)
+      return unless event == :property_changed
+      return unless info[:property] == "name"
+
+      # OK some map’s name has changed. Find the data model
+      # row that corresponds with the changed map and update
+      # that row’s name entry.
+      each do |model, path, iter|
+        if iter[0] == emitter    # model[0] => Map instance
+          iter[2] = info[:value] # model[2] => Map name
+          break
+        end
       end
     end
 
@@ -101,8 +120,8 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     # project changes, resync it with the new project’s
     # map tree storage.
     @map_tree = TreeView.new(MapTreeStore.new($app.project))
-    $app.observe(:project_changed) do |event, project|
-      @map_tree.model = MapTreeStore.new(project)
+    $app.observe(:project_changed) do |event, emitter, info|
+      @map_tree.model = MapTreeStore.new(info[:project])
     end
 
     # Lay out the tree view.
@@ -129,9 +148,9 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     @settings_button.sensitive = false
 
     # Enable/Disable buttons depending on the project state
-    $app.observe(:project_changed) do |event, project|
+    $app.observe(:project_changed) do |event, emitter, info|
       [@add_button, @del_button, @settings_button].each do |button|
-        button.sensitive = !!project
+        button.sensitive = !!info[:project]
       end
     end
   end

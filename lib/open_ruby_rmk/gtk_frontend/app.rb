@@ -60,7 +60,7 @@ class OpenRubyRMK::GTKFrontend::App
   def project=(proj)
     changed
     @project = proj
-    notify_observers(:project_changed, @project)
+    notify_observers(:project_changed, :project => @project)
   end
 
   # The project we’re currently working on.

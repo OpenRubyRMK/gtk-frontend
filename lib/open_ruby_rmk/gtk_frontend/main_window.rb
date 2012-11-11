@@ -18,10 +18,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_extra_windows
     setup_event_handlers
 
-    # Ensure we get notified when the project we’re working
-    # on gets changed.
-    $app.add_observer(self, :app_changed)
-    app_changed(:project_changed, nil) # Imitate a close-project event so all the menu entries are correctly enabled/disabled at the beginning
+    # Refresh the menu entries when the selected project changes.
+    $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
   end
 
   # As superclass method, but also calls
@@ -29,25 +27,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def show_all
     super
     @map_window.show_all
-  end
-
-  # Event handler triggered by the observed App.
-  # The observer is created in #initialize.
-  #
-  # It enables/disables menu entries as required.
-  def app_changed(event, project) # :nodoc:
-    return unless event == :project_changed
-
-    # Menu entries
-    if project
-      menu_items[:file_new].sensitive  = false
-      menu_items[:file_open].sensitive = false
-      menu_items[:file_save].sensitive = true
-    else
-      menu_items[:file_new].sensitive  = true
-      menu_items[:file_open].sensitive = true
-      menu_items[:file_save].sensitive = false
-    end
   end
 
   private
@@ -75,6 +54,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       append_menu_item help, t.menus.help.entries.about, :help_about
     end
 
+    # Enable/Disable menu entries for no loaded project
+    update_menu_entries(nil)
   end
 
   # Instanciates the widgets needed for the window.
@@ -205,5 +186,23 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       ad.destroy
     end
   end
+
+  ########################################
+  # Helpers
+
+  # Enable/Disable menu entries to reflect the operations possible
+  # on +project+ (which may be +nil+ if no project is loaded).
+  def update_menu_entries(project)
+    if project
+      menu_items[:file_new].sensitive  = false
+      menu_items[:file_open].sensitive = false
+      menu_items[:file_save].sensitive = true
+    else
+      menu_items[:file_new].sensitive  = true
+      menu_items[:file_open].sensitive = true
+      menu_items[:file_save].sensitive = false
+    end
+  end
+
 
 end
