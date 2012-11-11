@@ -82,9 +82,13 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
     true # Do not destroy the window, just hide it
   end
 
+  # + button
   def on_add_button_clicked(event)
+    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(nil, @map_tree.selected_map)
+    msd.run
   end
 
+  # - button
   def on_del_button_clicked(event)
   end
 
