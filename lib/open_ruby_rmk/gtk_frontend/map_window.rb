@@ -9,93 +9,6 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   include R18n::Helpers
   include OpenRubyRMK::Backend
 
-  # GTK TreeView storage model for storing a project’s
-  # map tree. To keep it in sync with the actual map tree
-  # in the Projcet instance, we use its observing functionality.
-  #
-  # This model is always layouted in three columns: The
-  # Backend::Map instance wrapped, the map’s ID and the
-  # map’s name. The latter two values may seem redundant as
-  # they’re available from the Map instance directly, but
-  # they are there for convenience so we can fill the
-  # TreeView’s view columns with ruby-gtk’s native (→ C)
-  # methods without having to resort to virtual columns.
-  class MapTreeStore < TreeStore
-
-    # Create a new instance of this class, mirroring +project+’s
-    # map tree. If +project+ is +nil+, the result simply is an
-    # empty store, so you can easily pass the currently active
-    # object to this method, even if no project is active currently.
-    def initialize(project)
-      super(OpenRubyRMK::Backend::Map, Integer, String) # Map, Map ID, Map name
-      @project = project
-
-      # Spy on the project, so we can act accordingly if
-      # its maps change (if the project is +nil+, this is
-      # and will always be an empty store (b/c there’s
-      # no active project, which would have to be loaded
-      # first, causing another instance of this class to
-      # be created), hence there’s no need for observers
-      # then).
-      if @project
-        @project.add_observer(self, :project_changed)
-        @project.root_maps.each{|root_map| root_map.traverse(true){|map| map.add_observer(self, :map_property_changed)}}
-      end
-
-      rebuild_map_tree!
-    end
-
-    # Triggered by the observed project whenever an event
-    # occurs. However, as the method name indicates, only
-    # map-related events will be processed by it.
-    def project_changed(event, emitter, info)
-      case event
-      when :root_map_added then raise(NotImplementedError, "TODO")
-      end
-    end
-
-    # Triggered by any observed map when its properties change.
-    def map_property_changed(event, emitter, info)
-      return unless event == :property_changed
-      return unless info[:property] == "name"
-
-      # OK some map’s name has changed. Find the data model
-      # row that corresponds with the changed map and update
-      # that row’s name entry.
-      each do |model, path, iter|
-        if iter[0] == emitter    # model[0] => Map instance
-          iter[2] = info[:value] # model[2] => Map name
-          break
-        end
-      end
-    end
-
-    # Erases all entries from the map storage, then
-    # completely resynchonises it to the map tree found
-    # in the wrapped Backend::Project instance.
-    def rebuild_map_tree!
-      clear
-      return unless @project # nil if no project is opened currently
-
-      @project.root_maps.each do |root_map|
-        traverse_map(root_map)
-      end
-    end
-
-    private
-
-    # Recursive helper method for #rebuild_map_tree! that adds
-    # a single map to the internal storage tree, then repeates
-    # the process for all child maps found.
-    def traverse_map(map, parent = nil)
-      row = append(parent)
-      row[0] = map
-      row[1] = map.id
-      row[2] = map[:name]
-      map.children.each{|child_map| traverse_map(child_map, map)}
-    end
-
-  end
 
   # Creates a new MapWindow. Pass in the parent window you want
   # to make this window a helper window of.
@@ -115,24 +28,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   private
 
   def create_widgets
-    # Create the map hierarchy widget and assign it the
-    # map storage for the current project; if the current
-    # project changes, resync it with the new project’s
-    # map tree storage.
-    @map_tree = TreeView.new(MapTreeStore.new($app.project))
-    $app.observe(:project_changed) do |event, emitter, info|
-      @map_tree.model = MapTreeStore.new(info[:project])
-    end
-
-    # Lay out the tree view.
-    @map_tree.selection.mode = SELECTION_SINGLE
-    name_renderer            = CellRendererText.new
-    id_renderer              = CellRendererText.new
-    name_col                 = TreeViewColumn.new(t.windows.map_tree.labels.map_name, name_renderer, text: 2) # model[2] => Map name
-    id_col                   = TreeViewColumn.new(t.windows.map_tree.labels.map_id, id_renderer, text: 1)     # model[1] => Map ID
-    @map_tree.append_column(id_col)
-    @map_tree.append_column(name_col)
-
+    @map_tree              = OpenRubyRMK::GTKFrontend::MapTreeView.new
     @add_button            = Button.new
     @del_button            = Button.new
     @settings_button       = Button.new
@@ -193,10 +89,9 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   end
 
   def on_settings_button_clicked(event)
-    return unless @map_tree.cursor[0] # if no path is available, nothing is selected and we cannot do anything.
-    map = @map_tree.model.get_iter(@map_tree.cursor[0])[0] # model[0] => Map instance
+    return unless @map_tree.selected_map
 
-    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(map)
+    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(@map_tree.selected_map)
     msd.run
   end
 
