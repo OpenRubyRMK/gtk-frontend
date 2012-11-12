@@ -60,13 +60,19 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the widgets needed for the window.
   def create_widgets
-
+    @map_table = OpenRubyRMK::GTKFrontend::Widgets::MapTable.new
   end
 
   # Lays out the previously created widgets.
   def create_layout
     VBox.new(false, 2).tap do |vbox|
-      vbox.pack_start(@menubar, false, false, 0)
+      vbox.pack_start(@menubar, false)
+
+      HBox.new.tap do |hbox|
+        hbox.pack_start(@map_table, false)
+        vbox.pack_start(hbox, false)
+      end
+
       add(vbox)
     end
   end

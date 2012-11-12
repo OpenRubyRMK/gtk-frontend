@@ -81,6 +81,7 @@ end
 require_relative "gtk_frontend/app"
 require_relative "gtk_frontend/errors"
 require_relative "gtk_frontend/helpers/menu_builder"
+require_relative "gtk_frontend/widgets/map_table"
 require_relative "gtk_frontend/widgets/map_tree_view"
 require_relative "gtk_frontend/main_window"
 require_relative "gtk_frontend/tool_windows/map_window"
