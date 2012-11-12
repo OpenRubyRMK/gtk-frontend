@@ -5,7 +5,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::Backend
-  include OpenRubyRMK::GTKFrontend::MenuBuilder
+  include OpenRubyRMK::GTKFrontend::Helpers::MenuBuilder
 
   # Creates the application window.
   def initialize
@@ -73,7 +73,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the helper windows.
   def create_extra_windows
-    @map_window = OpenRubyRMK::GTKFrontend::MapWindow.new(self)
+    @map_window = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
   end
 
   # Connects the previously created widgets with event handlers.

@@ -5,8 +5,11 @@ require "gtk2"
 require "r18n-desktop"
 require "open_ruby_rmk/backend"
 
+# Namespace of the OpenRubyRMK project.
 module OpenRubyRMK
 
+  # Namespace containing everything related to the GTK
+  # frontend.
   module GTKFrontend
 
     # This library’s root directory.
@@ -52,14 +55,33 @@ module OpenRubyRMK
       YAML.load_file(CONFIG_FILE)
     end
 
+    ########################################
+    # Other namespace definitions
+
+    # Namespace containing helpers for GUI layout.
+    module Helpers
+    end
+
+    # Namespace containing additional widgets.
+    module Widgets
+    end
+
+    # Namespace containing floating tool windows.
+    module ToolWindows
+    end
+
+    # Namespace containing (modal) dialog windows.
+    module Dialogs
+    end
+
   end
 
 end
 
 require_relative "gtk_frontend/app"
 require_relative "gtk_frontend/errors"
-require_relative "gtk_frontend/menu_builder"
-require_relative "gtk_frontend/map_tree_view"
+require_relative "gtk_frontend/helpers/menu_builder"
+require_relative "gtk_frontend/widgets/map_tree_view"
 require_relative "gtk_frontend/main_window"
-require_relative "gtk_frontend/map_window"
-require_relative "gtk_frontend/map_settings_dialog"
+require_relative "gtk_frontend/tool_windows/map_window"
+require_relative "gtk_frontend/dialogs/map_settings_dialog"

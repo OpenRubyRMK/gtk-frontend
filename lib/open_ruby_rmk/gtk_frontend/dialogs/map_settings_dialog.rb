@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Dialog for creating new and editing existing maps.
-class OpenRubyRMK::GTKFrontend::MapSettingsDialog < Gtk::Dialog
+class OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::GTKFrontend

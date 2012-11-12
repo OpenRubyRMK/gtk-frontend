@@ -16,7 +16,7 @@
 # register itself as an observer to the global App instance
 # and automatically re-initialise the internal storage model
 # with a new project if the globally selected project changes.
-class OpenRubyRMK::GTKFrontend::MapTreeView < Gtk::TreeView
+class OpenRubyRMK::GTKFrontend::Widgets::MapTreeView < Gtk::TreeView
   include Gtk
   include R18n::Helpers
 

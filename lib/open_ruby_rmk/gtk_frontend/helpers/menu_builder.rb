@@ -46,7 +46,7 @@
 #     include OpenRubyRMK::GTKFrontend::MenuBuilder
 #     # ...
 #   end
-module OpenRubyRMK::GTKFrontend::MenuBuilder
+module OpenRubyRMK::GTKFrontend::Helpers::MenuBuilder
 
   # Initialises the internal menu item storage.
   # Hooks into the +initialize+ chain properly.

@@ -4,11 +4,10 @@
 # cannot be destroyed by the user; attempting to close it will
 # effectively just hide the window, so it is easy to later
 # re-display it.
-class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
+class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::Backend
-
 
   # Creates a new MapWindow. Pass in the parent window you want
   # to make this window a helper window of.
@@ -28,7 +27,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   private
 
   def create_widgets
-    @map_tree              = OpenRubyRMK::GTKFrontend::MapTreeView.new
+    @map_tree              = OpenRubyRMK::GTKFrontend::Widgets::MapTreeView.new
     @add_button            = Button.new
     @del_button            = Button.new
     @settings_button       = Button.new
@@ -84,7 +83,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
 
   # + button
   def on_add_button_clicked(event)
-    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(nil, @map_tree.selected_map)
+    msd = OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog.new(nil, @map_tree.selected_map)
     msd.run
   end
 
@@ -106,7 +105,7 @@ class OpenRubyRMK::GTKFrontend::MapWindow < Gtk::Window
   def on_settings_button_clicked(event)
     return unless @map_tree.selected_map
 
-    msd = OpenRubyRMK::GTKFrontend::MapSettingsDialog.new(@map_tree.selected_map)
+    msd = OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog.new(@map_tree.selected_map)
     msd.run
   end
 
