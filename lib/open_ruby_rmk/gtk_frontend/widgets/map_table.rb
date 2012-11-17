@@ -3,6 +3,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapTable < Gtk::ScrolledWindow
   def initialize
     super
     @map = nil
+    @tileset_pixbufs = {}
 
     @layout = Gtk::Layout.new
 
@@ -15,23 +16,32 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapTable < Gtk::ScrolledWindow
 
   def map=(map)
     @map = map
-    #TODO: Redraw whole widget area!
+    @tileset_pixbufs.clear
+
+    @map.tmx_map.tilesets.each do |tileset|
+      @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
+    end
   end
 
   private
 
   def on_expose(_, event)
-    gc = Gdk::GC.new(@layout.bin_window)
-    gc.rgb_fg_color = Gdk::Color.new(50000, 0, 0)
-    gc2 = Gdk::GC.new(@layout.bin_window)
-    gc2.rgb_fg_color = Gdk::Color.new(0, 50000, 0)
+    #return unless @map
+    cc = @layout.bin_window.create_cairo_context
 
-    gcs = [gc, gc2].cycle
+    m = TiledTmx::Map.load_xml("/home/quintus/repos/privat/projekte/ruby/OpenRubyRMK/backend/data/skeleton/data/maps/0001.tmx")
+    pf = Gdk::Pixbuf.new(m.tilesets[1].source.to_s)
 
-    0.step(@layout.size[0], 10) do |x|
-      @layout.bin_window.draw_rectangle(gcs.next, true, x, 0, 10, @layout.size[1])
+    m.layers.each do |layer|
+      layer.each_tile(m) do |lx, ly, tile, id, tileset, flips|
+        x, y = tileset.tile_position(id)
+
+        cc.set_source_pixbuf(Gdk::Pixbuf.new(pf, x, y, tileset.tilewidth, tileset.tileheight),
+                             lx * tileset.tilewidth,
+                             ly * tileset.tileheight)
+        cc.paint
+      end
     end
-
 
     true
   end

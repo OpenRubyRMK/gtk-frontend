@@ -1,10 +1,17 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: f452794e94a81764eaa5d6c49da532e4e3435242
+  revision: 7fcf6425b225d1f3551980248aee6c5fc6e653ba
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
       ruby-tmx
+
+GIT
+  remote: git://github.com/Quintus/tmx-ruby.git
+  revision: f3548929c124ad0814af3d4717c9c3e5342cbb9d
+  specs:
+    ruby-tmx (0.0.1.dev)
+      nokogiri
 
 GEM
   remote: https://rubygems.org/
@@ -31,9 +38,7 @@ GEM
     r18n-core (1.1.2)
     r18n-desktop (1.1.2)
       r18n-core (= 1.1.2)
-    rake (0.9.2.2)
-    ruby-tmx (0.0.1.dev)
-      nokogiri
+    rake (10.0.1)
     turn (0.9.6)
       ansi
 
@@ -46,4 +51,5 @@ DEPENDENCIES
   paint
   r18n-desktop
   rake
+  ruby-tmx!
   turn
