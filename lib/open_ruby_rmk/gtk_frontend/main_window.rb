@@ -7,6 +7,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include OpenRubyRMK::Backend
   include OpenRubyRMK::GTKFrontend::Helpers::MenuBuilder
 
+  # The widget that shows the map.
+  attr_reader :map_table
+
   # Creates the application window.
   def initialize
     super

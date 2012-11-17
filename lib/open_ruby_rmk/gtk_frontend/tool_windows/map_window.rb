@@ -71,6 +71,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
     @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
     @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
     @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
+    @map_tree.signal_connect(:cursor_changed, &method(:on_tree_cursor_changed))
   end
 
   ########################################
@@ -107,6 +108,12 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
 
     msd = OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog.new(@map_tree.selected_map)
     msd.run
+  end
+
+  def on_tree_cursor_changed(*)
+    return unless @map_tree.selected_map
+
+    $app.mainwindow.map_table.map = @map_tree.selected_map
   end
 
 end
