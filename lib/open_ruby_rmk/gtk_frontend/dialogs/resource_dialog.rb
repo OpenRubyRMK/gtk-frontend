@@ -9,7 +9,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_NONE])
 
-    set_default_size 300, 400
+    set_default_size 500, 400
 
     create_widgets
     create_layout
@@ -26,18 +26,40 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   private
 
   def create_widgets
-    @category_tree = OpenRubyRMK::GTKFrontend::Widgets::ResourceDirectoryTreeView.new
-    @resource_list = OpenRubyRMK::GTKFrontend::Widgets::ListView.new
+    @category_frame = Frame.new("Categories")
+    @resource_frame = Frame.new("Resources")
+    @action_frame   = Frame.new("Actions")
+    @detail_frame   = Frame.new("Details")
+    @category_tree  = OpenRubyRMK::GTKFrontend::Widgets::ResourceDirectoryTreeView.new
+    @resource_list  = OpenRubyRMK::GTKFrontend::Widgets::ListView.new
   end
 
   def create_layout
     vbox.spacing = $app.space
 
     HBox.new.tap do |hbox|
-      hbox.pack_start(@category_tree, true)
-      hbox.pack_start(@resource_list, true)
+      hbox.spacing = $app.space
+
+      hbox.pack_start(@category_frame, true)
+      hbox.pack_start(@resource_frame, true)
+
+      VBox.new.tap do |vbox2|
+        vbox2.spacing = $app.space
+
+        vbox2.pack_start(@detail_frame)
+        vbox2.pack_start(@action_frame)
+
+        hbox.pack_start(vbox2)
+      end
+
+      #hbox.pack_start(@category_tree, true)
+      #hbox.pack_start(@resource_list, true)
+
       vbox.pack_start(hbox, true)
     end
+
+    @category_frame.add(@category_tree)
+    @resource_frame.add(@resource_list)
   end
 
   def setup_event_handlers
