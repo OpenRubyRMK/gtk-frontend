@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   include Gtk
+  include OpenRubyRMK::GTKFrontend::Widgets
   include R18n::Helpers
 
   def initialize
@@ -9,7 +10,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_NONE])
 
-    set_default_size 500, 400
+    set_default_size 500, 500
 
     create_widgets
     create_layout
@@ -29,15 +30,26 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @category_frame = Frame.new("Categories")
     @resource_frame = Frame.new("Resources")
     @action_frame   = Frame.new("Actions")
-    @detail_frame   = Frame.new("Details")
-    @category_tree  = OpenRubyRMK::GTKFrontend::Widgets::ResourceDirectoryTreeView.new
-    @resource_list  = OpenRubyRMK::GTKFrontend::Widgets::ListView.new
-    @license_button = OpenRubyRMK::GTKFrontend::Widgets::ImageLinkButton.new
+    @details_frame  = Frame.new("Details")
+
+    @category_tree  = ResourceDirectoryTreeView.new
+    @resource_list  = ListView.new
+    @license_button = ImageLinkButton.new
+
+    @import_button       = Button.new("Import")
+    @export_button       = Button.new("Export")
+    @preview_button      = Button.new("Preview")
+    @new_category_button = Button.new("New Category")
+    @rename_button       = Button.new("Rename")
+    @delete_button       = Button.new("Delete")
+    @details_label       = Label.new
+    @details_button      = Button.new("More…")
   end
 
   def create_layout
     vbox.spacing = $app.space
 
+    # Toplevel layout
     HBox.new.tap do |hbox|
       hbox.spacing = $app.space
 
@@ -47,18 +59,49 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
       VBox.new.tap do |vbox2|
         vbox2.spacing = $app.space
 
-        vbox2.pack_start(@detail_frame)
-        vbox2.pack_start(@action_frame)
+        vbox2.pack_start(@details_frame, false)
+        vbox2.pack_end(@action_frame, false)
 
-        hbox.pack_start(vbox2)
+        hbox.pack_start(vbox2, false)
       end
 
       vbox.pack_start(hbox, true)
     end
 
+    # Contents of the category and resource frames
     @category_frame.add(@category_tree)
     @resource_frame.add(@resource_list)
-    @action_frame.add(@license_button)
+
+    # Contents of the action frame
+    VBox.new.tap do |vbox2|
+      vbox2.spacing = $app.space
+      vbox2.pack_start(@import_button)
+      vbox2.pack_start(@export_button)
+      vbox2.pack_start(@preview_button)
+      vbox2.pack_start(@new_category_button)
+      vbox2.pack_start(@rename_button)
+      vbox2.pack_start(@delete_button)
+
+      @action_frame.add(vbox2)
+    end
+
+    # Contents of the details frame
+    VBox.new.tap do |vbox2|
+      vbox2.spacing = $app.space
+
+      HBox.new.tap do |hbox|
+        Alignment.new(0.5, 0.5, 0, 0).tap do |ali|
+          ali.add(@license_button)
+          hbox.pack_start(ali, true)
+        end
+        vbox2.pack_start(hbox, false)
+      end
+
+      vbox2.pack_start(@details_label)
+      vbox2.pack_start(@details_button)
+
+      @details_frame.add(vbox2)
+    end
   end
 
   def setup_event_handlers
@@ -81,6 +124,30 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
   def on_resource_list_cursor_changed(*)
     return unless @resource_list.selected_item
+
+    # Retrieve the licensing information of this resource
+    res = OpenRubyRMK::Backend::Resource.new(@category_tree.selected_path + @resource_list.selected_item)
+    hsh = OpenRubyRMK::GTKFrontend::Licenser.decompose_license(res.copyright.license)
+
+    # Change the license image
+    @license_button.image = Gdk::Pixbuf.new(hsh[:icon].to_s, 100, -1)
+    if hsh[:url]
+      @license_button.uri = hsh[:url]
+      @license_button.sensitive = true
+    else
+      @license_button.uri = ""
+      @license_button.sensitive = false
+    end
+
+    # Change the details text
+    @details_label.markup =<<-DETAILS
+<b>License</b>:
+  #{res.copyright.license}
+<b>Copyright year</b>:
+  #{res.copyright.year}
+<b>Copyright holder</b>:
+  #{res.copyright.author}
+    DETAILS
   end
 
 end

@@ -19,7 +19,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageLinkButton < Gtk::LinkButton
   # image) and set it to a new image.
   def initialize(uri = "", image = nil)
     super(uri)
-    self.image= image if image
+    self.image = image if image
   end
 
   # Sets the image of the button to the given
@@ -30,6 +30,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageLinkButton < Gtk::LinkButton
 
     # Add the image as the child.
     add(Gtk::Image.new(pixbuf))
+    show_all
   end
 
 end
