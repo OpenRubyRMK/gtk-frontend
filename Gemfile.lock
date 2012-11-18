@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 7fcf6425b225d1f3551980248aee6c5fc6e653ba
+  revision: 7e91f8cbad631fa927f384dc1580c0ab15d9a243
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri

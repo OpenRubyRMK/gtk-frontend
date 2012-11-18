@@ -47,6 +47,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     menu @menubar, t.menus.edit.name do |edit|
+      append_menu_item edit, "Resources...", :edit_resources
     end
 
     menu @menubar, t.menus.windows.name do |windows|
@@ -95,6 +96,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
+    menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
@@ -170,6 +172,12 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     Gtk.main_quit
   end
 
+  # Edit -> Resources...
+  def on_menu_edit_resources(event)
+    rd = OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog.new
+    rd.run
+  end
+
   def on_menu_windows_map_tree(event)
     if @map_window.visible?
       @map_window.hide
@@ -203,13 +211,15 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # on +project+ (which may be +nil+ if no project is loaded).
   def update_menu_entries(project)
     if project
-      menu_items[:file_new].sensitive  = false
-      menu_items[:file_open].sensitive = false
-      menu_items[:file_save].sensitive = true
+      menu_items[:file_new].sensitive       = false
+      menu_items[:file_open].sensitive      = false
+      menu_items[:file_save].sensitive      = true
+      menu_items[:edit_resources].sensitive = true
     else
-      menu_items[:file_new].sensitive  = true
-      menu_items[:file_open].sensitive = true
-      menu_items[:file_save].sensitive = false
+      menu_items[:file_new].sensitive       = true
+      menu_items[:file_open].sensitive      = true
+      menu_items[:file_save].sensitive      = false
+      menu_items[:edit_resources].sensitive = false
     end
   end
 
