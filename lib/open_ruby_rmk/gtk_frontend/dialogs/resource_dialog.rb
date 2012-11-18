@@ -27,23 +27,23 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   private
 
   def create_widgets
-    @category_frame = Frame.new("Categories")
-    @resource_frame = Frame.new("Resources")
-    @action_frame   = Frame.new("Actions")
-    @details_frame  = Frame.new("Details")
+    @category_frame = Frame.new(t.dialogs.resources.labels.categories)
+    @resource_frame = Frame.new(t.dialogs.resources.labels.resources)
+    @action_frame   = Frame.new(t.dialogs.resources.labels.actions)
+    @details_frame  = Frame.new(t.dialogs.resources.labels.details)
 
     @category_tree  = ResourceDirectoryTreeView.new
     @resource_list  = ListView.new
     @license_button = ImageLinkButton.new
 
-    @import_button       = Button.new("Import")
-    @export_button       = Button.new("Export")
-    @preview_button      = Button.new("Preview")
-    @new_category_button = Button.new("New Category")
-    @rename_button       = Button.new("Rename")
-    @delete_button       = Button.new("Delete")
+    @import_button       = Button.new(t.general.actions.import)
+    @export_button       = Button.new(t.general.actions.export)
+    @preview_button      = Button.new(t.dialogs.resources.labels.preview)
+    @new_category_button = Button.new(t.dialogs.resources.labels.new_category)
+    @rename_button       = Button.new(t.general.actions.rename)
+    @delete_button       = Button.new(t.general.actions.delete)
     @details_label       = Label.new
-    @details_button      = Button.new("More…")
+    @details_button      = Button.new(t.dialogs.resources.labels.more)
   end
 
   def create_layout
@@ -141,11 +141,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
     # Change the details text
     @details_label.markup =<<-DETAILS
-<b>License</b>:
+<b>#{t.dialogs.resources.labels.license}</b>:
   #{res.copyright.license}
-<b>Copyright year</b>:
+<b>#{t.dialogs.resources.labels.copyright_year}</b>:
   #{res.copyright.year}
-<b>Copyright holder</b>:
+<b>#{t.dialogs.resources.labels.copyright_holder}</b>:
   #{res.copyright.author}
     DETAILS
   end
