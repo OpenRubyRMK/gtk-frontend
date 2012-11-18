@@ -2,9 +2,11 @@
 # the OpenRubyRMK. Names are in alphabetical order.
 
 artists:
+  CreativeCommons (CC license icons): http://creativecommons.org
+  GNU project (GNU license icons): http://gnu.org
+  Marvin Gülker (quintus; some UI icons): quintus@quintilianus.eu
   Siggi Pop (sig): todo@example.org
   Tango project (for UI icons): http://tango.freedesktop.org
-  CreativeCommons (CC license icons): http://creativecommons.org
 
 documenters:
   Marvin Gülker (Quintus): quintus@quintilianus.eu
