@@ -1,4 +1,30 @@
+This file gives an overview over the sources the icon files
+are taken from.
+
+Toplevel PNG files:
+-------------------
 The icons are taken from the Tango project and are public
 domain.
 
-http://tango.freedesktop.org
+* http://tango.freedesktop.org
+
+licenses/cc
+-----------
+
+The license icons representing CreativeCommons licenses are taken from
+the CreativeCommons website, which allows their use for indicating
+CreativeCommons-licensed content.
+
+* http://creativecommons.org
+* http://creativecommons.org/about/downloads
+* http://creativecommons.org/policies
+
+licenses/gnu
+------------
+
+The license icons representing GNU licenses are taken from the GNU
+website, which allows their use for indicating content licensed under
+the respective license terms:
+
+* http://gnu.org
+* http://www.gnu.org/graphics/license-logos

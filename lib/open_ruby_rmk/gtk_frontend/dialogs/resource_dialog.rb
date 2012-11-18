@@ -32,6 +32,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @detail_frame   = Frame.new("Details")
     @category_tree  = OpenRubyRMK::GTKFrontend::Widgets::ResourceDirectoryTreeView.new
     @resource_list  = OpenRubyRMK::GTKFrontend::Widgets::ListView.new
+    @license_button = OpenRubyRMK::GTKFrontend::Widgets::ImageLinkButton.new
   end
 
   def create_layout
@@ -52,23 +53,23 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
         hbox.pack_start(vbox2)
       end
 
-      #hbox.pack_start(@category_tree, true)
-      #hbox.pack_start(@resource_list, true)
-
       vbox.pack_start(hbox, true)
     end
 
     @category_frame.add(@category_tree)
     @resource_frame.add(@resource_list)
+    @action_frame.add(@license_button)
   end
 
   def setup_event_handlers
     signal_connect(:response){destroy}
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
+    @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
   end
 
   def on_category_tree_cursor_changed(*)
     @resource_list.model.clear
+    return unless @category_tree.selected_path
 
     @category_tree.selected_path.children.sort.each do |path|
       next unless path.file?
@@ -76,6 +77,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
       @resource_list.append(path.basename)
     end
+  end
+
+  def on_resource_list_cursor_changed(*)
+    return unless @resource_list.selected_item
   end
 
 end
