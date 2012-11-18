@@ -11,10 +11,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapTable < Gtk::ScrolledWindow
 
     @layout = Gtk::Layout.new
 
-    set_size_request(500, 400)
-    @layout.set_size(800, 800)
+    @layout.set_size(32, 32) # Dummy start size
     @layout.signal_connect(:expose_event, &method(:on_expose))
-
     add(@layout)
   end
 

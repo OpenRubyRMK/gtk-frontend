@@ -72,8 +72,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       vbox.pack_start(@menubar, false)
 
       HBox.new.tap do |hbox|
-        hbox.pack_start(@map_table, false)
-        vbox.pack_start(hbox, false)
+        hbox.pack_start(@map_table)
+        vbox.pack_start(hbox)
       end
 
       add(vbox)
