@@ -68,11 +68,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::DirectoryTreeView < Gtk::TreeView
     super(DirectoryTreeStore.new(root_path))
 
     path_renderer          = CellRendererText.new
-    path_column            = TreeViewColumn.new("Path", path_renderer, text: 1) # model[1] => path as a string
+    path_column            = TreeViewColumn.new("", path_renderer, text: 1) # model[1] => path as a string
     append_column(path_column)
 
     selection.mode         = SELECTION_SINGLE
     self.enable_tree_lines = true
+    self.headers_visible   = false
   end
 
   # Returns the path pointed to by the currently selected

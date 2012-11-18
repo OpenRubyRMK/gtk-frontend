@@ -4,14 +4,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   include R18n::Helpers
 
   def initialize
-    super("Resource manager",
+    super(t.dialogs.resources.name,
           $app.mainwindow,
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_NONE])
 
     set_default_size 300, 400
-
-    # $app.project.add_observer(self, :on_reload)
 
     create_widgets
     create_layout
@@ -29,7 +27,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
   def create_widgets
     @category_tree = OpenRubyRMK::GTKFrontend::Widgets::ResourceDirectoryTreeView.new
-    # @resource_list = TreeView.new(ListStore.new(String))
+    @resource_list = OpenRubyRMK::GTKFrontend::Widgets::ListView.new
   end
 
   def create_layout
@@ -37,16 +35,25 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
     HBox.new.tap do |hbox|
       hbox.pack_start(@category_tree, true)
+      hbox.pack_start(@resource_list, true)
       vbox.pack_start(hbox, true)
     end
   end
 
   def setup_event_handlers
     signal_connect(:response){destroy}
+    @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
   end
 
-  #def on_reload
-  #  @resource_list.clear
-  #end
+  def on_category_tree_cursor_changed(*)
+    @resource_list.model.clear
+
+    @category_tree.selected_path.children.sort.each do |path|
+      next unless path.file?
+      next if path.extname == ".yml" # Ignore the info files, we load them separately on user request
+
+      @resource_list.append(path.basename)
+    end
+  end
 
 end

@@ -19,6 +19,8 @@ dialogs:
     errors:
       map_name_empty: "The map name cannot be empty."
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
+  resources:
+    name: "Resources"
 
 windows:
   map_tree:
