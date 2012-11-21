@@ -57,6 +57,9 @@ module OpenRubyRMK::GTKFrontend::Licenser
     /^GPLv2$/xi => ["http://www.gnu.org/licenses/gpl-2.0", nil],
     /^LGPL23$/xi => ["http://www.gnu.org/licenses/lgpl-2.0", nil],
     /^AGPLv2$/xi => ["http://www.gnu.org/licenses/agpl-2.0", nil],
+
+    # Proprietary stuff
+    /^proprietary$/i => ["https://en.wikipedia.org/wiki/Copyright", "proprietary.svg"]
   }
 
   # Takes a license string à la "CC-BY-SA 2.5", "CC-BY", "GPLv3", etc.
