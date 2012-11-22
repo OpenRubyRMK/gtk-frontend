@@ -65,8 +65,9 @@ module OpenRubyRMK::GTKFrontend::Licenser
   #   Pathname pointing to it. If we don’t have one, this is the
   #   absolute Pathname to the default license icon.
   def self.decompose_license(str)
-    _,(url, icon_path) = LICENSES.find { |regexp, _| str =~ regexp } || [nil,[nil,DEFAULT_ICON_NAME]]
-    return {:url => url, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", icon_path ||= DEFAULT_ICON_NAME)}
+    _,(url, icon_path) = LICENSES.find { |regexp, _| str =~ regexp } || nil
+    icon_path ||= DEFAULT_ICON_NAME
+    return {:url => url, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", icon_path)}
   end
 
 end
