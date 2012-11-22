@@ -18,21 +18,13 @@ module OpenRubyRMK::GTKFrontend::Licenser
   # value of DEFAULT_ICON_NAME.
   LICENSES = {
     # Creative Commons defaults
-    /^CC-BY$/xi       => ["http://creativecommons.org/licenses/by/3.0/", "cc/by.svg"],
-    /^CC-BY-SA$/xi    => ["http://creativecommons.org/licenses/by-sa/3.0/", "cc/by-sa.svg"],
-    /^CC-BY-ND$/xi    => ["http://creativecommons.org/licenses/by-nd/3.0/", "cc/by-nd.svg"],
-    /^CC-BY-NC$/xi    => ["http://creativecommons.org/licenses/by-nc/3.0/", "cc/by-nc.svg"],
-    /^CC-BY-NC-SA$/xi => ["http://creativecommons.org/licenses/by-nc-sa/3.0/", "cc/by-nc-sa.svg"],
-    /^CC-BY-NC-ND$/xi => ["http://creativecommons.org/licenses/by-nc-nd/3.0/", "cc/by-nc-nd.svg"],
+    /^CC-BY      (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by/3.0/", "cc/by.svg"],
+    /^CC-BY-SA   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-sa/3.0/", "cc/by-sa.svg"],
+    /^CC-BY-ND   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nd/3.0/", "cc/by-nd.svg"],
+    /^CC-BY-NC   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc/3.0/", "cc/by-nc.svg"],
+    /^CC-BY-NC-SA(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-sa/3.0/", "cc/by-nc-sa.svg"],
+    /^CC-BY-NC-ND(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-nd/3.0/", "cc/by-nc-nd.svg"],
     /^CC-ZERO|CC0$/xi => ["http://creativecommons.org/publicdomain/zero/1.0/", "cc/cc-zero.svg"],
-
-    # Creative Commons 3.0
-    /^CC-BY       \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by/3.0/", "cc/by.svg"],
-    /^CC-BY-SA    \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by-sa/3.0/", "cc/by-sa.svg"],
-    /^CC-BY-ND    \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by-nd/3.0/", "cc/by-nd.svg"],
-    /^CC-BY-NC    \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by-nc/3.0/", "cc/by-nc.svg"],
-    /^CC-BY-NC-SA \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by-nc-sa/3.0/", "cc/by-nc-sa.svg"],
-    /^CC-BY-NC-ND \s+ 3\.0$/xi => ["http://creativecommons.org/licenses/by-nc-nd/3.0/", "cc/by-nc-nd.svg"],
 
     # Creative Commons 2.5
     /^CC-BY       \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by/2.5/", "cc/by.svg"],
@@ -43,19 +35,14 @@ module OpenRubyRMK::GTKFrontend::Licenser
     /^CC-BY-NC-ND \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc-nd/2.5/", "cc/by-nc-nd.svg"],
 
     # GNU license defaults
-    /^GPL$/xi => ["http://www.gnu.org/licenses/gpl-3.0", "gnu/gpl-v3-logo.svg"],
-    /^LGPL$/xi => ["http://www.gnu.org/licenses/lgpl-3.0", "gnu/lgpl-v3-logo.svg"],
-    /^AGPL$/xi => ["http://www.gnu.org/licenses/agpl-3.0", "gnu/agpl-v3-logo.svg"],
+    /^GPL(v3)?$/xi => ["http://www.gnu.org/licenses/gpl-3.0", "gnu/gpl-v3-logo.svg"],
+    /^LGPL(v3)?$/xi => ["http://www.gnu.org/licenses/lgpl-3.0", "gnu/lgpl-v3-logo.svg"],
+    /^AGPL(v3)?$/xi => ["http://www.gnu.org/licenses/agpl-3.0", "gnu/agpl-v3-logo.svg"],
     /^GFDL$/xi => ["http://www.gnu.org/licenses/fdl-1.3", "gnu/gfdl-logo.svg"],
-
-    # GNU v3 licenses
-    /^GPLv3$/xi => ["http://www.gnu.org/licenses/gpl-3.0", "gnu/gpl-v3-logo.svg"],
-    /^LGPLv3$/xi => ["http://www.gnu.org/licenses/lgpl-3.0", "gnu/lgpl-v3-logo.svg"],
-    /^AGPLv3$/xi => ["http://www.gnu.org/licenses/agpl-3.0", "gnu/agpl-v3-logo.svg"],
 
     # GNU v2 licenses
     /^GPLv2$/xi => ["http://www.gnu.org/licenses/gpl-2.0", nil],
-    /^LGPL23$/xi => ["http://www.gnu.org/licenses/lgpl-2.0", nil],
+    /^LGPLv2$/xi => ["http://www.gnu.org/licenses/lgpl-2.0", nil],
     /^AGPLv2$/xi => ["http://www.gnu.org/licenses/agpl-2.0", nil],
 
     # Proprietary stuff
@@ -78,15 +65,8 @@ module OpenRubyRMK::GTKFrontend::Licenser
   #   Pathname pointing to it. If we don’t have one, this is the
   #   absolute Pathname to the default license icon.
   def self.decompose_license(str)
-    result = {:url => nil, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", DEFAULT_ICON_NAME)}
-    LICENSES.each_pair do |regexp, (url, icon_path)|
-      if str =~ regexp
-        result[:url]  = url if url
-        result[:icon] = OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", icon_path) if icon_path
-      end
-    end
-
-    result
+    _,(url, icon_path) = LICENSES.find { |regexp, _| str =~ regexp } || [nil,[nil,DEFAULT_ICON_NAME]]
+    return {:url => url, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", icon_path ||= DEFAULT_ICON_NAME)}
   end
 
 end
