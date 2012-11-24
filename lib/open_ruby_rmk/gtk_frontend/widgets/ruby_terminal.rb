@@ -78,6 +78,42 @@
 # Note that the only callback you are required to implement is
 # :enter, but depending on your use case you may want to define
 # other callbacks as well.
+#
+# == Asynchronous mode
+# By default, this widget runs in synchronous mode, i.e. after
+# the user hits [RETURN], your callback is called, waited for,
+# and then its return value is printed. Then the prompt is
+# printed by firing the :prompt event and we’re waiting for user
+# input again. This is easy, and probably you don’t need more.
+# However, things get a little tricky when the entered commands
+# take a long time to complete and you may want to display
+# progress; that won’t work in synchronous mode, because while
+# your command runs, the GUI event loop is blocked and the widget
+# will not process any draw events until your command returns control
+# to the event loop. To circumvent this, you can use this widget
+# in <i>asynchronous mode</i>. Asynchronous mode behaves exactly
+# like the synchronous one, with two important differences:
+#
+# 1. To enter asynchronous mode, your :enter callback must return
+#    immediately after receiving and storing the input, returning
+#    an empty string to the terminal.
+# 2. Don’t define a callback for the :prompt event, because it would
+#    get called immediately after your callback finishes, which is
+#    undesired, because it returns (nearly) immediately.
+#
+# From this, we can deduce two further things: First and most importantly,
+# to fulfill 1) we need threads (or another means of asynchronisity).
+# Second, we have to print the prompt ourselves, because the default
+# prompting mechanism doesn’t work and furthermore, the terminal can’t
+# know when your asynchronous code has finished.
+#
+# While your asynchronous code runs, it most likely wants to output
+# something onto the terminal. To do so, use the inherited #feed
+# method, which will print the text you specify and advance the
+# text cursor. Do *not* use this method to print the prompt, this
+# will cause the next :enter event to receive garbage text containing
+# whole or part of your prompt; instead, use #async_prompt which
+# ensures that the terminal’s internal state stays clean.
 class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
 
   # The VTE widget generates this character when the [DEL] key
@@ -168,6 +204,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
     @callbacks[event] = block
   end
 
+  # When using asynchronous mode, use this method to print
+  # the prompt onto the terminal. It ensures the terminal’s
+  # state to be clean, so that further :enter events won’t
+  # get garbage strings.
+  def async_prompt(str)
+    feed(str)
+    @prompt_length = str.chars.count
+  end
+
   private
 
   # If a callback is registered for +event+, execute
@@ -177,7 +222,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # If no callback is registered, this method immediately
   # returns.
   def callback(event, *args)
-    return unless @callbacks[event]
+    return "" unless @callbacks[event]
     debug("CALLBACK: #{event}")
     feed(@callbacks[event].call(*args).to_s)
   end
@@ -185,7 +230,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # Like #callback, but doesn’t feed the callback’s result
   # into the terminal widget.
   def silent_callback(event, *args)
-    return unless @callbacks[event]
+    return "" unless @callbacks[event]
     debug("SILENTCALLBACK: #{event}")
     @callbacks[event].call(*args).to_s
   end
