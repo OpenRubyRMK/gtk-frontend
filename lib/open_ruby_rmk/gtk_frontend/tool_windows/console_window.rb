@@ -106,10 +106,20 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
 
       # Execute RIPL in a loop, so that calling `exit'
       # will just restart it (but also hide the window
-      # as the user might expect this).
+      # as the user might expect this).  Note we run RIPL
+      # in a separate binding context so defining methods
+      # there doesn’t pollute the ConsoleWindow instance,
+      # and we disable readline as this won’t work through
+      # the GUI adapter. Additionally, we don’t read the
+      # ~/.irbrc and ~/.riplrc files, because this is an
+      # embedded shell which has no relation to any user
+      # shell or user configuration.
       loop do
-        Ripl.config[:readline] = false
-        Ripl.start(:binding => RIPL_CONTEXT.instance_eval{binding})
+        Ripl.start(binding: RIPL_CONTEXT.instance_eval{binding},
+                   readline: false,
+                   irbrc: false,
+                   riplrc: false)
+
         hide
       end
     end
@@ -123,7 +133,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   def create_widgets
     # Create the terminal widget in asynchronous mode
     @terminal = OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal.new do |t|
-      t.debug_terminal = true
+      #t.debug_terminal = true # Uncomment when debugging the RubyTerminal cache
 
       t.on :enter do |line|
         @ripl_thread[:input] << line
