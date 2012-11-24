@@ -129,9 +129,14 @@ class OpenRubyRMK::GTKFrontend::App
   def parse_argv
     return if @argv.empty?
 
-    @project = OpenRubyRMK::Backend::Project.load_dir(@argv.first)
-  rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
-    $stderr.puts("Project directory not found: '#{e.path}'")
+    # Accept the project directory as a path as well as
+    # the .rmk file.
+    path = Pathname.new(@argv.first)
+    path = path.dirname.expand_path.parent if path.extname == ".rmk"
+
+    @project = OpenRubyRMK::Backend::Project.load_dir(path)
+  rescue OpenRubyRMK::Backend::Errors::InvalidPath => e
+    $stderr.puts(e.message)
     @project = nil
   end
 
