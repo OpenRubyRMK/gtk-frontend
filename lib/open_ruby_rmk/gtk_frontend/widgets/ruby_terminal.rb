@@ -274,7 +274,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
       feed(output)
     when VTE_LINE_TERMINATOR
       feed("\r\n")
-      callback :enter, @cache
+      callback :enter, @cache.dup # Asynchronous callbacks store this, which is bad when we clear it (race condition). So dup it.
       @cache.clear
       callback :prompt
     when VTE_CURSOR_MOVE_LEFT

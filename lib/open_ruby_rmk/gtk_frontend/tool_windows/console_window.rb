@@ -70,6 +70,19 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   Thread.abort_on_exception = true
   Ripl::Shell.include(RiplRubyTerminalInput)
 
+  # This is the context in which the console runs.
+  RIPL_CONTEXT = ::Object.new.tap do |obj|
+    obj.instance_eval do
+
+      # For the curious that want to print out `self' in
+      # the console’s toplevel context.
+      def inspect # :nodoc:
+        "console main context"
+      end
+
+    end
+  end
+
   def initialize(parent)
     super()
     set_default_size(400, 300)
@@ -96,7 +109,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       # as the user might expect this).
       loop do
         Ripl.config[:readline] = false
-        Ripl.start
+        Ripl.start(:binding => RIPL_CONTEXT.instance_eval{binding})
         hide
       end
     end
@@ -110,7 +123,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   def create_widgets
     # Create the terminal widget in asynchronous mode
     @terminal = OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal.new do |t|
-      #t.debug_terminal = true
+      t.debug_terminal = true
 
       t.on :enter do |line|
         @ripl_thread[:input] << line
