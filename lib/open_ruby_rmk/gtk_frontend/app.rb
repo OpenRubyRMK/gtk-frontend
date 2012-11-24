@@ -130,6 +130,9 @@ class OpenRubyRMK::GTKFrontend::App
     return if @argv.empty?
 
     @project = OpenRubyRMK::Backend::Project.load_dir(@argv.first)
+  rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
+    $stderr.puts("Project directory not found: '#{e.path}'")
+    @project = nil
   end
 
   # Parse GTKFrontend::base_config.
