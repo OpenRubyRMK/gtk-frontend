@@ -40,6 +40,7 @@ class OpenRubyRMK::GTKFrontend::App
     @project     = nil
     $app         = self
 
+    parse_argv
     parse_config
     set_locale
   end
@@ -123,6 +124,13 @@ class OpenRubyRMK::GTKFrontend::App
   end
 
   private
+
+  # Parse the commandline arguments.
+  def parse_argv
+    return if @argv.empty?
+
+    @project = OpenRubyRMK::Backend::Project.load_dir(@argv.first)
+  end
 
   # Parse GTKFrontend::base_config.
   def parse_config

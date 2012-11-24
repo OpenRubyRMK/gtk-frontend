@@ -58,8 +58,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       append_menu_item help, t.menus.help.entries.about, :help_about
     end
 
-    # Enable/Disable menu entries for no loaded project
-    update_menu_entries(nil)
+    # Enable/Disable menu entries at the beginning for the currently
+    # loaded project (which is nil if no project path was passed via
+    # commandline).
+    update_menu_entries($app.project)
   end
 
   # Instanciates the widgets needed for the window.
