@@ -26,7 +26,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   end
 
   # As superclass method, but also calls
-  # #show_all on all child windows.
+  # #show_all on all desired child windows.
   def show_all
     super
     @map_window.show_all
@@ -52,6 +52,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
+      append_menu_separator windows
+      append_menu_item windows, "Console", :windows_console
     end
 
     menu @menubar, t.menus.help.name do |help|
@@ -86,6 +88,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # Instanciates the helper windows.
   def create_extra_windows
     @map_window = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
+    @console_window = OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow.new(self)
   end
 
   # Connects the previously created widgets with event handlers.
@@ -100,6 +103,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
+    menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
 
@@ -180,11 +184,21 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     rd.run
   end
 
+  # Windows -> Map tree
   def on_menu_windows_map_tree(event)
     if @map_window.visible?
       @map_window.hide
     else
       @map_window.show
+    end
+  end
+
+  # Windows -> Console
+  def on_menu_windows_console(event)
+    if @console_window.visible?
+      @console_window.hide
+    else
+      @console_window.show_all
     end
   end
 

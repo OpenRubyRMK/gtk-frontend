@@ -2,7 +2,10 @@
 require "pathname"
 require "yaml"
 require "gtk2"
+require "vte"
 require "r18n-desktop"
+require "ripl"
+require "ripl/multi_line"
 require "open_ruby_rmk/backend"
 
 # Namespace of the OpenRubyRMK project.
@@ -89,5 +92,6 @@ require_relative "gtk_frontend/widgets/list_view"
 require_relative "gtk_frontend/widgets/image_link_button"
 require_relative "gtk_frontend/main_window"
 require_relative "gtk_frontend/tool_windows/map_window"
+require_relative "gtk_frontend/tool_windows/console_window"
 require_relative "gtk_frontend/dialogs/map_settings_dialog"
 require_relative "gtk_frontend/dialogs/resource_dialog"

@@ -7,6 +7,9 @@ gem "openrubyrmk-backend", :git => "git://github.com/OpenRubyRMK/backend.git"
 
 # GUI
 gem "gtk2"
+gem "vte"
+gem "ripl"
+gem "ripl-multi_line"
 gem "r18n-desktop"
 
 group :development do

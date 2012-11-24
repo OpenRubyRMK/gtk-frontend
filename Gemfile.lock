@@ -19,6 +19,7 @@ GEM
     ansi (1.4.3)
     atk (1.1.5)
       glib2 (>= 1.1.5)
+    bond (0.4.2)
     cairo (1.12.2)
       pkg-config
     gdk_pixbuf2 (1.1.5)
@@ -39,8 +40,14 @@ GEM
     r18n-desktop (1.1.2)
       r18n-core (= 1.1.2)
     rake (10.0.1)
+    ripl (0.7.0)
+      bond (~> 0.4.2)
+    ripl-multi_line (0.3.0)
+      ripl (>= 0.3.6)
     turn (0.9.6)
       ansi
+    vte (1.1.5)
+      gtk2 (>= 1.1.5)
 
 PLATFORMS
   ruby
@@ -51,5 +58,8 @@ DEPENDENCIES
   paint
   r18n-desktop
   rake
+  ripl
+  ripl-multi_line
   ruby-tmx!
   turn
+  vte
