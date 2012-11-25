@@ -6,6 +6,7 @@ require "vte"
 require "r18n-desktop"
 require "ripl"
 require "ripl/multi_line"
+require "paint"
 require "open_ruby_rmk/backend"
 
 # Namespace of the OpenRubyRMK project.

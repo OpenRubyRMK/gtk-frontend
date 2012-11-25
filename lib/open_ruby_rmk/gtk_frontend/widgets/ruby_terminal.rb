@@ -71,6 +71,11 @@
 # [history_previous]
 #   Executed when the user presses [UP]. The return value
 #   is fed into the terminal. TODO.
+# [init]
+#   Executed immediately after the internal state is set up
+#   properly, even before the first prompt is printed. The
+#   return value is fed into the terminal widget, so you
+#   may use this to display some greeting message.
 # [prompt]
 #   Executed when the prompt needs to be reprinted. The return
 #   value is fed into the terminal widget.
@@ -194,7 +199,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
       end
     end
 
-    # The first thing a terminal must do is to display the prompt.
+    # For the early birds
+    callback :init
+
+    # The first real thing a terminal must do is to display the prompt.
     draw_prompt
   end
 
@@ -210,7 +218,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # get garbage strings.
   def async_prompt(str)
     feed(str)
-    @prompt_length = str.chars.count
+    @prompt_length = Paint.unpaint(str).chars.count
   end
 
   private
@@ -276,7 +284,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
       feed("\r\n")
       callback :enter, @cache.dup # Asynchronous callbacks store this, which is bad when we clear it (race condition). So dup it.
       @cache.clear
-      callback :prompt
+      draw_prompt
     when VTE_CURSOR_MOVE_LEFT
       # Move cursor only to the left if not moving into
       # the prompt.
@@ -315,7 +323,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # and then feed the prompt to the terminal.
   def draw_prompt
     str = silent_callback(:prompt)
-    @prompt_length = str.chars.count # 0 for no prompt, #silent_callback always returns a string
+    @prompt_length = Paint.unpaint(str).chars.count # 0 for no prompt, #silent_callback always returns a string
     feed(str)
   end
 

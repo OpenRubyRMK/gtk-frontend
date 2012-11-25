@@ -55,6 +55,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       super(err).gsub("\n", "\r\n") + "\r\n"
     end
 
+    # RIPL hook. The prompt string.
+    def prompt
+      str = ""
+      str << Paint[File.basename(Dir.pwd), :cyan]
+      str << ":"
+      str << Paint[$app.project.short_name, :green] if $app.project
+      str << ":"
+      str << Paint[@line.to_s, :yellow]
+      str << "> "
+      str
+    end
+
     private
 
     # Convenience method for accessing the thread-local variable
@@ -140,6 +152,20 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
         @ripl_thread.run # Notify the RIPL thread that input is available (does nothing if it is currently evaluating)
 
         "" # Print nothing, we’re running asynchronously
+      end
+
+      t.on :init do
+        <<GREETING.gsub("\n", "\r\n")
+OpenRubyRMK GTK #{OpenRubyRMK::GTKFrontend.version} @ backend #{OpenRubyRMK::Backend.version}
+Copyright (C) 2012 The OpenRubyRMK Team
+
+This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see COPYING for details.
+
+#{Paint[RUBY_DESCRIPTION, :red]}
+
+GREETING
       end
 
     end
