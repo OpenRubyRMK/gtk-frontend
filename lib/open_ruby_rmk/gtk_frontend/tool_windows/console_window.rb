@@ -124,6 +124,19 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   # RIPL prompt used for results. Cannot be a lambda.
   RIPL_RESULT_PROMPT = "=> "
 
+  # Greeting printed on opening the terminal.
+  GREETING =<<GREETING.gsub("\n", "\r\n")
+OpenRubyRMK GTK #{OpenRubyRMK::GTKFrontend.version} @ backend #{OpenRubyRMK::Backend.version}
+Copyright (C) 2012 The OpenRubyRMK Team
+
+This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
+This is free software, and you are welcome to redistribute it
+under certain conditions; see COPYING for details.
+
+#{Paint[RUBY_DESCRIPTION, :red]}
+
+GREETING
+
   def initialize(parent)
     super()
 
@@ -155,6 +168,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       # embedded shell which has no relation to any user
       # shell or user configuration.
       loop do
+        @terminal.feed(GREETING) # Copyright, yadda, yadda
+
         Ripl.start(binding: RIPL_CONTEXT.instance_eval{binding},
                    readline: false,
                    irbrc: false,
@@ -163,6 +178,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
                    result_prompt: RIPL_RESULT_PROMPT,
                    multi_line_prompt: RIPL_MULTILINE_PROMPT)
 
+        @terminal.reset(true, true)
         hide
       end
     end
@@ -183,20 +199,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
         @ripl_thread.run # Notify the RIPL thread that input is available (does nothing if it is currently evaluating)
 
         "" # Print nothing, we’re running asynchronously
-      end
-
-      t.on :init do
-        <<GREETING.gsub("\n", "\r\n")
-OpenRubyRMK GTK #{OpenRubyRMK::GTKFrontend.version} @ backend #{OpenRubyRMK::Backend.version}
-Copyright (C) 2012 The OpenRubyRMK Team
-
-This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
-This is free software, and you are welcome to redistribute it
-under certain conditions; see COPYING for details.
-
-#{Paint[RUBY_DESCRIPTION, :red]}
-
-GREETING
       end
 
     end
