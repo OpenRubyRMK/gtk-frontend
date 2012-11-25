@@ -76,6 +76,9 @@
 #   properly, even before the first prompt is printed. The
 #   return value is fed into the terminal widget, so you
 #   may use this to display some greeting message.
+# [interrupt]
+#   Executed when the user presses [CTRL]+[C]. The return
+#   value is fed into the terminal.
 # [prompt]
 #   Executed when the prompt needs to be reprinted. The return
 #   value is fed into the terminal widget.
@@ -156,6 +159,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # The VTE widget generates this character when the [END]
   # key is pressed.
   VTE_CURSOR_END = "\eOF"
+
+  # The VTE widget generates this character when [CTRL]+[C]
+  # is pressed.
+  VTE_INTERRUPT = "\u0003"
 
   # The current value of the cache. DO NOT CHANGE.
   attr_reader :cache
@@ -311,6 +318,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
       when VTE_CURSOR_END
         inline_pos = cursor_position[0] - @prompt_length
         feed(VTE_CURSOR_MOVE_RIGHT * (@cache.chars.count - inline_pos))
+      when VTE_INTERRUPT
+        callback :interrupt
       else
         column = cursor_position[0]
         target_index = column - @prompt_length

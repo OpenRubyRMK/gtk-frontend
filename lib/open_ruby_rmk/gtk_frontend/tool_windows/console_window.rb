@@ -39,6 +39,12 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       terminal.feed(format_error(err))
     end
 
+    # RIPL hook. Handles interrupt by feeding a newline
+    # to the terminal.
+    def handle_interrupt
+      terminal.feed("\r\n")
+    end
+
     # RIPL hook. Basically the same as RIPL’s default
     # #format_result, but converts the newlines to the
     # terminal-friendly CR-LF format and also appends
@@ -197,6 +203,16 @@ GREETING
       t.on :enter do |line|
         @ripl_thread[:input] << line
         @ripl_thread.run # Notify the RIPL thread that input is available (does nothing if it is currently evaluating)
+
+        "" # Print nothing, we’re running asynchronously
+      end
+
+      t.on :interrupt do
+        # Nobody knows, but you can send an exception to
+        # a thread :-). Very useful to signal RIPL the
+        # pressing of CTRL+C (which generates the Interrupt
+        # exception in Ruby usually).
+        @ripl_thread.raise(Interrupt)
 
         "" # Print nothing, we’re running asynchronously
       end
