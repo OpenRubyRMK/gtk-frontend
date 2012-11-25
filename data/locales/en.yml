@@ -38,6 +38,19 @@ dialogs:
       copyright_year: "Copyright year"
       copyright_holder: "Copyright holder"
 
+# Texts for the debugging console.
+console:
+  title: "Debugging console"
+  # Note: Don’t make lines longer than 80 characters here,
+  # this would break terminal text layout (this doesn’t
+  # include the syntactic leading spaces).
+  greeter: |
+    OpenRubyRMK GTK %{frontendversion} @ backend %{backendversion}
+    Copyright (C) %{copyrightyear} The OpenRubyRMK Team
+    
+    This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions; see COPYING for details.
 
 windows:
   map_tree:

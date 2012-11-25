@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   include Gtk
+  include R18n::Helpers
 
   # RIPL plugin intended to be run as a separate-thread RIPL that
   # writes input to a RubyTerminal widget in asynchronous mode.
@@ -130,25 +131,12 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
   # RIPL prompt used for results. Cannot be a lambda.
   RIPL_RESULT_PROMPT = "=> "
 
-  # Greeting printed on opening the terminal.
-  GREETING =<<GREETING.gsub("\n", "\r\n")
-OpenRubyRMK GTK #{OpenRubyRMK::GTKFrontend.version} @ backend #{OpenRubyRMK::Backend.version}
-Copyright (C) 2012 The OpenRubyRMK Team
-
-This program comes with ABSOLUTELY NO WARRANTY; for details see COPYING.
-This is free software, and you are welcome to redistribute it
-under certain conditions; see COPYING for details.
-
-#{Paint[RUBY_DESCRIPTION, :red]}
-
-GREETING
-
   def initialize(parent)
     super()
 
     self.type_hint = Gdk::Window::TYPE_HINT_UTILITY
     self.transient_for = parent
-    self.title = "Debugging console"
+    self.title = t.console.title
 
     # The widgets must be created prior to initialising
     # the RIPL thread, hence this is done here and not
@@ -174,8 +162,15 @@ GREETING
       # embedded shell which has no relation to any user
       # shell or user configuration.
       loop do
-        @terminal.feed(GREETING) # Copyright, yadda, yadda
+        # Copyright, yadda, yadda
+        greeting = sprintf(t.console.greeter,
+                           :frontendversion => OpenRubyRMK::GTKFrontend.version,
+                           :backendversion  => OpenRubyRMK::Backend.version,
+                           :copyrightyear   => 2012)
+        greeting << "\n" << Paint[RUBY_DESCRIPTION, :red] << "\n\n"
+        @terminal.feed(greeting.gsub("\n", "\r\n"))
 
+        # Actually start RIPL
         Ripl.start(binding: RIPL_CONTEXT.instance_eval{binding},
                    readline: false,
                    irbrc: false,
@@ -184,6 +179,8 @@ GREETING
                    result_prompt: RIPL_RESULT_PROMPT,
                    multi_line_prompt: RIPL_MULTILINE_PROMPT)
 
+        # When exiting, reset the terminal, hide the window,
+        # then loop.
         @terminal.reset(true, true)
         hide
       end
