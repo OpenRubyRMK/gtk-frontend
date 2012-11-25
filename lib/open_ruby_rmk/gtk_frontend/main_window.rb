@@ -53,7 +53,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
       append_menu_separator windows
-      append_menu_item windows, "Console", :windows_console
+      append_menu_item windows, t.menus.windows.entries.console, :windows_console
     end
 
     menu @menubar, t.menus.help.name do |help|

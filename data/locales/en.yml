@@ -81,7 +81,8 @@ menus:
   windows:
     name: _Windows
     entries:
-      map_tree: "Map tree"
+      map_tree: "M_ap tree"
+      console: "C_onsole"
   help:
     name: _Help
     entries:
