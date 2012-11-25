@@ -83,6 +83,47 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
     end
   end
 
+  # Normal RIPL prompt.
+  RIPL_PROMPT = lambda do
+    str = ""
+    str << Paint[File.basename(Dir.pwd), :cyan]
+    str << ":"
+    str << Paint[$app.project.short_name, :green] if $app.project
+    str << ":"
+    str << Paint[Ripl.shell.line, :yellow]
+    str << "> "
+    str
+  end
+
+  # RIPL multiline continuation prompt.
+  RIPL_MULTILINE_PROMPT = lambda do |*args|
+    str = ""
+    str << Paint[File.basename(Dir.pwd), :cyan]
+    str << ":"
+    str << Paint[$app.project.short_name, :green] if $app.project
+    str << ":"
+    str << Paint[Ripl.shell.line, :yellow]
+
+    str << case args[0]
+    when :statement then "| "
+    when :literal   then
+      case args[1]
+      when :array  then "[] "
+      when :hash   then "{} "
+      when :string then '" '
+      when :regexp then "/ "
+      else
+        "* "
+      end
+    else
+      "* "
+    end
+    str
+  end
+
+  # RIPL prompt used for results. Cannot be a lambda.
+  RIPL_RESULT_PROMPT = "=> "
+
   def initialize(parent)
     super()
     set_default_size(400, 300)
@@ -104,18 +145,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       Thread.current[:terminal] = @terminal
       Thread.current[:input]    = []
 
-      # RIPL prompt
-      prompt_lambda = lambda do
-        str = ""
-        str << Paint[File.basename(Dir.pwd), :cyan]
-        str << ":"
-        str << Paint[$app.project.short_name, :green] if $app.project
-        str << ":"
-        str << Paint[Ripl.shell.line, :yellow]
-        str << "> "
-        str
-      end
-
       # Execute RIPL in a loop, so that calling `exit'
       # will just restart it (but also hide the window
       # as the user might expect this).  Note we run RIPL
@@ -131,9 +160,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
                    readline: false,
                    irbrc: false,
                    riplrc: false,
-                   prompt: prompt_lambda,
-                   result_prompt: "=> ",
-                   multi_line_prompt: "| ")
+                   prompt: RIPL_PROMPT,
+                   result_prompt: RIPL_RESULT_PROMPT,
+                   multi_line_prompt: RIPL_MULTILINE_PROMPT)
 
         hide
       end
