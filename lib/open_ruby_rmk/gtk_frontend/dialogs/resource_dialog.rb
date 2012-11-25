@@ -108,6 +108,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     signal_connect(:response){destroy}
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
     @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
+    @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
   end
 
   def on_category_tree_cursor_changed(*)
@@ -148,6 +149,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 <b>#{t.dialogs.resources.labels.copyright_holder}</b>:
   #{res.copyright.author}
     DETAILS
+  end
+
+  def on_details_button_clicked(*)
+    return unless @resource_list.selected_item
+
+    res = OpenRubyRMK::Backend::Resource.new(@category_tree.selected_path + @resource_list.selected_item)
+    msg = "Copyright © #{res.copyright.year} #{res.copyright.author}"
+    msg << "\n\n" << res.copyright.extra_info
+
+    md = MessageDialog.new(self,
+                           Dialog::DESTROY_WITH_PARENT,
+                           MessageDialog::INFO,
+                           MessageDialog::BUTTONS_CLOSE,
+                           msg)
+    md.run
+    md.destroy
   end
 
 end
