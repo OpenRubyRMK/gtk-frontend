@@ -185,6 +185,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
     @cache          = ""
     @prompt_length  = 0
     @callbacks      = {}
+    @async_mutex    = Mutex.new
 
     # Register GTK event handlers
     signal_connect(:commit, &method(:on_commit))
@@ -217,8 +218,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   # state to be clean, so that further :enter events won’t
   # get garbage strings.
   def async_prompt(str)
-    feed(str)
-    @prompt_length = Paint.unpaint(str).chars.count
+    @async_mutex.synchronize do
+      debug("ASYNCPROMPT: '#{str}'")
+      feed(str)
+      @prompt_length = Paint.unpaint(str).chars.count
+    end
   end
 
   private
@@ -244,79 +248,81 @@ class OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal < Vte::Terminal
   end
 
   def on_commit(_, text, length)
-    debug("TEXTCOMMIT: #{text.inspect}")
-    case text
-    when VTE_REVERSE_DELETE
-      column, row = cursor_position
-      target_index = column - @prompt_length - 1 # We want to delete to the left
-      return if target_index < 0 # Beginning of line
-
-      # Delete the target character from the cache
-      @cache[target_index] = ""
-
-      # We now overprint the target character on the widget
-      # (\b below) with the rest of the line (plus a splace
-      # so we don’t leave the last character unoverprinted).
-      # After this, the cursor is at the end of the line; we
-      # then move it back to the position where it was prior
-      # to the deletion, plus one character further so we end
-      # up left to the deletion position.
-      rest = @cache[target_index..-1]
-      output = "\b#{rest} "
-      output.concat(VTE_CURSOR_MOVE_LEFT * (rest.chars.count + 1))
-      feed(output)
-    when VTE_FORWARD_DELETE
-      column, row = cursor_position
-      target_index = column - @prompt_length
-      return if target_index >= @cache.chars.count # End of line
-
-      # Delete the character from the cache
-      @cache[target_index] = ""
-
-      # Overprint with rest, move cursor to the previous
-      # position. See the comments on VTE_REVERSE_DELETE
-      # for a detailed explanation.
-      rest = @cache[target_index..-1]
-      output = "#{rest} " # \b required, cursor is already at the correct position
-      output.concat(VTE_CURSOR_MOVE_LEFT * (rest.chars.count + 1))
-      feed(output)
-    when VTE_LINE_TERMINATOR
-      feed("\r\n")
-      callback :enter, @cache.dup # Asynchronous callbacks store this, which is bad when we clear it (race condition). So dup it.
-      @cache.clear
-      draw_prompt
-    when VTE_CURSOR_MOVE_LEFT
-      # Move cursor only to the left if not moving into
-      # the prompt.
-      column = cursor_position[0]
-      return if column <= @prompt_length
-      feed(text)
-    when VTE_CURSOR_MOVE_RIGHT
-      # Move cursor only to the right if not moving behind
-      # the current line’s length.
-      column = cursor_position[0]
-      return if column >= @prompt_length + @cache.chars.count
-      feed(text)
-    when VTE_CURSOR_MOVE_UP
-      callback :history_previous
-    when VTE_CURSOR_MOVE_DOWN
-      callback :history_next
-    when VTE_CURSOR_HOME
-      feed(VTE_CURSOR_MOVE_LEFT * (cursor_position[0] - @prompt_length))
-    when VTE_CURSOR_END
-      inline_pos = cursor_position[0] - @prompt_length
-      feed(VTE_CURSOR_MOVE_RIGHT * (@cache.chars.count - inline_pos))
-    else
-      column = cursor_position[0]
-      target_index = column - @prompt_length
-
-      @cache.insert(target_index, text)
-
-      output = @cache[target_index..-1]
-      output.concat(VTE_CURSOR_MOVE_LEFT * (output.chars.count - 1))
-      feed(output)
+    @async_mutex.synchronize do
+      debug("TEXTCOMMIT: #{text.inspect}")
+      case text
+      when VTE_REVERSE_DELETE
+        column, row = cursor_position
+        target_index = column - @prompt_length - 1 # We want to delete to the left
+        return if target_index < 0 # Beginning of line
+      
+        # Delete the target character from the cache
+        @cache[target_index] = ""
+      
+        # We now overprint the target character on the widget
+        # (\b below) with the rest of the line (plus a splace
+        # so we don’t leave the last character unoverprinted).
+        # After this, the cursor is at the end of the line; we
+        # then move it back to the position where it was prior
+        # to the deletion, plus one character further so we end
+        # up left to the deletion position.
+        rest = @cache[target_index..-1]
+        output = "\b#{rest} "
+        output.concat(VTE_CURSOR_MOVE_LEFT * (rest.chars.count + 1))
+        feed(output)
+      when VTE_FORWARD_DELETE
+        column, row = cursor_position
+        target_index = column - @prompt_length
+        return if target_index >= @cache.chars.count # End of line
+      
+        # Delete the character from the cache
+        @cache[target_index] = ""
+      
+        # Overprint with rest, move cursor to the previous
+        # position. See the comments on VTE_REVERSE_DELETE
+        # for a detailed explanation.
+        rest = @cache[target_index..-1]
+        output = "#{rest} " # \b required, cursor is already at the correct position
+        output.concat(VTE_CURSOR_MOVE_LEFT * (rest.chars.count + 1))
+        feed(output)
+      when VTE_LINE_TERMINATOR
+        feed("\r\n")
+        callback :enter, @cache.dup # Asynchronous callbacks store this, which is bad when we clear it (race condition). So dup it.
+        @cache.clear
+        draw_prompt
+      when VTE_CURSOR_MOVE_LEFT
+        # Move cursor only to the left if not moving into
+        # the prompt.
+        column = cursor_position[0]
+        return if column <= @prompt_length
+        feed(text)
+      when VTE_CURSOR_MOVE_RIGHT
+        # Move cursor only to the right if not moving behind
+        # the current line’s length.
+        column = cursor_position[0]
+        return if column >= @prompt_length + @cache.chars.count
+        feed(text)
+      when VTE_CURSOR_MOVE_UP
+        callback :history_previous
+      when VTE_CURSOR_MOVE_DOWN
+        callback :history_next
+      when VTE_CURSOR_HOME
+        feed(VTE_CURSOR_MOVE_LEFT * (cursor_position[0] - @prompt_length))
+      when VTE_CURSOR_END
+        inline_pos = cursor_position[0] - @prompt_length
+        feed(VTE_CURSOR_MOVE_RIGHT * (@cache.chars.count - inline_pos))
+      else
+        column = cursor_position[0]
+        target_index = column - @prompt_length
+      
+        @cache.insert(target_index, text)
+      
+        output = @cache[target_index..-1]
+        output.concat(VTE_CURSOR_MOVE_LEFT * (output.chars.count - 1))
+        feed(output)
+      end
+      debug("[NEW CACHE: #{@cache.inspect}]")
     end
-    debug("[NEW CACHE: #{@cache.inspect}]")
   end
 
   # Call the :prompt callback, remember the prompt size,

@@ -55,18 +55,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       super(err).gsub("\n", "\r\n") + "\r\n"
     end
 
-    # RIPL hook. The prompt string.
-    def prompt
-      str = ""
-      str << Paint[File.basename(Dir.pwd), :cyan]
-      str << ":"
-      str << Paint[$app.project.short_name, :green] if $app.project
-      str << ":"
-      str << Paint[@line.to_s, :yellow]
-      str << "> "
-      str
-    end
-
     private
 
     # Convenience method for accessing the thread-local variable
@@ -116,6 +104,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
       Thread.current[:terminal] = @terminal
       Thread.current[:input]    = []
 
+      # RIPL prompt
+      prompt_lambda = lambda do
+        str = ""
+        str << Paint[File.basename(Dir.pwd), :cyan]
+        str << ":"
+        str << Paint[$app.project.short_name, :green] if $app.project
+        str << ":"
+        str << Paint[Ripl.shell.line, :yellow]
+        str << "> "
+        str
+      end
+
       # Execute RIPL in a loop, so that calling `exit'
       # will just restart it (but also hide the window
       # as the user might expect this).  Note we run RIPL
@@ -130,7 +130,10 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
         Ripl.start(binding: RIPL_CONTEXT.instance_eval{binding},
                    readline: false,
                    irbrc: false,
-                   riplrc: false)
+                   riplrc: false,
+                   prompt: prompt_lambda,
+                   result_prompt: "=> ",
+                   multi_line_prompt: "| ")
 
         hide
       end
