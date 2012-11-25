@@ -175,6 +175,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
                    readline: false,
                    irbrc: false,
                    riplrc: false,
+                   argv: [], # Suppresses reading the global ARGV
                    prompt: RIPL_PROMPT,
                    result_prompt: RIPL_RESULT_PROMPT,
                    multi_line_prompt: RIPL_MULTILINE_PROMPT)
