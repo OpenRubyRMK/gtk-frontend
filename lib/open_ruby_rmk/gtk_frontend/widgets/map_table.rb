@@ -30,6 +30,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapTable < Gtk::ScrolledWindow
     end
 
     # Request the underlying drawing canvas to be redrawn.
+    @layout.set_size(@map.tmx_map.width * @map.tmx_map.tilewidth,
+                     @map.tmx_map.height * @map.tmx_map.tileheight)
     @layout.queue_draw
   end
 
