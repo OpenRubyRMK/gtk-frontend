@@ -126,7 +126,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
 
   def initialize(parent)
     super()
-    set_default_size(400, 300)
 
     self.type_hint = Gdk::Window::TYPE_HINT_UTILITY
     self.transient_for = parent
@@ -176,7 +175,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
 
   def create_widgets
     # Create the terminal widget in asynchronous mode
-    @terminal = OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal.new do |t|
+    @terminal = OpenRubyRMK::GTKFrontend::Widgets::RubyTerminal.new("Monospace 10") do |t|
       #t.debug_terminal = true # Uncomment when debugging the RubyTerminal cache
 
       t.on :enter do |line|
