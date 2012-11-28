@@ -108,19 +108,15 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     signal_connect(:response){destroy}
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
     @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
+    @import_button.signal_connect(:clicked, &method(:on_import_button_clicked))
     @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
   end
 
   def on_category_tree_cursor_changed(*)
-    @resource_list.model.clear
+    @resource_list.clear
     return unless @category_tree.selected_path
 
-    @category_tree.selected_path.children.sort.each do |path|
-      next unless path.file?
-      next if path.extname == ".yml" # Ignore the info files, we load them separately on user request
-
-      @resource_list.append(path.basename)
-    end
+    reload_resource_list
   end
 
   def on_resource_list_cursor_changed(*)
@@ -151,6 +147,36 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     DETAILS
   end
 
+  def on_import_button_clicked(*)
+    fd = FileChooserDialog.new("Import resource",
+                           self,
+                           FileChooser::ACTION_OPEN,
+                           nil,
+                           [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                           [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+
+    if fd.run == Dialog::RESPONSE_ACCEPT
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      fd.destroy
+    else
+      fd.destroy
+      return
+    end
+
+    begin
+      # Add the new resource
+      if @category_tree.selected_path
+        $app.project.add_resource(path, @category_tree.selected_path.relative_path_from($app.project.paths.resources_dir))
+        reload_resource_list
+      else # Just in case...
+        $app.project.add_resource(path, ".") # Copies to the resources/ directory itself
+        reload_resource_list($app.project.paths.resources_dir)
+      end
+    rescue OpenRubyRMK::Backend::Errors::NonexistantFile => e
+      $app.msgbox("File not found: #{e.path}", type: :error, buttons: close)
+    end
+  end
+
   def on_details_button_clicked(*)
     return unless @resource_list.selected_item
 
@@ -165,6 +191,19 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
                            msg)
     md.run
     md.destroy
+  end
+
+  # Clears the resource list widget and adds entries for all
+  # resources found in +path+.
+  def reload_resource_list(path = @category_tree.selected_path)
+    @resource_list.clear
+
+    path.children.sort.each do |childpath|
+      next unless childpath.file?
+      next if childpath.extname == ".yml" # Ignore the info files, we load them separately on user request
+
+      @resource_list.append(childpath.basename)
+    end
   end
 
 end
