@@ -109,6 +109,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
     @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
     @import_button.signal_connect(:clicked, &method(:on_import_button_clicked))
+    @export_button.signal_connect(:clicked, &method(:on_export_button_clicked))
     @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
   end
 
@@ -148,7 +149,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   end
 
   def on_import_button_clicked(*)
-    fd = FileChooserDialog.new("Import resource",
+    fd = FileChooserDialog.new(t.general.actions.import,
                            self,
                            FileChooser::ACTION_OPEN,
                            nil,
@@ -175,6 +176,31 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     rescue OpenRubyRMK::Backend::Errors::NonexistantFile => e
       $app.msgbox("File not found: #{e.path}", type: :error, buttons: close)
     end
+  end
+
+  def on_export_button_clicked(*)
+    return unless @category_tree.selected_path
+    return unless @resource_list.selected_item
+    resource = @category_tree.selected_path + @resource_list.selected_item
+
+    fd = FileChooserDialog.new(t.general.actions.export,
+                               self,
+                               FileChooser::ACTION_SAVE,
+                               nil,
+                               [Stock::CANCEL, Dialog::RESPONSE_CANCEL],
+                               [Stock::SAVE, Dialog::RESPONSE_ACCEPT])
+    fd.current_name = resource.basename.to_s # Save name suggestion
+
+    if fd.run == Dialog::RESPONSE_ACCEPT
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      fd.destroy
+    else
+      fd.destroy
+      return
+    end
+
+    FileUtils.mkdir_p(path.parent) unless path.parent.exist?
+    FileUtils.cp(resource, path)
   end
 
   def on_details_button_clicked(*)
