@@ -33,14 +33,13 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @details_frame  = Frame.new(t.dialogs.resources.labels.details)
 
     @category_tree  = ResourceDirectoryTreeView.new
-    @resource_list  = ListView.new
+    @resource_list  = ListView.new(true)
     @license_button = ImageLinkButton.new
 
     @import_button       = Button.new(t.general.actions.import)
     @export_button       = Button.new(t.general.actions.export)
     @preview_button      = Button.new(t.dialogs.resources.labels.preview)
     @new_category_button = Button.new(t.dialogs.resources.labels.new_category)
-    @rename_button       = Button.new(t.general.actions.rename)
     @delete_button       = Button.new(t.general.actions.delete)
     @details_label       = Label.new
     @details_button      = Button.new(t.dialogs.resources.labels.more)
@@ -79,7 +78,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
       vbox2.pack_start(@export_button)
       vbox2.pack_start(@preview_button)
       vbox2.pack_start(@new_category_button)
-      vbox2.pack_start(@rename_button)
       vbox2.pack_start(@delete_button)
 
       @action_frame.add(vbox2)
@@ -108,6 +106,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     signal_connect(:response){destroy}
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
     @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
+    @resource_list.edit_cell(&method(:on_resource_list_edit_cell))
     @import_button.signal_connect(:clicked, &method(:on_import_button_clicked))
     @export_button.signal_connect(:clicked, &method(:on_export_button_clicked))
     @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
@@ -146,6 +145,18 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 <b>#{t.dialogs.resources.labels.copyright_holder}</b>:
   #{res.copyright.author}
     DETAILS
+  end
+
+  def on_resource_list_edit_cell(cell, path, new_text)
+    iter = @resource_list.model.get_iter(path) || return
+
+    unless new_text.empty?
+      res = OpenRubyRMK::Backend::Resource.new(@category_tree.selected_path + iter[0])
+
+      res.path.rename(res.path.dirname + new_text)
+      res.info_file.rename(res.info_file.dirname + "#{new_text}.yml")
+      iter[0] = new_text
+    end
   end
 
   def on_import_button_clicked(*)
