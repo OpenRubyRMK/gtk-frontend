@@ -45,8 +45,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @details_label       = Label.new
     @details_button      = Button.new(t.dialogs.resources.labels.more)
 
-    @preview_button.add(icon_image("ui/media-playback-start.svg", width: 32))
-
+    set_preview_button_image :start
     disable_buttons
   end
 
@@ -118,6 +117,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @category_tree.signal_connect(:cursor_changed, &method(:on_category_tree_cursor_changed))
     @resource_list.signal_connect(:cursor_changed, &method(:on_resource_list_cursor_changed))
     @resource_list.edit_cell(&method(:on_resource_list_edit_cell))
+    @preview_button.signal_connect(:clicked, &method(:on_preview_button_clicked))
     @import_button.signal_connect(:clicked, &method(:on_import_button_clicked))
     @export_button.signal_connect(:clicked, &method(:on_export_button_clicked))
     @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
@@ -172,6 +172,23 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
       res.path.rename(res.path.dirname + new_text)
       res.info_file.rename(res.info_file.dirname + "#{new_text}.yml")
       iter[0] = new_text
+    end
+  end
+
+  def on_preview_button_clicked(*)
+    return unless @category_tree.selected_path
+    return unless @resource_list.selected_item
+
+    if @preview_button_type == :start
+      set_preview_button_image :stop
+
+      res = OpenRubyRMK::Backend::Resource.new(@category_tree.selected_path + @resource_list.selected_item)
+      rd = OpenRubyRMK::GTKFrontend::Dialogs::ResourcePreviewDialog.new(self, res)
+      rd.run
+
+      set_preview_button_image :start
+    else # :stop
+      # TODO
     end
   end
 
@@ -272,6 +289,26 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   # Disable all buttons.
   def disable_buttons
     enable_buttons(false)
+  end
+
+  # Change the icon on the preview button to either :start or :stop.
+  def set_preview_button_image(type)
+    # If there’s any image already in there, remove it so
+    # we can add a new one afterwards.
+    @preview_button.remove(@preview_button.children.first) unless @preview_button.children.count.zero?
+
+    if type == :stop
+      @preview_button.add(icon_image("ui/media-playback-stop.svg", width: 32))
+    elsif type == :start
+      @preview_button.add(icon_image("ui/media-playback-start.svg", width: 32))
+    end
+
+    # Remember the type so we can act differently depending on
+    # the shown icon.
+    @preview_button_type = type
+
+    # Don’t forget to show our new widget inside the button!
+    @preview_button.show_all
   end
 
 end
