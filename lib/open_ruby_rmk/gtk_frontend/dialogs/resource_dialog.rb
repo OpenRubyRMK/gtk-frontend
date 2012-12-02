@@ -43,6 +43,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @delete_button       = Button.new(t.general.actions.delete)
     @details_label       = Label.new
     @details_button      = Button.new(t.dialogs.resources.labels.more)
+
+    disable_buttons
   end
 
   def create_layout
@@ -112,8 +114,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @details_button.signal_connect(:clicked, &method(:on_details_button_clicked))
   end
 
+  ########################################
+  # Event handlers
+
   def on_category_tree_cursor_changed(*)
     @resource_list.clear
+    disable_buttons
     return unless @category_tree.selected_path
 
     reload_resource_list
@@ -121,6 +127,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
   def on_resource_list_cursor_changed(*)
     return unless @resource_list.selected_item
+    enable_buttons
 
     # Retrieve the licensing information of this resource
     res = OpenRubyRMK::Backend::Resource.new(@category_tree.selected_path + @resource_list.selected_item)
@@ -230,6 +237,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     md.destroy
   end
 
+  ########################################
+  # Helper methods
+
   # Clears the resource list widget and adds entries for all
   # resources found in +path+.
   def reload_resource_list(path = @category_tree.selected_path)
@@ -241,6 +251,18 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
       @resource_list.append(childpath.basename)
     end
+  end
+
+  # Enable/Disable all buttons.
+  def enable_buttons(enable = true)
+    [@license_button, @preview_button, @import_button, @export_button, @new_category_button, @delete_button, @details_button].each do |button|
+      button.sensitive = enable
+    end
+  end
+
+  # Disable all buttons.
+  def disable_buttons
+    enable_buttons(false)
   end
 
 end
