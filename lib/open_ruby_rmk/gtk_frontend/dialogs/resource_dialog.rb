@@ -2,6 +2,7 @@
 class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
   include Gtk
   include OpenRubyRMK::GTKFrontend::Widgets
+  include OpenRubyRMK::GTKFrontend::Helpers::Icons
   include R18n::Helpers
 
   def initialize
@@ -38,11 +39,13 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
 
     @import_button       = Button.new(t.general.actions.import)
     @export_button       = Button.new(t.general.actions.export)
-    @preview_button      = Button.new(t.dialogs.resources.labels.preview)
+    @preview_button      = Button.new
     @new_category_button = Button.new(t.dialogs.resources.labels.new_category)
     @delete_button       = Button.new(t.general.actions.delete)
     @details_label       = Label.new
     @details_button      = Button.new(t.dialogs.resources.labels.more)
+
+    @preview_button.add(icon_image("ui/media-playback-start.svg", width: 32))
 
     disable_buttons
   end
@@ -61,6 +64,13 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
         vbox2.spacing = $app.space
 
         vbox2.pack_start(@details_frame, false)
+
+        Alignment.new(0.5, 0.5, 0, 0).tap do |ali|
+          ali.add(@preview_button)
+
+          vbox2.pack_start(ali, true)
+        end
+
         vbox2.pack_end(@action_frame, false)
 
         hbox.pack_start(vbox2, false)
@@ -78,7 +88,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
       vbox2.spacing = $app.space
       vbox2.pack_start(@import_button)
       vbox2.pack_start(@export_button)
-      vbox2.pack_start(@preview_button)
       vbox2.pack_start(@new_category_button)
       vbox2.pack_start(@delete_button)
 

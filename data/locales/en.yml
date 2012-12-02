@@ -31,7 +31,6 @@ dialogs:
       resources: "Resources"
       actions: "Actions"
       details: "Details"
-      preview: "Preview"
       new_category: "New Category"
       more: "More…"
       license: "License"
