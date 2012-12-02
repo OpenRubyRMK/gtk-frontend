@@ -8,7 +8,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourcePreviewDialog < Gtk::Dialog
   # Creates a new instance of this class. Pass in the parent window and the
   # Backend::Resource you want to preview.
   def initialize(parent, resource)
-    super("Resource preview",
+    super(t.dialogs.resource_preview.title,
           parent,
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_NONE])

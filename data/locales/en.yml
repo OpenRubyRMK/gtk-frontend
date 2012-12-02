@@ -36,6 +36,8 @@ dialogs:
       license: "License"
       copyright_year: "Copyright year"
       copyright_holder: "Copyright holder"
+  resource_preview:
+    title: "Resource preview"
 
 # Texts for the debugging console.
 console:
