@@ -1,7 +1,7 @@
 This file gives an overview over the sources the icon files
 are taken from.
 
-Toplevel PNG files:
+ui
 -------------------
 The icons are taken from the Tango project and are public
 domain.
@@ -11,9 +11,9 @@ domain.
 licenses/default.svg
 --------------------
 
-The default license icon was created by me, Marvin Gülker aka Quintus,
-specifically for the OpenRubyRMK, in 2012. It is licensed under the
-unported CC-BY license.
+The default and proprietary license icons were created by me, Marvin
+Gülker aka Quintus, specifically for the OpenRubyRMK, in 2012. They
+are licensed under the unported CC-BY license.
 
 licenses/cc
 -----------

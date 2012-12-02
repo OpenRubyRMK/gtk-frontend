@@ -8,6 +8,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::Backend
+  include OpenRubyRMK::GTKFrontend::Helpers::Icons
 
   # Creates a new MapWindow. Pass in the parent window you want
   # to make this window a helper window of.
@@ -32,9 +33,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
     @del_button            = Button.new
     @settings_button       = Button.new
 
-    @add_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("plus.png").to_s))
-    @del_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("minus.png").to_s))
-    @settings_button.add(Gtk::Image.new(OpenRubyRMK::GTKFrontend::ICONS_DIR.join("gear.png").to_s))
+    @add_button.add(icon_image("ui/list-add.svg", width: 16))
+    @del_button.add(icon_image("ui/list-remove.svg", width: 16))
+    @settings_button.add(icon_image("ui/preferences-system.svg", width: 16))
 
     # On startup, when no projects are loaded, these
     # buttons are disabled.
