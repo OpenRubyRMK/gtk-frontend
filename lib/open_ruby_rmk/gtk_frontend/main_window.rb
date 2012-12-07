@@ -30,6 +30,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def show_all
     super
     @map_window.show_all
+    @tileset_window.show_all
   end
 
   private
@@ -52,6 +53,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
+      append_menu_item windows, "Tileset", :windows_tileset
       append_menu_separator windows
       append_menu_item windows, t.menus.windows.entries.console, :windows_console
     end
@@ -87,7 +89,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the helper windows.
   def create_extra_windows
-    @map_window = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
+    @map_window     = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
+    @tileset_window = OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow.new(self)
     @console_window = OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow.new(self)
   end
 
@@ -103,6 +106,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
+    menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
     menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
@@ -190,6 +194,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       @map_window.hide
     else
       @map_window.show
+    end
+  end
+
+  def on_menu_windows_tileset(event)
+    if @tileset_window.visible?
+      @tileset_window.hide
+    else
+      @tileset_window.show
     end
   end
 

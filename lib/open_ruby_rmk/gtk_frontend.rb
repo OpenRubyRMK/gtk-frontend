@@ -82,7 +82,6 @@ module OpenRubyRMK
 
 end
 
-require_relative "gtk_frontend/app"
 require_relative "gtk_frontend/errors"
 require_relative "gtk_frontend/licenser"
 require_relative "gtk_frontend/helpers/menu_builder"
@@ -93,9 +92,11 @@ require_relative "gtk_frontend/widgets/directory_tree_view"
 require_relative "gtk_frontend/widgets/list_view"
 require_relative "gtk_frontend/widgets/image_link_button"
 require_relative "gtk_frontend/widgets/ruby_terminal"
-require_relative "gtk_frontend/main_window"
 require_relative "gtk_frontend/tool_windows/map_window"
+require_relative "gtk_frontend/tool_windows/tileset_window"
 require_relative "gtk_frontend/tool_windows/console_window"
 require_relative "gtk_frontend/dialogs/map_settings_dialog"
 require_relative "gtk_frontend/dialogs/resource_dialog"
 require_relative "gtk_frontend/dialogs/resource_preview_dialog"
+require_relative "gtk_frontend/main_window"
+require_relative "gtk_frontend/app"

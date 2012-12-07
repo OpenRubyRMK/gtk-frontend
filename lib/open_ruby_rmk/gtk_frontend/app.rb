@@ -19,6 +19,7 @@ $app = nil
 class OpenRubyRMK::GTKFrontend::App
   include R18n::Helpers
   include OpenRubyRMK::Backend::Eventable
+  include OpenRubyRMK::GTKFrontend::Helpers::Icons
 
   # Usual number of pixels between widgets
   THE_SPACE = 4
@@ -29,6 +30,10 @@ class OpenRubyRMK::GTKFrontend::App
   # of form:
   #   {:key => value}
   attr_reader :config
+
+  # The Gtk::IconFactory we use to provide GTK with our own
+  # menu icons.
+  attr_reader :icon_factory
 
   # Create the one and only instance of this class. Pass the
   # commandline options you want it to (destructively) parse.
@@ -43,6 +48,7 @@ class OpenRubyRMK::GTKFrontend::App
     parse_argv
     parse_config
     set_locale
+    register_stock_icons
   end
 
   # Shortcut for dereferencing the THE_SPACE constant.
@@ -153,6 +159,29 @@ class OpenRubyRMK::GTKFrontend::App
     else
       R18n.from_env(OpenRubyRMK::GTKFrontend::LOCALE_DIR.to_s)
     end
+  end
+
+  # Tells GTK about our custom menu icons.
+  def register_stock_icons
+    # Create a new icon factory and make GTK search it for
+    # menu items.
+    @icon_factory = Gtk::IconFactory.new
+    @icon_factory.add_default
+
+    # Now add all our custom menu icons.
+    register_stock_icon(:paint_mode, "ui/fill.svg", "Fill mode")
+    register_stock_icon(:fill_mode, "ui/paint.svg", "Paint mode")
+  end
+
+  # Adds a single custom menu item to GTK. +path+ is
+  # a path relative to data/icons, +label+ is the label
+  # to display next to the icon if the user requests this.
+  # +name+ is the key used to look up icon and label (a
+  # Symbol).
+  def register_stock_icon(name, path, label)
+    Gtk::Stock.add(name, label)
+    iconset = Gtk::IconSet.new(icon_pixbuf(path, :width => 32))
+    @icon_factory.add(name.to_s, iconset) # For some unknown reason, this must be a string
   end
 
 end
