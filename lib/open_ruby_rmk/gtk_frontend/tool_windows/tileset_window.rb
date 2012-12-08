@@ -20,8 +20,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   def create_widgets
     @toolbar = Toolbar.new
-    @paint_mode_button = RadioToolButton.new(nil, :paint_mode)
-    @fill_mode_button  = RadioToolButton.new(@paint_mode_button, :fill_mode)
+    @paint_mode_button = RadioToolButton.new(nil, :orr_paint_mode)
+    @fill_mode_button  = RadioToolButton.new(@paint_mode_button, :orr_fill_mode)
 
     @toolbar.insert(0, @paint_mode_button)
     @toolbar.insert(0, @fill_mode_button)
