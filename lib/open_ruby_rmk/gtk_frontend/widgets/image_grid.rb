@@ -67,6 +67,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @layout.signal_connect(:expose_event, &method(:on_expose))
     add(@layout)
 
+    @layout.add_events(Gdk::Event::BUTTON_PRESS_MASK | Gdk::Event::BUTTON_RELEASE_MASK)
+    signal_connect(:button_press_event, &method(:on_button_press))
+    signal_connect(:button_release_event, &method(:on_button_release))
+
     redraw!
   end
 
@@ -140,7 +144,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole tabe is rectangular, i.e. no row has more columns
     # than another, etc.
-    [@pixbufs.first.first.height * @pixbufs.first.count, @pixbufs.first.first.width * @pixbufs.count]
+    [tile_width * @pixbufs.first.count, tile_height * @pixbufs.count]
+  end
+
+  # The width of a single tile in pixels.
+  def tile_width
+    @pixbufs.first.first.width
+  end
+
+  # The height of a single tile in pixels.
+  def tile_height
+    @pixbufs.first.first.height
+  end
+
+  # The number of tile rows in the grid, i.e. how many tiles are
+  # in a single column.
+  def row_num
+    @pixbufs.count
+  end
+
+  # The number of tile columns in the grid, i.e. how many tiles are
+  # in a single row.
+  def col_num
+    col = @pixbufs.first
+    return 0 unless col
+    col.count
   end
 
   private
@@ -194,6 +222,20 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     end
 
     true # Event completely handled
+  end
+
+  def on_button_press(_, event)
+    width, height = canvas_size
+    x, y          = event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height
+
+    # Only care about clicks on the map, not about those next to it
+    return if x < 0 or x >= col_num or y < 0 or y >= row_num
+
+    # TODO
+  end
+
+  def on_button_release(_, event)
+    # TODO
   end
 
 end
