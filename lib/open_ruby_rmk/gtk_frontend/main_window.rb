@@ -48,12 +48,16 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     menu @menubar, t.menus.edit.name do |edit|
-      append_menu_item edit, "Resources...", :edit_resources
+      append_menu_item edit, t.menus.edit.entries.resources, :edit_resources
+    end
+
+    menu @menubar, t.menus.view.name do |view|
+      append_menu_item view, t.menus.view.entries.grid, :view_grid
     end
 
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
-      append_menu_item windows, "Tileset", :windows_tileset
+      append_menu_item windows, t.menus.windows.entries.tileset, :windows_tileset
       append_menu_separator windows
       append_menu_item windows, t.menus.windows.entries.console, :windows_console
     end
@@ -105,6 +109,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
+    menu_items[:view_grid].signal_connect(:activate, &method(:on_menu_view_grid))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
     menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
@@ -186,6 +191,12 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def on_menu_edit_resources(event)
     rd = OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog.new
     rd.run
+  end
+
+  # View -> Grid
+  def on_menu_view_grid(event)
+    @map_grid.draw_grid = !@map_grid.draw_grid?
+    @map_grid.redraw!
   end
 
   # Windows -> Map tree

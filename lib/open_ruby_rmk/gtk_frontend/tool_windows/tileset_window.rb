@@ -29,6 +29,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     @toolbar.insert(0, @fill_mode_button)
 
     @tileset_grid = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new
+    @tileset_grid.draw_grid = true
   end
 
   def create_layout

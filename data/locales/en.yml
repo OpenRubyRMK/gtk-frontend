@@ -73,18 +73,24 @@ menus:
     name: F_ile
     entries:
       new: Ne_w
-      open: O_pen...
+      open: O_pen…
       save: Sav_e
       quit: _Quit
   edit:
     name: E_dit
     entries:
+      resources: Re_ssources…
+  view:
+    name: _View
+    entries:
+      grid: Toggle _grid
   windows:
     name: _Windows
     entries:
       map_tree: "M_ap tree"
       console: "C_onsole"
+      tileset: T_ileset
   help:
     name: _Help
     entries:
-      about: A_bout...
+      about: A_bout…
