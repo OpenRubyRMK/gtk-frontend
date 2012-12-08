@@ -1,4 +1,13 @@
-# Global configuration file for the OpenRubyRMK.
+# Global configuration file for the OpenRubyRMK
+# =============================================
+#
+# This is the OpenRubyRMK’s GTK client configuration file.
+# It’s a simple, human-readable and editable file in YAML
+# format and you’re welcome to adjust the settings to your
+# needs. Generally, "on" activates a feature, and "off"
+# turns it off, any options requiring other values are
+# described accordingly.
+#
 # Default values are indicated with double hash signs ##.
 
 # Locale to display the GUI in. Leave empty to determine the
@@ -6,3 +15,7 @@
 # locale: de
 ## locale:
 locale:
+
+# Wether or not to display the map grid by default.
+## off
+grid: off
