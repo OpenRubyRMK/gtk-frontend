@@ -180,7 +180,7 @@ class OpenRubyRMK::GTKFrontend::App
   # Symbol).
   def register_stock_icon(name, path, label)
     Gtk::Stock.add(name, label)
-    iconset = Gtk::IconSet.new(icon_pixbuf(path, :width => 32))
+    iconset = Gtk::IconSet.new(icon_pixbuf(path))
     @icon_factory.add(name.to_s, iconset) # For some unknown reason, this must be a string
   end
 
