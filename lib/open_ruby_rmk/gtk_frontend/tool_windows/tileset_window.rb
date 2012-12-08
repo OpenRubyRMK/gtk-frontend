@@ -11,6 +11,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     self.transient_for = parent
     self.title = "Tileset"
 
+    parent.map_grid.add_observer(self, :map_grid_changed)
+
     create_widgets
     create_layout
     setup_event_handlers
@@ -26,14 +28,14 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     @toolbar.insert(0, @paint_mode_button)
     @toolbar.insert(0, @fill_mode_button)
 
-    @tileset_area = DrawingArea.new
+    @tileset_grid = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new
   end
 
   def create_layout
     VBox.new.tap do |vbox|
 
       vbox.pack_start(@toolbar, false)
-      vbox.pack_start(@tileset_area, true, true)
+      vbox.pack_start(@tileset_grid, true, true)
 
       add(vbox)
     end
@@ -45,6 +47,29 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   ########################################
   # Event handlers
+
+  def map_grid_changed(event, sender, info)
+    return unless event == :map_changed
+    @tileset_grid.clear
+
+    if info[:map] and !info[:map].tmx_map.tilesets.empty?
+      # TODO: Support multiple tilesets in tabs!
+      start_id       = info[:map].tmx_map.tilesets.keys.first
+      tileset        = info[:map].tmx_map.tilesets[start_id]
+      tileset_pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)
+
+      0.upto(Float::INFINITY) do |id| # First tileset tile index is always 1, not 0
+        pos = tileset.tile_position(id)
+        break unless pos
+
+        @tileset_grid[pos[0], pos[1]] = Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight)
+      end
+    end
+
+
+    @tileset_grid.redraw!
+  end
+  public :map_grid_changed # For Observable
 
   def on_delete_event(*)
     hide

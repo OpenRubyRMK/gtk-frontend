@@ -53,6 +53,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @layout.set_size(*DEFAULT_SIZE)
     @layout.signal_connect(:expose_event, &method(:on_expose))
     add(@layout)
+
+    redraw!
   end
 
   def []=(x, y, pixbuf)
@@ -103,8 +105,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole tabe is rectangular, i.e. no row has more columns
     # than another, etc.
-    width = @pixbufs.first.first.width * @pixbufs.count
-    height = @pixbufs.first.first.height * @pixbufs.first.count
+    width  = @pixbufs.first.first.height * @pixbufs.first.count
+    height = @pixbufs.first.first.width * @pixbufs.count
 
     # Tell GTK the new size and request a redraw.
     @layout.set_size(width, height)

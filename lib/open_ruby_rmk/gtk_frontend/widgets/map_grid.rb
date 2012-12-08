@@ -2,6 +2,7 @@
 
 # This is the widget that displays the map on the main window.
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
+  include OpenRubyRMK::Backend::Eventable
 
   def initialize
     super
@@ -12,7 +13,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Change the currently displayed map to another one, clearing
   # all internal graphic buffers, reloading them from disk and
   # finally redrawing the entire widget.
+  # == Events
+  # [map_changed]
+  #   Always emitted when this method is called. Callback
+  #   receives +map+ via the :map parameter.
   def map=(map)
+    changed
+
     @map = map
     @tileset_pixbufs.clear
 
@@ -31,7 +38,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     @map.tmx_map.layers.each do |layer|
       layer.each_tile(@map.tmx_map) do |mapx, mapy, tile, id, tileset, flips|
         # Convert the relative tile ID into coordinates on the tileset pixmap
-        x, y = tileset.tile_position(id)
+        tx, ty, x, y = tileset.tile_position(id)
 
         # Extract the tile from the tileset pixmap and store it in
         # the widget’s drawing storage.
@@ -40,6 +47,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     end
 
     redraw!
+    notify_observers(:map_changed, :map => map)
   end
 
 end
