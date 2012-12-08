@@ -114,7 +114,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
   def on_tree_cursor_changed(*)
     return unless @map_tree.selected_map
 
-    $app.mainwindow.map_table.map = @map_tree.selected_map
+    $app.mainwindow.map_grid.map = @map_tree.selected_map
   end
 
 end

@@ -8,7 +8,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include OpenRubyRMK::GTKFrontend::Helpers::MenuBuilder
 
   # The widget that shows the map.
-  attr_reader :map_table
+  attr_reader :map_grid
 
   # Creates the application window.
   def initialize
@@ -70,7 +70,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the widgets needed for the window.
   def create_widgets
-    @map_table = OpenRubyRMK::GTKFrontend::Widgets::MapTable.new
+    @map_grid = OpenRubyRMK::GTKFrontend::Widgets::MapGrid.new
   end
 
   # Lays out the previously created widgets.
@@ -79,7 +79,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       vbox.pack_start(@menubar, false)
 
       HBox.new.tap do |hbox|
-        hbox.pack_start(@map_table)
+        hbox.pack_start(@map_grid)
         vbox.pack_start(hbox)
       end
 
