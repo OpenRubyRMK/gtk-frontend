@@ -45,10 +45,23 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # (mostly applicable immediately after instanciation).
   DEFAULT_SIZE = [32, 32]
 
+  # Set to +true+ if you want to draw visual lines between the cells.
+  attr_writer :draw_grid
+
+  # Color for the grid lines if +draw_grid+ is +true+. A four-element
+  # array of color values as Cairo expects it, i.e. each component
+  # may reach from 0 (nothing) up to 1 (full):
+  #   [red, green, blue, alpha]
+  attr_accessor :grid_color
+
+  # Creates a new and empty image grid.
   def initialize
     super
     @pixbufs = []
     @layout = Gtk::Layout.new
+
+    @draw_grid = false
+    @grid_color = [0.5, 0, 1, 1]
 
     @layout.set_size(*DEFAULT_SIZE)
     @layout.signal_connect(:expose_event, &method(:on_expose))
@@ -57,19 +70,24 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw!
   end
 
+  # Set the Pixbuf instance at a specified coordinate. Use +nil+
+  # for +pixbuf+ if you want an empty cell.
   def []=(x, y, pixbuf)
     0.upto(y){|i| @pixbufs[i] = [] unless @pixbufs[i]} unless @pixbufs[y]
     @pixbufs[y][x] = pixbuf
   end
 
+  # Retrieves the Pixbuf instance (or +nil+) at the specified coordinate.
   def [](x, y)
     @pixbufs[y][x]
   end
 
+  # Append an entire row of pixbufs to the bottom of the grid.
   def append_row(pixbufs)
     @pixbufs.push(pixbufs)
   end
 
+  # Same as #append_row, but returns +self+ for method chaining.
   def <<(pixbufs)
     append_row
     self
@@ -87,6 +105,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @pixbufs.clear
   end
 
+  # True if the grid shall be drawn.
+  def draw_grid?
+    @draw_grid
+  end
+
   # Recalculate the width and height of the canvas by examining
   # the stored Pixbuf objects (which must all have the same
   # dimensions and in total must sum up to a rectangular area)
@@ -101,16 +124,23 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     end
 
     # Calculate the width and height of the underlying Cairo
-    # context we will draw on. Note this code makes two
-    # important assumptions: Each pixbuf has the same dimensions,
-    # and the whole tabe is rectangular, i.e. no row has more columns
-    # than another, etc.
-    width  = @pixbufs.first.first.height * @pixbufs.first.count
-    height = @pixbufs.first.first.width * @pixbufs.count
+    # context we will draw on.
+    width, height = canvas_size
 
     # Tell GTK the new size and request a redraw.
     @layout.set_size(width, height)
     @layout.queue_draw
+  end
+
+  # Calculates the size of the underlying canvas by examining the
+  # internal pixbuf array. Return value is a two-element array
+  # of form <tt>[width, height]</tt> (both values are pixel values).
+  def canvas_size
+    # Note this code makes two
+    # important assumptions: Each pixbuf has the same dimensions,
+    # and the whole tabe is rectangular, i.e. no row has more columns
+    # than another, etc.
+    [@pixbufs.first.first.height * @pixbufs.first.count, @pixbufs.first.first.width * @pixbufs.count]
   end
 
   private
@@ -132,6 +162,35 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
         cc.set_source_pixbuf(pixbuf, x * pixbuf.width, y * pixbuf.height)
         cc.paint
       end
+    end
+
+    # Draw the grid if requested. Note the 0.5px offset when drawing creating
+    # the paths; this is required since the coordinates really apply to the
+    # edges between the pixels, and a line width of 1 would mean 0.5px to either
+    # side of the edge, which is impossible and results in 1 semi-opaque pixel
+    # to either side. By offsetting by 0.5 the edge *is* on the pixel’s middle,
+    # and expanding by 0.5px to either side exactly snaps into the real pixel
+    # edges, causing a sharp, 1px thick line. Without this trick, we would end
+    # up with a 2px thick, semi-opaque line (as explained already).
+    if @draw_grid
+      width, height = canvas_size
+
+      # Create the Cairo paths for the vertical lines
+      0.step(width, @pixbufs.first.first.width) do |x|
+        cc.move_to(x + 0.5, 0)
+        cc.line_to(x + 0.5, height)
+      end
+
+      # Create the Cairo paths for the horizontal lines
+      0.step(height, @pixbufs.first.first.height) do |y|
+        cc.move_to(0, y + 0.5)
+        cc.line_to(width, y + 0.5)
+      end
+
+      # Stroke the paths specified earlier with the requested colour.
+      cc.set_source_rgba(*@grid_color)
+      cc.line_width = 1
+      cc.stroke
     end
 
     true # Event completely handled
