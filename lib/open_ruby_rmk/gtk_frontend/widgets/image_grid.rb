@@ -39,6 +39,12 @@
 # performance hit. So instead, just do the entire loop and _then_ redraw
 # the widget by ordering it to do so.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
+  type_register
+  signal_new :selection_start, GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :selection_add,   GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :selection_end,   GLib::Signal::RUN_LAST, nil, nil, Hash
+
+  CellPos = Struct.new(:tile_x, :tile_y, :x, :y)
 
   # The default size the unterlying canvas is set to when
   # the list of Pixbuf objects for this widget is empty
@@ -62,14 +68,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     @draw_grid = false
     @grid_color = [0.5, 0, 1, 1]
+    @selection = []
+    @button_is_down = false # Set to true while a mouse button is down
 
     @layout.set_size(*DEFAULT_SIZE)
     @layout.signal_connect(:expose_event, &method(:on_expose))
     add(@layout)
 
-    @layout.add_events(Gdk::Event::BUTTON_PRESS_MASK | Gdk::Event::BUTTON_RELEASE_MASK)
-    signal_connect(:button_press_event, &method(:on_button_press))
-    signal_connect(:button_release_event, &method(:on_button_release))
+    @layout.add_events(Gdk::Event::BUTTON_PRESS_MASK | Gdk::Event::BUTTON_RELEASE_MASK | Gdk::Event::POINTER_MOTION_MASK)
+    @layout.signal_connect(:button_press_event, &method(:on_button_press))
+    @layout.signal_connect(:button_release_event, &method(:on_button_release))
+    @layout.signal_connect(:motion_notify_event, &method(:on_motion))
 
     redraw!
   end
@@ -119,7 +128,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # dimensions and in total must sum up to a rectangular area)
   # and then redraw the entire widget. If the internal pixbuf
   # array is empty, resets the underlying canvas to the default
-  # dimensions and redraws the widget.
+  # dimensions and redraws it.
   def redraw!
     if @pixbufs.empty?
       @layout.set_size(*DEFAULT_SIZE)
@@ -127,12 +136,28 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       return
     end
 
-    # Calculate the width and height of the underlying Cairo
-    # context we will draw on.
-    width, height = canvas_size
-
     # Tell GTK the new size and request a redraw.
-    @layout.set_size(width, height)
+    @layout.set_size(*canvas_size)
+    redraw
+  end
+
+  # Tell GTK to redraw only a certain part of the map canvas.
+  # In contrast to #redraw! this does not re-examine the pixbuf
+  # array, i.e. the canvas will not change size when calling this
+  # method.
+  def redraw_area(x, y, width, height)
+    # This is a bit nitty-gritty. `@layout.queue_draw_area' resolves coordinates
+    # relative to the scroll window, which is undesired and updates the wrong
+    # parts of the canvas. Instead, we directly operate on the canvas and tell
+    # GDK to invalidate part of it, which in turn causes GTK to issue the expose
+    # event accordingly. `@layout.queue_draw' always affects the entire canvas widget,
+    # so redrawing that one is possible without having to go down to GDK.
+    @layout.bin_window.invalidate(Gdk::Rectangle.new(x, y, width, height), false)
+  end
+
+  # Tell GTK to redraw the entire canvas, but don’t recalculate
+  # the canvas size. See also #redraw!.
+  def redraw
     @layout.queue_draw
   end
 
@@ -173,9 +198,33 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   private
 
+  ########################################
+  # Custom default event handlers
+
+  def signal_do_selection_start(hsh)
+    redraw_area(hsh[:pos].x, hsh[:pos].y, tile_width, tile_height)
+  end
+
+  def signal_do_selection_add(hsh)
+    redraw_area(hsh[:pos].x, hsh[:pos].y, tile_width, tile_height)
+  end
+
+  def signal_do_selection_end(hsh)
+  end
+
+  ########################################
+  # Event handlers
+
   def on_expose(_, event)
     return if @pixbufs.empty?
     cc = @layout.bin_window.create_cairo_context
+
+    # TODO: Only redraw the parts that need to be redrawn,
+    # available via `event.region'. The bounding box of all
+    # places that need to be redrawn is available via
+    # `event.area', which may be easier to handle on the cost
+    # of redrawing parts between them that don’t need to be
+    # redrawn.
 
     # TODO: Layers!
     # TODO: Instead of holding all the images in memory which
@@ -221,21 +270,55 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       cc.stroke
     end
 
+    # If a selection is active, also draw that one.
+    @selection.each do |pos|
+      cc.rectangle(pos.x, pos.y, tile_width, tile_height)
+    end
+    cc.set_source_rgba(1, 0, 0, 0.5)
+    cc.fill
+
     true # Event completely handled
   end
 
   def on_button_press(_, event)
-    width, height = canvas_size
-    x, y          = event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height
+    @button_is_down = true
+
+    # Snap click coordinates to tile grid
+    pos   = CellPos.new(event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height)
+    pos.x = pos.tile_x * tile_width
+    pos.y = pos.tile_y * tile_height
 
     # Only care about clicks on the map, not about those next to it
-    return if x < 0 or x >= col_num or y < 0 or y >= row_num
+    return if pos.tile_x < 0 or pos.tile_x >= col_num or pos.tile_y < 0 or pos.tile_y >= row_num
 
-    # TODO
+    @selection.clear
+    @selection.push(pos)
+    signal_emit :selection_start, :pos => pos
+    redraw # So the old selection goes away
+  end
+
+  def on_motion(_, event)
+    return unless @button_is_down
+
+    # Snap click coordinates to tile grid
+    pos   = CellPos.new(event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height)
+    pos.x = pos.tile_x * tile_width
+    pos.y = pos.tile_y * tile_height
+
+    # Only care about clicks on the map, not about those next to it
+    return if pos.tile_x < 0 or pos.tile_x >= col_num or pos.tile_y < 0 or pos.tile_y >= row_num
+
+    # If we already have this tile selected, ignore the event.
+    # Otherwise add it and emit the signal.
+    unless @selection.include?(pos)
+      @selection.push(pos)
+      signal_emit :selection_add, :pos => pos
+    end
   end
 
   def on_button_release(_, event)
-    # TODO
+    @button_is_down = false
+    signal_emit :selection_end, :selection => @selection.dup # So that clearing it later doesn't affect handler
   end
 
 end
