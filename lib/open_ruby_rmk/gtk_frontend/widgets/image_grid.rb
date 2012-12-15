@@ -384,6 +384,41 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @mask
   end
 
+  # Inverts the current mask, i.e. unmasks all currently masked
+  # cells and masks everything else. Note this method implicitely
+  # clips the mask to the current canvas size. Automatically
+  # redraws the widget.
+  def invert_mask
+    new_mask = []
+    0.upto(col_num) do |y|
+      0.upto(row_num) do |x|
+        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
+
+        new_mask << pos unless masked?(pos)
+      end
+    end
+
+    @mask.replace(new_mask)
+    redraw
+  end
+
+  # Clears the current mask and then masks everything.
+  # Implicitely clips the mask to the current canvas size.
+  # Automatically redraws the widget.
+  def mask_all
+    @mask.clear
+
+    0.upto(col_num) do |y|
+      0.upto(row_num) do |x|
+        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
+
+        @mask << pos
+      end
+    end
+
+    redraw
+  end
+
   # Apply the mask for selection on the grid and return all
   # CellInfo instances that match this. That is, return
   # all CellInfo objects corresponding to all CellPos objects
