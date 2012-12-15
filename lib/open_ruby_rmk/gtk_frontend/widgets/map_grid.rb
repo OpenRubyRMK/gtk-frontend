@@ -54,7 +54,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
                                  y,
                                  tileset.tilewidth,
                                  tileset.tileheight),
-                 :x => tx, :y => ty, :layer => layer, :tileset => tileset)
+                 :x => mapx, :y => mapy, :layer => layer, :tileset => tileset)
       end
     end
 
@@ -115,7 +115,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       # and redraw the canvas — everything done! When the map
       # gets saved, everything where it ought to be thanks
       # to this.
-      cell_info.data[:layer][cell_info.data[:layer].pos2index(@map.tmx_map, cell_info.data[:x], cell_info.data[:y])] = tile.data[:gid]
+      index = cell_info.data[:layer].pos2index(@map.tmx_map, cell_info.data[:x], cell_info.data[:y])
+      cell_info.data[:layer][index] = tile.data[:gid]
       # It should be possible to do this without dupping, but I don’t
       # feel good if two entirely separate widgets hold references
       # to the same image...
