@@ -47,7 +47,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
         # Extract the tile from the tileset pixmap and store it in
         # the widget’s drawing storage.
-        set_cell(mapx, mapy, Gdk::Pixbuf.new(@tileset_pixbufs[tileset], x, y, tileset.tilewidth, tileset.tileheight))
+        set_cell(mapx,
+                 mapy,
+                 Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
+                                 x,
+                                 y,
+                                 tileset.tilewidth,
+                                 tileset.tileheight),
+                 :x => tx, :y => ty, :layer => layer, :tileset => tileset)
       end
     end
 
@@ -61,6 +68,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Event handlers
 
   def on_cell_button_press(_, hsh)
+    return unless @map
+
     @pressed_button = hsh[:event].button
     return unless hsh[:event].button == 3 # Secondary mouse button
 
@@ -70,17 +79,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   end
 
   def on_cell_button_motion(_, hsh)
+    return unless @map
     return unless @pressed_button == 3 # Secondary mouse button
 
     mask_rectangle(@first_selection, hsh[:pos])
   end
 
   def on_cell_button_release(_, hsh)
+    return unless @map
     return unless @pressed_button == hsh[:event].button # Shouldn’t happen
 
     case @pressed_button
     when 1 then # Primary mouse button
-      # TODO: Fill selection
+      fill_mask
     when 3 then # Secondary mouse button
       @first_selection = nil
     when 2 then # Middle mouse button
@@ -88,5 +99,30 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     end
   end
 
+  ########################################
+  # Helpers
+
+  # Fills the current mask with the selected tileset’s
+  # selected tile.
+  def fill_mask
+    tiles = $app.mainwindow.tileset_window.tileset_grid.selection
+    return unless tiles # No tile selected
+    tile = tiles.first  # Only one tile can actually be selected
+
+    selection.each do |cell_info|
+      # By-reference is great :-)
+      # Just update the layer and pixbuf referenced by this cell,
+      # and redraw the canvas — everything done! When the map
+      # gets saved, everything where it ought to be thanks
+      # to this.
+      cell_info.data[:layer][cell_info.data[:layer].pos2index(@map.tmx_map, cell_info.data[:x], cell_info.data[:y])] = tile.data[:gid]
+      # It should be possible to do this without dupping, but I don’t
+      # feel good if two entirely separate widgets hold references
+      # to the same image...
+      cell_info.pixbuf = tile.pixbuf.dup
+    end
+
+    clear_mask # Issues #redraw itself
+  end
 
 end

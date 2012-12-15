@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/Quintus/tmx-ruby.git
-  revision: 32f607e2a0bc04772b4387594c08cf836dfa870f
+  revision: 133a8fae0bf8d04ba2370ec768b37b7f958f4b43
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri

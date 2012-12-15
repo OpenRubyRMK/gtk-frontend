@@ -10,6 +10,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # The widget that shows the map.
   attr_reader :map_grid
 
+  # The window showing the tileset stuff.
+  attr_reader :tileset_window
+
   # Creates the application window.
   def initialize
     super

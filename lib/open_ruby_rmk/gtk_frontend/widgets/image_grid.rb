@@ -419,12 +419,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw
   end
 
-  # Apply the mask for selection on the grid and return all
-  # CellInfo instances that match this. That is, return
+  # Applies the mask for selection on the grid, returning all
+  # CellInfo instances that match it. That is, returns
   # all CellInfo objects corresponding to all CellPos objects
   # in the mask.
+  # Does not clear the mask.
   def selection
-    @mask.map{|pos| get_cell(pos.x, pos.y)}
+    @mask.map{|pos| get_cell(pos.cell_x, pos.cell_y)}
   end
 
   private

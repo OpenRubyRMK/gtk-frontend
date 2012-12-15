@@ -1,7 +1,12 @@
+# -*- coding: utf-8 -*-
+
 class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::GTKFrontend::Helpers::Icons
+
+  # The grid showing the tileset’s tile images.
+  attr_reader :tileset_grid
 
   def initialize(parent)
     super()
@@ -67,7 +72,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
         pos = tileset.tile_position(id)
         break unless pos
 
-        @tileset_grid.set_cell(pos[0], pos[1], Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight))
+        @tileset_grid.set_cell(pos[0], pos[1], Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight), :gid => start_id + id)
       end
     end
 
