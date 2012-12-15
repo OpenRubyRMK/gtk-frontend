@@ -47,6 +47,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
+    @tileset_grid.signal_connect(:cell_button_release, &method(:on_cell_button_release))
   end
 
   ########################################
@@ -78,6 +79,13 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   def on_delete_event(*)
     hide
     true # Do not destroy the window, just hide it
+  end
+
+  def on_cell_button_release(_, hsh)
+    return unless hsh[:pos]
+
+    @tileset_grid.clear_selection
+    @tileset_grid.add_to_selection(hsh[:pos])
   end
 
 end

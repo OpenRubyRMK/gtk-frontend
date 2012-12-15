@@ -73,7 +73,11 @@
 #     The underlying +button_motion+ event.
 # [cell_button_release]
 #   The user finally releases the pressed mouse button. The signal
-#   handler gets passed a hash with the following key:
+#   handler gets passed a hash with the following keys:
+#   [pos]
+#     An instance of CellPos, describing the cell that has been
+#     clicked. +nil+ if the release was outside the canvas
+#     (see below).
 #   [event]
 #     The underlying +button_release+ event.
 #
@@ -422,7 +426,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    signal_emit :cell_button_release, :event => event
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos.x = pos.cell_x * cell_width
+    pos.y = pos.cell_y * cell_height
+
+    # Don’t provide coordinates outside the cell grid
+    pos = nil if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+
+    signal_emit :cell_button_release, :event => event, :pos => pos
   end
 
 end
