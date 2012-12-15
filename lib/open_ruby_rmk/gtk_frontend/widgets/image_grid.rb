@@ -83,7 +83,10 @@
 # (an exception to this is the +cell_button_release+ signal which will
 # be emitted even if the mouse button is released with the cursor being
 # somewhere outwards the canvas, but only if a corresponding +cell_button_pressed+
-# signal was encountered before).
+# signal was encountered before). Also, the initial cell_button_press’
+# position and the first cell_button_motion’s +pos+ arguments will not
+# be the same, i.e. +cell_button_motion+ will not receive the starting
+# point.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   type_register
   signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
@@ -255,6 +258,36 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw_area(pos.x, pos.y, cell_width, cell_height)
   end
 
+  # Replaces the current selection with the rectangle described
+  # by the two CellPos instances +corner1+ and +corner2+,
+  # taking care of the appropriate redrawing operations.
+  # Depending on the coordinates of the two arguments to this
+  # method, this method may actually select a stripe or event
+  # only a single cell. Entirely clearing the selection is not
+  # possible with this method.
+  def select_rectangle(corner1, corner2)
+    # Remove anything existing and redraw
+    clear_selection
+
+    # Determine which coordinates we need to subtract from which
+    first_x_corner, second_x_corner = corner1.cell_x < corner2.cell_x ? [corner1, corner2] : [corner2, corner1]
+    first_y_corner, second_y_corner = corner1.cell_y < corner2.cell_y ? [corner1, corner2] : [corner2, corner1]
+
+    # Select the rectangle bounded by upper_left and lower_right
+    first_x_corner.cell_x.upto(second_x_corner.cell_x) do |cell_x|
+      first_y_corner.cell_y.upto(second_y_corner.cell_y) do |cell_y|
+        pos = CellPos.new(cell_x, cell_y, cell_x * cell_width, cell_y * cell_height)
+        @selection.push(pos)
+      end
+    end
+
+    # Redraw the area bounded by upper_left and lower_right
+    redraw_area(first_x_corner.x,
+                first_y_corner.y,
+                (second_x_corner.x + cell_width)  - first_x_corner.x, # Right edge of second cell - Left edge of first cell
+                (second_y_corner.y + cell_height) - first_y_corner.y) # Likewise for vertical axis
+  end
+
   # Clears the selection and redraws the canvas without
   # it.
   def clear_selection
@@ -266,6 +299,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # if so, returns +true+, otherwise +false+.
   def selected?(pos)
     @selection.include?(pos)
+  end
+
+  # All currently selected cells as an array
+  # of CellPos instances. Don’t directly change
+  # this, instead use the selection-related
+  # methods of this class.
+  def selection
+    @selection
   end
 
   private
@@ -362,10 +403,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
 
     signal_emit :cell_button_press, :pos => pos, :event => event
-
-    #@selection.clear
-    #signal_emit :selection_start, :pos => pos
-    #redraw # So the old selection goes away
   end
 
   def on_motion(_, event)

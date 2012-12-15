@@ -8,6 +8,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     super
     @map = nil
     @tileset_pixbufs = {}
+    @first_selection = nil
 
     signal_connect(:cell_button_press, &method(:on_cell_button_press))
     signal_connect(:cell_button_motion, &method(:on_cell_button_motion))
@@ -62,15 +63,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   def on_cell_button_press(_, hsh)
     clear_selection
     add_to_selection(hsh[:pos])
+    @first_selection = hsh[:pos]
   end
 
   def on_cell_button_motion(_, hsh)
-    return if selected?(hsh[:pos])
-    add_to_selection(hsh[:pos])
+    select_rectangle(@first_selection, hsh[:pos])
   end
 
   def on_cell_button_release(_, hsh)
-    # Nothing yet
+    @first_selection = nil
   end
 
 
