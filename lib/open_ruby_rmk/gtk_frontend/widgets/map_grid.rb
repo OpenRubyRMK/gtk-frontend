@@ -61,17 +61,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Event handlers
 
   def on_cell_button_press(_, hsh)
+    @pressed_button = hsh[:event].button
+    return unless hsh[:event].button == 3 # Secondary mouse button
+
     clear_selection
     add_to_selection(hsh[:pos])
     @first_selection = hsh[:pos]
   end
 
   def on_cell_button_motion(_, hsh)
+    return unless @pressed_button == 3 # Secondary mouse button
+
     select_rectangle(@first_selection, hsh[:pos])
   end
 
   def on_cell_button_release(_, hsh)
-    @first_selection = nil
+    return unless @pressed_button == hsh[:event].button # Shouldn’t happen
+
+    case @pressed_button
+    when 1 then # Primary mouse button
+      # TODO: Fill selection
+    when 3 then # Secondary mouse button
+      @first_selection = nil
+    when 2 then # Middle mouse button
+      # TODO: Something useful?
+    end
   end
 
 

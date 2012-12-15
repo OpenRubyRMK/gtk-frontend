@@ -392,8 +392,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   def on_button_press(_, event)
-    @button_is_down = true
-
     # Snap click coordinates to cell grid
     pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
     pos.x = pos.cell_x * cell_width
@@ -402,6 +400,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # Only care about clicks on the grid, not about those next to it
     return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
 
+    @button_is_down = true
     signal_emit :cell_button_press, :pos => pos, :event => event
   end
 
@@ -420,6 +419,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   def on_button_release(_, event)
+    return unless @button_is_down
     @button_is_down = false
 
     signal_emit :cell_button_release, :event => event
