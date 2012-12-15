@@ -174,11 +174,14 @@ class OpenRubyRMK::GTKFrontend::App
     # been added by the ORR code or is a GTK stock builtin.
     register_stock_icon(:orr_paint_mode, "ui/fill.svg", "Fill mode")
     register_stock_icon(:orr_fill_mode, "ui/paint.svg", "Paint mode")
+    register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.svg", "Freehand")
+    register_stock_icon(:orr_magic_selection, "ui/selection-magic.svg", "Magic")
+    register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.svg", "Rectangle")
   end
 
   # Adds a single custom menu item to GTK. +path+ is
   # a path relative to data/icons, +label+ is the label
-  # to display next to the icon if the user requests this.
+  # to display next to the icon if requested.
   # +name+ is the key used to look up icon and label (a
   # Symbol).
   def register_stock_icon(name, path, label)

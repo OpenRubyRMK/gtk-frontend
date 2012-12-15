@@ -21,15 +21,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   private
 
   def create_widgets
-    @toolbar = Toolbar.new
-    @paint_mode_button = RadioToolButton.new(nil, :orr_paint_mode)
-    @fill_mode_button  = RadioToolButton.new(@paint_mode_button, :orr_fill_mode)
+    @toolbar           = Toolbar.new
+    @rect_mode_button  = RadioToolButton.new(nil, :orr_rectangle_selection)
+    @magic_mode_button = RadioToolButton.new(@rect_mode_button, :orr_magic_selection)
+    @free_mode_button  = RadioToolButton.new(@rect_mode_button, :orr_freehand_selection)
 
-    @toolbar.insert(0, @paint_mode_button)
-    @toolbar.insert(0, @fill_mode_button)
+    [@free_mode_button, @magic_mode_button, @rect_mode_button].each do |button|
+      @toolbar.insert(0, button)
+    end
 
-    @tileset_grid = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new
-    @tileset_grid.draw_grid = true
+    @tileset_grid            = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new
+    @tileset_grid.draw_grid  = true
+    @rect_mode_button.active = true
   end
 
   def create_layout
