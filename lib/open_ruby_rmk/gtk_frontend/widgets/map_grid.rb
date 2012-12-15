@@ -8,6 +8,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     super
     @map = nil
     @tileset_pixbufs = {}
+
+    signal_connect(:cell_button_press, &method(:on_cell_button_press))
+    signal_connect(:cell_button_motion, &method(:on_cell_button_motion))
+    signal_connect(:cell_button_release, &method(:on_cell_button_release))
   end
 
   # Change the currently displayed map to another one, clearing
@@ -49,5 +53,25 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     redraw!
     notify_observers(:map_changed, :map => map)
   end
+
+  private
+
+  ########################################
+  # Event handlers
+
+  def on_cell_button_press(_, hsh)
+    clear_selection
+    add_to_selection(hsh[:pos])
+  end
+
+  def on_cell_button_motion(_, hsh)
+    return if selected?(hsh[:pos])
+    add_to_selection(hsh[:pos])
+  end
+
+  def on_cell_button_release(_, hsh)
+    # Nothing yet
+  end
+
 
 end

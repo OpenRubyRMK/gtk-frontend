@@ -38,13 +38,62 @@
 # widget each time you set something via #[]= in a loop is a severe
 # performance hit. So instead, just do the entire loop and _then_ redraw
 # the widget by ordering it to do so.
+#
+# FIXME: Use #redraw_area in methods like #[]= to only update part of
+# the canvas, which should have a much better performance than an
+# entire #redraw.
+#
+# == Signals
+# This widget provides three highlevel events for dealing with mouse
+# interaction on the grid’s cells. They are, in the order in which
+# they’re emitted:
+#
+# [cell_button_press]
+#   The user pressed any mouse button over any of the grid’s cells. The
+#   signal handlers gets passed a hash with the following keys:
+#   [pos]
+#     An instance of CellPos, describing the cell that has been
+#     clicked.
+#   [event]
+#     The underlying +button_press+ event. You can use this to find the
+#     button that has been pressed.
+# [cell_button_motion]
+#   The user continues pressing a mouse button and moves the cursor to
+#   other cells ("dragging"). Note that in contrast to the normal
+#   +button_motion+ signal, this signal only gets triggered on a per-cell
+#   basis, so if the cursor never leaves the cell dragging started on
+#   before releasing the button, you never receive this signal. The
+#   handler gets passed a hash with the following keys:
+#   [pos]
+#     An instance of CellPos describing the cell the user has hovered
+#     to. Depending on the cursor’s velocity and the input device (think
+#     touchscreens) this does not necessarily need to be adjascent to
+#     the cell you received in the +cell_button_press+ event.
+#   [event]
+#     The underlying +button_motion+ event.
+# [cell_button_release]
+#   The user finally releases the pressed mouse button. The signal
+#   handler gets passed a hash with the following key:
+#   [event]
+#     The underlying +button_release+ event.
+#
+# Note that all these signals are only generated on interaction with the
+# actual grid, i.e. if the user clicks, drags, etc. outside the area
+# covered by the actual canvas, none of these signals will be emitted
+# (an exception to this is the +cell_button_release+ signal which will
+# be emitted even if the mouse button is released with the cursor being
+# somewhere outwards the canvas, but only if a corresponding +cell_button_pressed+
+# signal was encountered before).
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   type_register
-  signal_new :selection_start, GLib::Signal::RUN_LAST, nil, nil, Hash
-  signal_new :selection_add,   GLib::Signal::RUN_LAST, nil, nil, Hash
-  signal_new :selection_end,   GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :cell_button_motion,  GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :cell_button_release, GLib::Signal::RUN_LAST, nil, nil, Hash
 
-  CellPos = Struct.new(:tile_x, :tile_y, :x, :y)
+  # A CellPos struct represents the position of a single cell in the
+  # grid. You usually don’t construct these objects yourself, but
+  # obtain them via the arguments of the cell_button_* signals.
+  CellPos = Struct.new(:cell_x, :cell_y, :x, :y)
 
   # The default size the unterlying canvas is set to when
   # the list of Pixbuf objects for this widget is empty
@@ -141,7 +190,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw
   end
 
-  # Tell GTK to redraw only a certain part of the map canvas.
+  # Tell GTK to redraw only a certain part of the grid canvas.
   # In contrast to #redraw! this does not re-examine the pixbuf
   # array, i.e. the canvas will not change size when calling this
   # method.
@@ -150,14 +199,16 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # relative to the scroll window, which is undesired and updates the wrong
     # parts of the canvas. Instead, we directly operate on the canvas and tell
     # GDK to invalidate part of it, which in turn causes GTK to issue the expose
-    # event accordingly. `@layout.queue_draw' always affects the entire canvas widget,
-    # so redrawing that one is possible without having to go down to GDK.
+    # event accordingly. In contrast, `@layout.queue_draw' always affects the
+    # entire canvas widget, so redrawing that one is possible without having
+    # to go down to GDK.
     @layout.bin_window.invalidate(Gdk::Rectangle.new(x, y, width, height), false)
   end
 
   # Tell GTK to redraw the entire canvas, but don’t recalculate
   # the canvas size. See also #redraw!.
   def redraw
+    # <Also see the comments in #redraw_area>
     @layout.queue_draw
   end
 
@@ -169,26 +220,26 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole tabe is rectangular, i.e. no row has more columns
     # than another, etc.
-    [tile_width * @pixbufs.first.count, tile_height * @pixbufs.count]
+    [cell_width * @pixbufs.first.count, cell_height * @pixbufs.count]
   end
 
-  # The width of a single tile in pixels.
-  def tile_width
+  # The width of a single cell in pixels.
+  def cell_width
     @pixbufs.first.first.width
   end
 
-  # The height of a single tile in pixels.
-  def tile_height
+  # The height of a single cell in pixels.
+  def cell_height
     @pixbufs.first.first.height
   end
 
-  # The number of tile rows in the grid, i.e. how many tiles are
+  # The number of cell rows in the grid, i.e. how many cells are
   # in a single column.
   def row_num
     @pixbufs.count
   end
 
-  # The number of tile columns in the grid, i.e. how many tiles are
+  # The number of cell columns in the grid, i.e. how many cells are
   # in a single row.
   def col_num
     col = @pixbufs.first
@@ -196,20 +247,39 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     col.count
   end
 
+  # Adds the given CellPos to the current selection and
+  # redraws the affected part of the canvas.
+  # Most useful inside the cell_button_* signal handlers.
+  def add_to_selection(pos)
+    @selection.push(pos)
+    redraw_area(pos.x, pos.y, cell_width, cell_height)
+  end
+
+  # Clears the selection and redraws the canvas without
+  # it.
+  def clear_selection
+    @selection.clear
+    redraw
+  end
+
+  # Checks if the given CellPos is already selected and
+  # if so, returns +true+, otherwise +false+.
+  def selected?(pos)
+    @selection.include?(pos)
+  end
+
   private
 
   ########################################
   # Custom default event handlers
 
-  def signal_do_selection_start(hsh)
-    redraw_area(hsh[:pos].x, hsh[:pos].y, tile_width, tile_height)
+  def signal_do_cell_button_press(*)
   end
 
-  def signal_do_selection_add(hsh)
-    redraw_area(hsh[:pos].x, hsh[:pos].y, tile_width, tile_height)
+  def signal_do_cell_button_motion(*)
   end
 
-  def signal_do_selection_end(hsh)
+  def signal_do_cell_button_release(*)
   end
 
   ########################################
@@ -272,7 +342,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     # If a selection is active, also draw that one.
     @selection.each do |pos|
-      cc.rectangle(pos.x, pos.y, tile_width, tile_height)
+      cc.rectangle(pos.x, pos.y, cell_width, cell_height)
     end
     cc.set_source_rgba(1, 0, 0, 0.5)
     cc.fill
@@ -283,42 +353,39 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def on_button_press(_, event)
     @button_is_down = true
 
-    # Snap click coordinates to tile grid
-    pos   = CellPos.new(event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height)
-    pos.x = pos.tile_x * tile_width
-    pos.y = pos.tile_y * tile_height
+    # Snap click coordinates to cell grid
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos.x = pos.cell_x * cell_width
+    pos.y = pos.cell_y * cell_height
 
-    # Only care about clicks on the map, not about those next to it
-    return if pos.tile_x < 0 or pos.tile_x >= col_num or pos.tile_y < 0 or pos.tile_y >= row_num
+    # Only care about clicks on the grid, not about those next to it
+    return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
 
-    @selection.clear
-    @selection.push(pos)
-    signal_emit :selection_start, :pos => pos
-    redraw # So the old selection goes away
+    signal_emit :cell_button_press, :pos => pos, :event => event
+
+    #@selection.clear
+    #signal_emit :selection_start, :pos => pos
+    #redraw # So the old selection goes away
   end
 
   def on_motion(_, event)
     return unless @button_is_down
 
-    # Snap click coordinates to tile grid
-    pos   = CellPos.new(event.coords[0].to_i / tile_width, event.coords[1].to_i / tile_height)
-    pos.x = pos.tile_x * tile_width
-    pos.y = pos.tile_y * tile_height
+    # Snap click coordinates to cell grid
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos.x = pos.cell_x * cell_width
+    pos.y = pos.cell_y * cell_height
 
-    # Only care about clicks on the map, not about those next to it
-    return if pos.tile_x < 0 or pos.tile_x >= col_num or pos.tile_y < 0 or pos.tile_y >= row_num
+    # Only care about clicks on the grid, not about those next to it
+    return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
 
-    # If we already have this tile selected, ignore the event.
-    # Otherwise add it and emit the signal.
-    unless @selection.include?(pos)
-      @selection.push(pos)
-      signal_emit :selection_add, :pos => pos
-    end
+    signal_emit :cell_button_motion, :pos => pos, :event => event
   end
 
   def on_button_release(_, event)
     @button_is_down = false
-    signal_emit :selection_end, :selection => @selection.dup # So that clearing it later doesn't affect handler
+
+    signal_emit :cell_button_release, :event => event
   end
 
 end
