@@ -93,6 +93,26 @@
 # position and the first cell_button_motion’s +pos+ arguments will not
 # be the same, i.e. +cell_button_motion+ will not receive the starting
 # point.
+#
+# == The mask
+# Most likely you want your user to interact with the widget by clicking
+# on it, dragging, etc. As already mentioned, these interaction causes
+# the above signals to be emitted, to which you can connect to act upon
+# the user’s request. However, the ImageGrid widget comes with another
+# powerful element: The selection mask, or just mask for short. This is
+# just an array of CellPos instances that describes all cells in the grid
+# that are "masked", usually representing a selection the user made by
+# clicking-and-dragging on the widget. By default, no mask is applied
+# as the default event handlers do nothing for you, but you can easily
+# hook into them and pass the CellInfo instances you will get as arguments
+# into the masking methods of this class, e.g. #add_to_mask. Whenever you
+# do so, the current mask will be shown to the user by drawing it over
+# the actual cell pixbuf images, and you may call #selection to use
+# the mask on the grid and retrieve all CellInfo instances it masks.
+# The mask is independent from the actual grid, as it’s a purely hypothetical
+# construct; you can easily extend the mask to areas that don’t even
+# reside inside the grid canvas. Until you call #selection, remember that
+# the mask may have dimensions unrelated to the grid canvas.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   type_register
   signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
@@ -135,7 +155,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     @draw_grid = false
     @grid_color = [0.5, 0, 1, 1]
-    @selection = []
+    @mask = []
     @button_is_down = false # Set to true while a mouse button is down
 
     @layout.set_size(*DEFAULT_SIZE)
@@ -151,19 +171,56 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   # Set the CellInfo instance at a specified coordinate. Use +nil+
-  # for +obj+ if you want an empty cell. For convenience, if you
-  # don’t want to create a CellInfo object yourself, you can directly
-  # pass a Pixbuf instance as +obj+, in which case the CellInfo
-  # instance will be wrapped around it automatically.
-  def []=(x, y, obj)
-    obj = CellInfo.new(obj) if obj.kind_of?(Gdk::Pixbuf)
+  # for +cell_info+ if you want an empty cell.
+  def []=(x, y, cell_info)
+    raise(TypeError, "Not a Gdk::Pixbuf nor nil: #{cell_info.pixbuf.inspect}") if cell_info and !cell_info.pixbuf.kind_of?(Gdk::Pixbuf)
+
     0.upto(y){|i| @cells[i] = [] unless @cells[i]} unless @cells[y]
-    @cells[y][x] = obj
+    @cells[y][x] = cell_info
   end
 
   # Retrieves the CellInfo instance (or +nil+) at the specified coordinate.
   def [](x, y)
     @cells[y][x]
+  end
+
+  # call-seq:
+  #   set_cell(x, y, cell_info)
+  #   set_cell(x, y, nil)
+  #   set_cell(x, y, pixbuf)
+  #   set_cell(x, y, pixbuf, data)
+  #
+  # Set the CellInfo instance at the specified coordinate. The first form
+  # is equal to using #[]= and directly assigns a CellInfo instance to
+  # the specified cell coordinate. The second form is equal to using #[]=
+  # with +nil+ as the target argument and erases the specified cell by
+  # removing its content. The third form is a convenience form for contructing
+  # a CellInfo instance around a Gdk::Pixbuf object without adding any
+  # additional data, and the fourth form also sets the data on the CellInfo
+  # instance. This is particularily useful when using this method with
+  # an implicit hash:
+  #
+  #   grid.set_cell(1, 2, my_pixbuf, :foo => "bar", :baz => "blubb")
+  #
+  # The Hash instance will be assigned to the generated CellInfo instance’s
+  # +data+ attribute and can be retrieved like any other data later on.
+  def set_cell(x, y, obj, data = nil)
+    if data
+      self[x, y] = CellInfo.new(obj, data) # Pixbuf typecheck done in #[]
+    else
+      case obj
+      when Gdk::Pixbuf then self[x, y] = CellInfo.new(obj, data) # Some users may want to store `false'
+      when CellInfo    then self[x, y] = obj
+      when NilClass    then self[x, y] = nil
+      else
+        raise(TypeError, "Neither a CellInfo nor a Gdk::Pixbuf: #{obj.inspect}")
+      end
+    end
+  end
+
+  # For symmetry with #set_cell, equal to #[].
+  def get_cell(x, y)
+    self[x, y]
   end
 
   # Append an entire row of cells to the bottom of the grid.
@@ -184,7 +241,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cells.replace(cells)
   end
 
-  # Wipe out the internal array of cells.
+  # Wipe out the internal array of cells. Does not affect
+  # the mask.
   def clear
     @cells.clear
   end
@@ -269,24 +327,24 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     col.count
   end
 
-  # Adds the given CellPos to the current selection and
+  # Adds the given CellPos to the current mask and
   # redraws the affected part of the canvas.
   # Most useful inside the cell_button_* signal handlers.
-  def add_to_selection(pos)
-    @selection.push(pos)
+  def add_to_mask(pos)
+    @mask.push(pos)
     redraw_area(pos.x, pos.y, cell_width, cell_height)
   end
 
-  # Replaces the current selection with the rectangle described
+  # Replaces the current mask with the rectangle described
   # by the two CellPos instances +corner1+ and +corner2+,
   # taking care of the appropriate redrawing operations.
   # Depending on the coordinates of the two arguments to this
   # method, this method may actually select a stripe or event
-  # only a single cell. Entirely clearing the selection is not
+  # only a single cell. Entirely clearing the mask is not
   # possible with this method.
-  def select_rectangle(corner1, corner2)
+  def mask_rectangle(corner1, corner2)
     # Remove anything existing and redraw
-    clear_selection
+    clear_mask
 
     # Determine which coordinates we need to subtract from which
     first_x_corner, second_x_corner = corner1.cell_x < corner2.cell_x ? [corner1, corner2] : [corner2, corner1]
@@ -296,7 +354,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     first_x_corner.cell_x.upto(second_x_corner.cell_x) do |cell_x|
       first_y_corner.cell_y.upto(second_y_corner.cell_y) do |cell_y|
         pos = CellPos.new(cell_x, cell_y, cell_x * cell_width, cell_y * cell_height)
-        @selection.push(pos)
+        @mask.push(pos)
       end
     end
 
@@ -307,25 +365,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
                 (second_y_corner.y + cell_height) - first_y_corner.y) # Likewise for vertical axis
   end
 
-  # Clears the selection and redraws the canvas without
+  # Clears the mask and redraws the canvas without
   # it.
-  def clear_selection
-    @selection.clear
+  def clear_mask
+    @mask.clear
     redraw
   end
 
-  # Checks if the given CellPos is already selected and
-  # if so, returns +true+, otherwise +false+.
-  def selected?(pos)
-    @selection.include?(pos)
+  # Checks if the given CellPos is already part of the
+  # mask, and if so, returns +true+, otherwise +false+.
+  def masked?(pos)
+    @mask.include?(pos)
   end
 
-  # All currently selected cells as an array
-  # of CellPos instances. Don’t directly change
-  # this, instead use the selection-related
-  # methods of this class.
+  # The mask, i.e. an array of all CellPos instances
+  # that have been added to the mask.
+  def mask
+    @mask
+  end
+
+  # Apply the mask for selection on the grid and return all
+  # CellInfo instances that match this. That is, return
+  # all CellInfo objects corresponding to all CellPos objects
+  # in the mask.
   def selection
-    @selection
+    @mask.map{|pos| get_cell(pos.x, pos.y)}
   end
 
   private
@@ -400,8 +464,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       cc.stroke
     end
 
-    # If a selection is active, also draw that one.
-    @selection.each do |pos|
+    # If a mask is active, also draw that one.
+    @mask.each do |pos|
       cc.rectangle(pos.x, pos.y, cell_width, cell_height)
     end
     cc.set_source_rgba(1, 0, 0, 0.5)

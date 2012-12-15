@@ -47,7 +47,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
         # Extract the tile from the tileset pixmap and store it in
         # the widget’s drawing storage.
-        self[mapx, mapy] = Gdk::Pixbuf.new(@tileset_pixbufs[tileset], x, y, tileset.tilewidth, tileset.tileheight)
+        set_cell(mapx, mapy, Gdk::Pixbuf.new(@tileset_pixbufs[tileset], x, y, tileset.tilewidth, tileset.tileheight))
       end
     end
 
@@ -64,15 +64,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     @pressed_button = hsh[:event].button
     return unless hsh[:event].button == 3 # Secondary mouse button
 
-    clear_selection
-    add_to_selection(hsh[:pos])
+    clear_mask
+    add_to_mask(hsh[:pos])
     @first_selection = hsh[:pos]
   end
 
   def on_cell_button_motion(_, hsh)
     return unless @pressed_button == 3 # Secondary mouse button
 
-    select_rectangle(@first_selection, hsh[:pos])
+    mask_rectangle(@first_selection, hsh[:pos])
   end
 
   def on_cell_button_release(_, hsh)

@@ -67,7 +67,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
         pos = tileset.tile_position(id)
         break unless pos
 
-        @tileset_grid[pos[0], pos[1]] = Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight)
+        @tileset_grid.set_cell(pos[0], pos[1], Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight))
       end
     end
 
@@ -84,8 +84,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   def on_cell_button_release(_, hsh)
     return unless hsh[:pos]
 
-    @tileset_grid.clear_selection
-    @tileset_grid.add_to_selection(hsh[:pos])
+    @tileset_grid.clear_mask
+    @tileset_grid.add_to_mask(hsh[:pos])
   end
 
 end
