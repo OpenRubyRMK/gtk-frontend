@@ -63,7 +63,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
       tileset        = info[:map].tmx_map.tilesets[start_id]
       tileset_pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)
 
-      0.upto(Float::INFINITY) do |id| # First tileset tile index is always 1, not 0
+      0.upto(Float::INFINITY) do |id|
         pos = tileset.tile_position(id)
         break unless pos
 

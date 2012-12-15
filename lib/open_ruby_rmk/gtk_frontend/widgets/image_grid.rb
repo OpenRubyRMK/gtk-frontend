@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 # This is a nested widget that can be used to draw grids of images and
 # let the user interact with them. The images are internally stored as
-# a two-dimensional array of Gdk::Pixbuf objects, each subarray representing
-# a single row in the grid and each pixbuf a single cell.
+# a two-dimensional array of CellInfo objects, each subarray representing
+# a single row in the grid and each CellInfo a single cell. A CellInfo
+# mainly consists of the Gdk::Pixbuf instance used to draw the cell,
+# but can contain arbitrary information via its +data+ attribute.
 #
 # This widget consists basicly of two widgets: A Gtk::Layout, which
 # is the canvas we draw the images onto and which may have an arbitrary
@@ -11,8 +13,8 @@
 # to see parts of the canvas otherwise flipping off the window or even
 # the screen.
 #
-# When the widget is to be drawn, the internal array of Pixbuf instances
-# is iterated, and each Pixbuf is then drawn onto the canvas according
+# When the widget is to be drawn, the internal array of CellInfo instances
+# is iterated, and each’s Pixbuf is then drawn onto the canvas according
 # to its position in that array, representing a single cell. Note that
 # the internal calculation of the size of the canvas depends on two
 # things:
@@ -21,16 +23,16 @@
 #    This does not mean they have to be squared, but each pixbuf’s width
 #    must be the same, and likewise each pixbuf’s height must also be the
 #    same.
-# 2. The internal pixbuf array must always represent a rectangle when
+# 2. The internal cells array must always represent a rectangle when
 #    the widget is to be drawn, i.e. each row must have the same number
-#    of cells. Use +nil+ instead of a pixbuf if you want to leave a
+#    of cells. Use +nil+ instead of a CellInfo if you want to leave a
 #    single cell blank.
 #
 # If you don’t obey these rules, you may experience weird effects when
 # the widget is drawn.
 #
 # == Redrawing
-# Whenever you change the underlying pixbuf array, that what is visible
+# Whenever you change the underlying cells array, that what is visible
 # on the screen differs from the internal data. Therefore, whenever you
 # change pixbuf information of this widget, call the #redraw! method
 # afterwards so the visible part can be resynchronised with the internal
@@ -100,10 +102,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # A CellPos struct represents the position of a single cell in the
   # grid. You usually don’t construct these objects yourself, but
   # obtain them via the arguments of the cell_button_* signals.
+  # These are purely mathematical objects that don’t have any relation
+  # to a cell that may or may not be described through the coordinates
+  # an instance of this class contains.
   CellPos = Struct.new(:cell_x, :cell_y, :x, :y)
 
+  # A CellInfo object encapsulates the information found in a single
+  # cell. This is, most prominently, the Pixbuf instance used to
+  # draw the cell, but you can attach any information you like to
+  # it by setting +data+ to something useful.
+  CellInfo = Struct.new(:pixbuf, :data)
+
   # The default size the unterlying canvas is set to when
-  # the list of Pixbuf objects for this widget is empty
+  # the list of CellInfo objects for this widget is empty
   # (mostly applicable immediately after instanciation).
   DEFAULT_SIZE = [32, 32]
 
@@ -119,7 +130,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Creates a new and empty image grid.
   def initialize
     super
-    @pixbufs = []
+    @cells = []
     @layout = Gtk::Layout.new
 
     @draw_grid = false
@@ -139,25 +150,29 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw!
   end
 
-  # Set the Pixbuf instance at a specified coordinate. Use +nil+
-  # for +pixbuf+ if you want an empty cell.
-  def []=(x, y, pixbuf)
-    0.upto(y){|i| @pixbufs[i] = [] unless @pixbufs[i]} unless @pixbufs[y]
-    @pixbufs[y][x] = pixbuf
+  # Set the CellInfo instance at a specified coordinate. Use +nil+
+  # for +obj+ if you want an empty cell. For convenience, if you
+  # don’t want to create a CellInfo object yourself, you can directly
+  # pass a Pixbuf instance as +obj+, in which case the CellInfo
+  # instance will be wrapped around it automatically.
+  def []=(x, y, obj)
+    obj = CellInfo.new(obj) if obj.kind_of?(Gdk::Pixbuf)
+    0.upto(y){|i| @cells[i] = [] unless @cells[i]} unless @cells[y]
+    @cells[y][x] = obj
   end
 
-  # Retrieves the Pixbuf instance (or +nil+) at the specified coordinate.
+  # Retrieves the CellInfo instance (or +nil+) at the specified coordinate.
   def [](x, y)
-    @pixbufs[y][x]
+    @cells[y][x]
   end
 
-  # Append an entire row of pixbufs to the bottom of the grid.
-  def append_row(pixbufs)
-    @pixbufs.push(pixbufs)
+  # Append an entire row of cells to the bottom of the grid.
+  def append_row(cells)
+    @cells.push(cells)
   end
 
   # Same as #append_row, but returns +self+ for method chaining.
-  def <<(pixbufs)
+  def <<(cells)
     append_row
     self
   end
@@ -165,13 +180,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Replace the entire internal array with another. Be *very*
   # careful when using this method and re-read the notes on
   # the internal structure of that array in the class docs.
-  def replace(pixbufs)
-    @pixbufs.replace(pixbufs)
+  def replace(cells)
+    @cells.replace(cells)
   end
 
-  # Wipe out the internal array of pixbufs.
+  # Wipe out the internal array of cells.
   def clear
-    @pixbufs.clear
+    @cells.clear
   end
 
   # True if the grid shall be drawn.
@@ -182,11 +197,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Recalculate the width and height of the canvas by examining
   # the stored Pixbuf objects (which must all have the same
   # dimensions and in total must sum up to a rectangular area)
-  # and then redraw the entire widget. If the internal pixbuf
+  # and then redraw the entire widget. If the internal cells
   # array is empty, resets the underlying canvas to the default
   # dimensions and redraws it.
   def redraw!
-    if @pixbufs.empty?
+    if @cells.empty?
       @layout.set_size(*DEFAULT_SIZE)
       @layout.queue_draw
       return
@@ -198,7 +213,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   # Tell GTK to redraw only a certain part of the grid canvas.
-  # In contrast to #redraw! this does not re-examine the pixbuf
+  # In contrast to #redraw! this does not re-examine the cells
   # array, i.e. the canvas will not change size when calling this
   # method.
   def redraw_area(x, y, width, height)
@@ -220,36 +235,36 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   # Calculates the size of the underlying canvas by examining the
-  # internal pixbuf array. Return value is a two-element array
+  # internal cells array. Return value is a two-element array
   # of form <tt>[width, height]</tt> (both values are pixel values).
   def canvas_size
     # Note this code makes two
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole tabe is rectangular, i.e. no row has more columns
     # than another, etc.
-    [cell_width * @pixbufs.first.count, cell_height * @pixbufs.count]
+    [cell_width * @cells.first.count, cell_height * @cells.count]
   end
 
   # The width of a single cell in pixels.
   def cell_width
-    @pixbufs.first.first.width
+    @cells.first.first.pixbuf.width
   end
 
   # The height of a single cell in pixels.
   def cell_height
-    @pixbufs.first.first.height
+    @cells.first.first.pixbuf.height
   end
 
   # The number of cell rows in the grid, i.e. how many cells are
   # in a single column.
   def row_num
-    @pixbufs.count
+    @cells.count
   end
 
   # The number of cell columns in the grid, i.e. how many cells are
   # in a single row.
   def col_num
-    col = @pixbufs.first
+    col = @cells.first
     return 0 unless col
     col.count
   end
@@ -331,7 +346,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Event handlers
 
   def on_expose(_, event)
-    return if @pixbufs.empty?
+    return if @cells.empty?
     cc = @layout.bin_window.create_cairo_context
 
     # TODO: Only redraw the parts that need to be redrawn,
@@ -347,11 +362,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # fire a redraw_cell event here so the user can allocate the
     # image required for this cell temporarily.
     # TODO: Fire a redraw_layer event for non-grid layers.
-    @pixbufs.each_with_index do |row, y|
-      row.each_with_index do |pixbuf, x|
-        next if pixbuf.nil? # Empty cell
+    @cells.each_with_index do |row, y|
+      row.each_with_index do |info, x|
+        next if info.nil? # Empty cell
 
-        cc.set_source_pixbuf(pixbuf, x * pixbuf.width, y * pixbuf.height)
+        cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
         cc.paint
       end
     end
@@ -368,13 +383,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       width, height = canvas_size
 
       # Create the Cairo paths for the vertical lines
-      0.step(width, @pixbufs.first.first.width) do |x|
+      0.step(width, @cells.first.first.pixbuf.width) do |x|
         cc.move_to(x + 0.5, 0)
         cc.line_to(x + 0.5, height)
       end
 
       # Create the Cairo paths for the horizontal lines
-      0.step(height, @pixbufs.first.first.height) do |y|
+      0.step(height, @cells.first.first.pixbuf.height) do |y|
         cc.move_to(0, y + 0.5)
         cc.line_to(width, y + 0.5)
       end
