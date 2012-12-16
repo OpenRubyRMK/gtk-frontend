@@ -114,6 +114,8 @@
 # reside inside the grid canvas. Until you call #selection, remember that
 # the mask may have dimensions unrelated to the grid canvas.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
+  include Enumerable
+
   type_register
   signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
   signal_new :cell_button_motion,  GLib::Signal::RUN_LAST, nil, nil, Hash
@@ -232,6 +234,18 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def <<(cells)
     append_row
     self
+  end
+
+  # Iterates over all cells in this grid and yields their
+  # coressponding CellInfo and CellPos objects to the block.
+  # +cell+ may be +nil+ for an empty cell.
+  def each
+    @cells.each_with_index do |col, y|
+      col.each_with_index do |cell, x|
+        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
+        yield(cell, pos)
+      end
+    end
   end
 
   # Replace the entire internal array with another. Be *very*
@@ -363,6 +377,48 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
                 first_y_corner.y,
                 (second_x_corner.x + cell_width)  - first_x_corner.x, # Right edge of second cell - Left edge of first cell
                 (second_y_corner.y + cell_height) - first_y_corner.y) # Likewise for vertical axis
+  end
+
+  # Replaces the mask by a mask that covers all cells that have
+  # the same associated information as the cell at +pos+, and
+  # are adjascent to that cell (recursively). This is like the
+  # "magic selection" known from painting programs.
+  #
+  # Note that this method depends on your data to implement a
+  # meaningful == method. Implicitely clips the mask to the
+  # grid.
+  def mask_adjascent(source_pos)
+    #adjascent = [source_pos]
+    #source    = get_cell(source_pos.cell_x, source_pos.cell_y)
+    #
+    #loop do
+    #  found = []
+    #
+    #  each do |cell_info, pos|
+    #    xrange = Range.new(pos.cell_x - 1, pos.cell_x + 1)
+    #    yrange = Range.new(pos.cell_y - 1, pos.cell_y + 1)
+    #
+    #    # A tile is adjascent, if it is *either* horizontally *or*
+    #    # vertically next to the source tile, but *not* if both
+    #    # (because then it’s diagonally placed).
+    #    result = adjascent.any? do |apos|
+    #      p [apos, pos, xrange, xrange.include?(apos.cell_x)]
+    #    end
+    #
+    #    #if adjascent.any?{|apos| (xrange.include?(apos.cell_x) || yrange.include?(apos.cell_y)) && !(xrange.include?(apos.cell_x) && yrange.include?(apos.cell_y))}
+    #      # Now that we know that is’s an adjascent tile, check if it
+    #      # uses the same cell information.
+    #    #  found << pos if source.data == cell_info.data
+    #    #end
+    #  end
+    #
+    #  break if found.empty?
+    #  adjascent.concat(found)
+    #end
+    #
+    #@mask.replace(adjascent)
+    #redraw
+    raise(NotImplementedError, "Someone needs to implement magic selection.")
   end
 
   # Clears the mask and redraws the canvas without

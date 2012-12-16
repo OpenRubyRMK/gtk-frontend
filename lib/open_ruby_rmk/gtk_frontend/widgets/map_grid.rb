@@ -4,6 +4,15 @@
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
   include OpenRubyRMK::Backend::Eventable
 
+  TileInfo = Struct.new(:x, :y, :layer, :tileset, :tileset_x, :tileset_y) do
+    # Two tile infos are considered equal if all their
+    # attributes except for :x and :y are equal.
+    def ==(other) # :nodoc:
+      other.layer == layer && other.tileset == tileset &&
+        other.tileset_x == tileset_x && other.tileset_y == tileset_y
+    end
+  end
+
   def initialize
     super
     @map = nil
@@ -54,7 +63,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
                                  y,
                                  tileset.tilewidth,
                                  tileset.tileheight),
-                 :x => mapx, :y => mapy, :layer => layer, :tileset => tileset)
+                 TileInfo.new(mapx, mapy, layer, tileset, tx, ty))
       end
     end
 
@@ -82,12 +91,22 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return unless @map
     return unless @pressed_button == 3 # Secondary mouse button
 
-    mask_rectangle(@first_selection, hsh[:pos])
+    # Mask adjustments for those selection modes that are motion-aware
+    case $app.mainwindow.tileset_window.selection_mode
+      when :rectangle then mask_rectangle(@first_selection, hsh[:pos])
+      when :freehand  then add_to_mask(hsh[:pos])
+    end
   end
 
   def on_cell_button_release(_, hsh)
     return unless @map
+    return unless hsh[:pos]
     return unless @pressed_button == hsh[:event].button # Shouldn’t happen
+
+    # Mask adjustments for those selection modes that aren’t motion-aware
+    case $app.mainwindow.tileset_window.selection_mode
+      when :magic then mask_adjascent(@first_selection)
+    end
 
     case @pressed_button
     when 1 then # Primary mouse button
@@ -103,7 +122,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Helpers
 
   # Fills the current mask with the selected tileset’s
-  # selected tile.
+  # selected tile, afterwards clears the mask.
   def fill_mask
     tiles = $app.mainwindow.tileset_window.tileset_grid.selection
     return unless tiles # No tile selected
@@ -115,8 +134,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       # and redraw the canvas — everything done! When the map
       # gets saved, everything where it ought to be thanks
       # to this.
-      index = cell_info.data[:layer].pos2index(@map.tmx_map, cell_info.data[:x], cell_info.data[:y])
-      cell_info.data[:layer][index] = tile.data[:gid]
+      index = cell_info.data.layer.pos2index(@map.tmx_map, cell_info.data.x, cell_info.data.y)
+      cell_info.data.layer[index] = tile.data[:gid]
       # It should be possible to do this without dupping, but I don’t
       # feel good if two entirely separate widgets hold references
       # to the same image...

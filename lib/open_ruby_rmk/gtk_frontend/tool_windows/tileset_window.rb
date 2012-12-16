@@ -58,6 +58,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
     @tileset_grid.signal_connect(:cell_button_release, &method(:on_cell_button_release))
+    @rect_mode_button.signal_connect(:toggled, &method(:rect_mode_button_toggled))
+    @magic_mode_button.signal_connect(:toggled, &method(:magic_mode_button_toggled))
+    @free_mode_button.signal_connect(:toggled, &method(:free_mode_button_toggled))
   end
 
   ########################################
@@ -96,6 +99,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
     @tileset_grid.clear_mask
     @tileset_grid.add_to_mask(hsh[:pos])
+  end
+
+  def rect_mode_button_toggled(widget)
+    @selection_mode = :rectangle if widget.active?
+  end
+
+  def magic_mode_button_toggled(widget)
+    @selection_mode = :magic if widget.active?
+  end
+
+  def free_mode_button_toggled(widget)
+    @selection_mode = :freehand if widget.active?
   end
 
 end
