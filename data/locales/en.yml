@@ -65,6 +65,13 @@ windows:
       rectangle: "Rectangle"
       magic: "Magic"
       freehand: "Freehand"
+  settings:
+    title: "Settings"
+    general:
+      title: "General"
+      name: "Name"
+      descr: "Description"
+      base_path: "Project-Path"
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally

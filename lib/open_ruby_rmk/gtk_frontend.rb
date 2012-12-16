@@ -82,9 +82,18 @@ module OpenRubyRMK
 
 end
 
+########################################
+# Monkey patches
+
+class R18n::TranslatedString
+  def to_label
+    Gtk::Label.new(self.to_s)
+  end
+end
+
 require_relative "gtk_frontend/errors"
 require_relative "gtk_frontend/licenser"
-require_relative "gtk_frontend/helpers/menu_builder"
+require_relative "gtk_frontend/helpers/gtk_helper"
 require_relative "gtk_frontend/helpers/icons"
 require_relative "gtk_frontend/widgets/image_grid"
 require_relative "gtk_frontend/widgets/map_grid"
@@ -99,5 +108,6 @@ require_relative "gtk_frontend/tool_windows/console_window"
 require_relative "gtk_frontend/dialogs/map_settings_dialog"
 require_relative "gtk_frontend/dialogs/resource_dialog"
 require_relative "gtk_frontend/dialogs/resource_preview_dialog"
+require_relative "gtk_frontend/settings_editor"
 require_relative "gtk_frontend/main_window"
 require_relative "gtk_frontend/app"
