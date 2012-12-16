@@ -38,6 +38,14 @@ dialogs:
       copyright_holder: "Copyright holder"
   resource_preview:
     title: "Resource preview"
+  settings:
+    title: "Settings"
+    labels:
+      general:
+        title: "General"
+        name: "Name"
+        descr: "Description"
+        base_path: "Project-Path"
 
 # Texts for the debugging console.
 console:
@@ -65,13 +73,6 @@ windows:
       rectangle: "Rectangle"
       magic: "Magic"
       freehand: "Freehand"
-  settings:
-    title: "Settings"
-    general:
-      title: "General"
-      name: "Name"
-      descr: "Description"
-      base_path: "Project-Path"
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally
@@ -93,6 +94,7 @@ menus:
     name: E_dit
     entries:
       resources: Re_ssources…
+      project_settings: P_roject settings…
   view:
     name: _View
     entries:

@@ -34,7 +34,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     super
     @map_window.show_all
     @tileset_window.show_all
-    @settings_window.show_all
   end
 
   # Event handler triggered by the observed App.
@@ -70,6 +69,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     menu @menubar, t.menus.edit.name do |edit|
       append_menu_item edit, t.menus.edit.entries.resources, :edit_resources
+      append_menu_item edit, t.menus.edit.entries.project_settings, :edit_project_settings
     end
 
     menu @menubar, t.menus.view.name do |view|
@@ -119,7 +119,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @map_window     = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
     @tileset_window = OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow.new(self)
     @console_window = OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow.new(self)
-    @settings_window = OpenRubyRMK::GTKFrontend::SettingsEditor.new(self)
   end
 
   # Connects the previously created widgets with event handlers.
@@ -133,11 +132,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
+    menu_items[:edit_project_settings].signal_connect(:activate, &method(:on_menu_edit_project_settings))
     menu_items[:view_grid].signal_connect(:activate, &method(:on_menu_view_grid))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
     menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
-    menu_items[:windows_settings].signal_connect(:activate, &method(:on_menu_windows_settings))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
   end
 
@@ -155,7 +154,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # a new directory. In my mind I see a little guy full of dreams and ideas who wants to
   # write his thoughts down in that very first step. Of course that things will change
   # a few times before the final release, so the dialog should be reusable as "change
-  # project settings" - dialog. 
+  # project settings" - dialog.
   # There might be an embedded-in-main-window-than-create-thousands-of-popupwindows-mode
   def on_menu_file_new(event)
     fd = FileChooserDialog.new(t.dialogs.new_project,
@@ -225,6 +224,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     rd.run
   end
 
+  def on_menu_edit_project_settings(event)
+    sd = OpenRubyRMK::GTKFrontend::Dialogs::SettingsDialog.new
+    sd.run
+  end
+
   # View -> Grid
   def on_menu_view_grid(event)
     @map_grid.draw_grid = !@map_grid.draw_grid?
@@ -240,15 +244,15 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
   end
 
-  # FIXME: Extract to a helper!
-  def self.toggleable_window(name)
-    define_method "on_menu_windows_#{name.to_s}" do |event|
-      hook = instance_variable_get("@#{name.to_s}_window")
-      hook.send(hook.visible? ? :hide : :show)
-    end
-  end
-  toggleable_window :map_tree
-  toggleable_window :settings
+  # FIXME: Extract to a helper and use!
+  #def self.toggleable_window(name)
+  #  define_method "on_menu_windows_#{name.to_s}" do |event|
+  #    hook = instance_variable_get("@#{name.to_s}_window")
+  #    hook.send(hook.visible? ? :hide : :show)
+  #  end
+  #end
+  #toggleable_window :map_tree
+  #toggleable_window :settings
 
   def on_menu_windows_tileset(event)
     if @tileset_window.visible?
@@ -292,15 +296,17 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # on +project+ (which may be +nil+ if no project is loaded).
   def update_menu_entries(project)
     if project
-      menu_items[:file_new].sensitive       = false
-      menu_items[:file_open].sensitive      = false
-      menu_items[:file_save].sensitive      = true
-      menu_items[:edit_resources].sensitive = true
+      menu_items[:file_new].sensitive              = false
+      menu_items[:file_open].sensitive             = false
+      menu_items[:file_save].sensitive             = true
+      menu_items[:edit_resources].sensitive        = true
+      menu_items[:edit_project_settings].sensitive = true
     else
-      menu_items[:file_new].sensitive       = true
-      menu_items[:file_open].sensitive      = true
-      menu_items[:file_save].sensitive      = false
-      menu_items[:edit_resources].sensitive = false
+      menu_items[:file_new].sensitive              = true
+      menu_items[:file_open].sensitive             = true
+      menu_items[:file_save].sensitive             = false
+      menu_items[:edit_resources].sensitive        = false
+      menu_items[:edit_project_settings].sensitive = false
     end
   end
 
