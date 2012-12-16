@@ -172,11 +172,9 @@ class OpenRubyRMK::GTKFrontend::App
     # NOTE: If you want to add to this, please always use "orr_" as a prefix
     # for your names. This allows to easily see in-code whether an icon has
     # been added by the ORR code or is a GTK stock builtin.
-    register_stock_icon(:orr_paint_mode, "ui/fill.svg", "Fill mode")
-    register_stock_icon(:orr_fill_mode, "ui/paint.svg", "Paint mode")
-    register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.svg", "Freehand")
-    register_stock_icon(:orr_magic_selection, "ui/selection-magic.svg", "Magic")
-    register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.svg", "Rectangle")
+    register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.svg", t.windows.tileset.labels.freehand)
+    register_stock_icon(:orr_magic_selection, "ui/selection-magic.svg", t.windows.tileset.labels.magic)
+    register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.svg", t.windows.tileset.labels.rectangle)
   end
 
   # Adds a single custom menu item to GTK. +path+ is

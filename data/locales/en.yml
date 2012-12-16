@@ -59,6 +59,12 @@ windows:
     labels:
       map_name: "Map name"
       map_id: "Map ID"
+  tileset:
+    title: "Tileset"
+    labels:
+      rectangle: "Rectangle"
+      magic: "Magic"
+      freehand: "Freehand"
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally

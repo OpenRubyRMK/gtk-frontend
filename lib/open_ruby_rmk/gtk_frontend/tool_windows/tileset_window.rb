@@ -8,13 +8,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   # The grid showing the tileset’s tile images.
   attr_reader :tileset_grid
 
+  # The selection mode as selected by the user.
+  attr_reader :selection_mode
+
   def initialize(parent)
     super()
     set_default_size 200, 300
 
     self.type_hint = Gdk::Window::TYPE_HINT_UTILITY
     self.transient_for = parent
-    self.title = "Tileset"
+    self.title = t.windows.tileset.title
+
+    @selection_mode = :rectangle
 
     parent.map_grid.add_observer(self, :map_grid_changed)
 
