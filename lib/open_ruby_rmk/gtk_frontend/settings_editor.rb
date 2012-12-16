@@ -7,7 +7,7 @@ class OpenRubyRMK::GTKFrontend::SettingsEditor < Gtk::Window
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::Backend
-  include OpenRubyRMK::GTKFrontend::GtkHelper
+  include OpenRubyRMK::GTKFrontend::Helpers::GtkHelper
   
   def initialize(parent)
     super()

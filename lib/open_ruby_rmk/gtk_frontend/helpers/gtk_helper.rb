@@ -46,7 +46,7 @@
 #     include OpenRubyRMK::GTKFrontend::MenuBuilder
 #     # ...
 #   end
-module OpenRubyRMK::GTKFrontend::Helers::GtkHelper  
+module OpenRubyRMK::GTKFrontend::Helpers::GtkHelper
   # Initialises the internal menu item storage.
   # Hooks into the +initialize+ chain properly.
   def initialize(*) # :nodoc:
