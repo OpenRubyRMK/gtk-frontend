@@ -81,7 +81,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       append_menu_item windows, t.menus.windows.entries.tileset, :windows_tileset
       append_menu_separator windows
       append_menu_item windows, t.menus.windows.entries.console, :windows_console
-      append_menu_item windows, t.menus.windows.entries.map_tree, :windows_settings
     end
 
     menu @menubar, t.menus.help.name do |help|
