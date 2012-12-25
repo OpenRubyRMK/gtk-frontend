@@ -125,7 +125,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # selected tile, afterwards clears the mask.
   def fill_mask
     tiles = $app.mainwindow.tileset_window.tileset_grid.selection
-    return unless tiles # No tile selected
+    return if !tiles or tiles.empty? # No tile selected
     tile = tiles.first  # Only one tile can actually be selected
 
     selection.each do |cell_info|

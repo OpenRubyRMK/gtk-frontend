@@ -158,7 +158,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def on_menu_file_new(event)
     fd = FileChooserDialog.new(t.dialogs.new_project,
                                self,
-                               FileChooser::ACTION_CREATE_FOLDER,
+                               FileChooser::Action::SELECT_FOLDER,
                                nil,
                                [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
                                [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
@@ -184,12 +184,18 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # File -> Open
   def on_menu_file_open(event)
+    filter = FileFilter.new
+    filter.name = "OpenRubyRMK project files (*.rmk;*.RMK)"
+    filter.add_pattern("*.rmk")
+    filter.add_pattern("*.RMK")
+
     fd = FileChooserDialog.new(t.dialogs.new_project,
                                self,
-                               FileChooser::ACTION_SELECT_FOLDER,
+                               FileChooser::ACTION_OPEN,
                                nil,
                                [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
                                [Gtk::Stock::OPEN, Gtk::Dialog::RESPONSE_ACCEPT])
+    fd.add_filter(filter)
 
     if fd.run == Dialog::RESPONSE_ACCEPT
       path = Pathname.new(GLib.filename_to_utf8(fd.filename))
@@ -200,7 +206,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     begin
-      $app.project = Project.load_dir(path)
+      $app.project = Project.load_dir(path.dirname.parent)
     rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
       $app.msgbox(t.dialogs.dir_not_found, type: :error, buttons: :close, params: {:dir => e.path})
       $app.project = nil # Ensure we have a clean state
