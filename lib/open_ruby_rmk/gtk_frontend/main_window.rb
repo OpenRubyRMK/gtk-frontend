@@ -164,7 +164,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
                                [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
 
     if fd.run == Dialog::RESPONSE_ACCEPT
-      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename)).expand_path
       fd.destroy
     else
       fd.destroy
@@ -198,7 +198,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     fd.add_filter(filter)
 
     if fd.run == Dialog::RESPONSE_ACCEPT
-      path = Pathname.new(GLib.filename_to_utf8(fd.filename))
+      path = Pathname.new(GLib.filename_to_utf8(fd.filename)).expand_path
       fd.destroy
     else
       fd.destroy
@@ -206,9 +206,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
 
     begin
-      $app.project = Project.load_dir(path.dirname.parent)
-    rescue OpenRubyRMK::Backend::Errors::NonexistantDirectory => e
-      $app.msgbox(t.dialogs.dir_not_found, type: :error, buttons: :close, params: {:dir => e.path})
+      $app.project = Project.load_project_file(path)
+    rescue OpenRubyRMK::Backend::Errors::NonexistantFile => e
+      $app.msgbox(t.dialogs.file_not_found, type: :error, buttons: :close, params: {:file => e.path})
       $app.project = nil # Ensure we have a clean state
     end
   end

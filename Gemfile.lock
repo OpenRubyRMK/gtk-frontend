@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 6aec586601ac13c6097719b3edcfd1265ff1e1a6
+  revision: b14b742380b575cbb464b87ce9fe8fbe2fcc552b
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/Quintus/tmx-ruby.git
-  revision: b6a5f48e63f388a62932836c25c23d1814cfb3ba
+  revision: 9464802bec1698dcef58468a63f0b6c2b2db9406
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
@@ -30,7 +30,7 @@ GEM
       atk (>= 1.1.5)
       gdk_pixbuf2 (>= 1.1.5)
       pango (>= 1.1.5)
-    nokogiri (1.5.5)
+    nokogiri (1.5.6)
     paint (0.8.5)
     pango (1.1.5)
       cairo (>= 1.10.0)

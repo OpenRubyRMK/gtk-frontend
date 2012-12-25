@@ -14,6 +14,7 @@ dialogs:
   new_project: "Create a new project"
   not_empty: "The directory %{dir} is not empty."
   dir_not_found: "The directory %{dir} couldn’t be found."
+  file_not_found: "The file %{file} couldn’t be found."
   map_settings:
     name: "Map settings"
     labels:
