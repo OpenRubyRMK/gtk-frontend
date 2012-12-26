@@ -135,12 +135,10 @@ class OpenRubyRMK::GTKFrontend::App
   def parse_argv
     return if @argv.empty?
 
-    # Accept the project directory as a path as well as
-    # the .rmk file.
+    # The one and only argument may be a path to a .rmk file
     path = Pathname.new(@argv.first)
-    path = path.dirname.expand_path.parent if path.extname == ".rmk"
 
-    @project = OpenRubyRMK::Backend::Project.load_dir(path)
+    @project = OpenRubyRMK::Backend::Project.load_project_file(path)
   rescue OpenRubyRMK::Backend::Errors::InvalidPath => e
     $stderr.puts(e.message)
     @project = nil
