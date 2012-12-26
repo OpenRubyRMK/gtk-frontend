@@ -64,6 +64,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       append_menu_item file, t.menus.file.entries.open, :file_open
       append_menu_item file, t.menus.file.entries.save, :file_save
       append_menu_separator file
+      append_menu_item file, t.menus.file.entries.package, :file_package
+      append_menu_separator file
       append_menu_item file, t.menus.file.entries.quit, :file_quit
     end
 
@@ -129,6 +131,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_new].signal_connect(:activate, &method(:on_menu_file_new))
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
+    menu_items[:file_package].signal_connect(:activate, &method(:on_menu_file_package))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
     menu_items[:edit_project_settings].signal_connect(:activate, &method(:on_menu_edit_project_settings))
@@ -218,6 +221,36 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     $app.project.save
   end
 
+  # File -> Package
+  def on_menu_file_package(event)
+    fd = FileChooserDialog.new(t.dialogs.package,
+                               self,
+                               FileChooser::Action::SELECT_FOLDER,
+                               nil,
+                               [Gtk::Stock::CANCEL, Gtk::Dialog::RESPONSE_CANCEL],
+                               [Gtk::Stock::SAVE, Gtk::Dialog::RESPONSE_ACCEPT])
+
+    begin
+      if fd.run == Dialog::RESPONSE_ACCEPT
+        path = Pathname.new(GLib.filename_to_utf8(fd.filename)).expand_path
+      else
+        return
+      end
+    ensure
+      fd.destroy
+    end
+
+    unless path.children.empty?
+      $app.msgbox(t.dialogs.not_empty,
+                  type: :error,
+                  buttons: :close,
+                  params: {:dir => path})
+      return
+    end
+
+    $app.project.package(path)
+  end
+
   # File -> Quit
   def on_menu_file_quit(event)
     Gtk.main_quit
@@ -304,12 +337,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:file_new].sensitive              = false
       menu_items[:file_open].sensitive             = false
       menu_items[:file_save].sensitive             = true
+      menu_items[:file_package].sensitive          = true
       menu_items[:edit_resources].sensitive        = true
       menu_items[:edit_project_settings].sensitive = true
     else
       menu_items[:file_new].sensitive              = true
       menu_items[:file_open].sensitive             = true
       menu_items[:file_save].sensitive             = false
+      menu_items[:file_package].sensitive          = false
       menu_items[:edit_resources].sensitive        = false
       menu_items[:edit_project_settings].sensitive = false
     end

@@ -47,6 +47,7 @@ dialogs:
         name: "Name"
         descr: "Description"
         base_path: "Project-Path"
+  package: "Select a target directory"
 
 # Texts for the debugging console.
 console:
@@ -90,6 +91,7 @@ menus:
       new: Ne_w
       open: O_pen…
       save: Sav_e
+      package: P_ackage…
       quit: _Quit
   edit:
     name: E_dit
