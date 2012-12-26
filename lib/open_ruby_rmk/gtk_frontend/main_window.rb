@@ -13,6 +13,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # The window showing the tileset stuff.
   attr_reader :tileset_window
 
+  # PID of the process running the game test. +nil+
+  # if no testing is done currently.
+  attr_reader :test_pid
+
   # Creates the application window.
   def initialize
     super
@@ -23,6 +27,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_layout
     create_extra_windows
     setup_event_handlers
+
+    @test_pid = nil
 
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
@@ -64,6 +70,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       append_menu_item file, t.menus.file.entries.open, :file_open
       append_menu_item file, t.menus.file.entries.save, :file_save
       append_menu_separator file
+      append_menu_item file, t.menus.file.entries.test, :file_test
       append_menu_item file, t.menus.file.entries.package, :file_package
       append_menu_separator file
       append_menu_item file, t.menus.file.entries.quit, :file_quit
@@ -131,6 +138,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_new].signal_connect(:activate, &method(:on_menu_file_new))
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
+    menu_items[:file_test].signal_connect(:activate, &method(:on_menu_file_test))
     menu_items[:file_package].signal_connect(:activate, &method(:on_menu_file_package))
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
@@ -219,6 +227,22 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # File -> Save
   def on_menu_file_save(event)
     $app.project.save
+  end
+
+  # File -> Test
+  def on_menu_file_test(event)
+    @test_pid = spawn({
+                        "BUNDLE_BIN_PATH" => nil,
+                        "BUNDLE_GEMFILE" => nil,
+                        "RUBYOPT" => nil,
+                        "GEM_HOME" => nil,
+                        "GEM_PATH" => nil
+                      },
+                      "bundle exec '#{$app.project.paths.start_file}'",
+                      chdir: $app.project.paths.root.to_s)
+    # FIXME: Add a modal dialog with a stop button so
+    # the main UI is blocked, but the test can still be
+    # aborted.
   end
 
   # File -> Package
@@ -337,6 +361,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:file_new].sensitive              = false
       menu_items[:file_open].sensitive             = false
       menu_items[:file_save].sensitive             = true
+      menu_items[:file_test].sensitive             = true
       menu_items[:file_package].sensitive          = true
       menu_items[:edit_resources].sensitive        = true
       menu_items[:edit_project_settings].sensitive = true
@@ -344,6 +369,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:file_new].sensitive              = true
       menu_items[:file_open].sensitive             = true
       menu_items[:file_save].sensitive             = false
+      menu_items[:file_test].sensitive             = false
       menu_items[:file_package].sensitive          = false
       menu_items[:edit_resources].sensitive        = false
       menu_items[:edit_project_settings].sensitive = false

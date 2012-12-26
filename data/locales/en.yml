@@ -91,6 +91,7 @@ menus:
       new: Ne_w
       open: O_pen…
       save: Sav_e
+      test: Test
       package: P_ackage…
       quit: _Quit
   edit:
