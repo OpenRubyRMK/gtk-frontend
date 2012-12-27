@@ -80,7 +80,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
         pos = tileset.tile_position(id)
         break unless pos
 
-        @tileset_grid.set_cell(pos[0], pos[1], Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight), :gid => start_id + id)
+        @tileset_grid.set_cell(pos[0], pos[1], 0, Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight), :gid => start_id + id)
       end
     end
 

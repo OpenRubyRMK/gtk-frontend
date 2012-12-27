@@ -4,15 +4,6 @@
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
   include OpenRubyRMK::Backend::Eventable
 
-  TileInfo = Struct.new(:x, :y, :layer, :tileset, :tileset_x, :tileset_y) do
-    # Two tile infos are considered equal if all their
-    # attributes except for :x and :y are equal.
-    def ==(other) # :nodoc:
-      other.layer == layer && other.tileset == tileset &&
-        other.tileset_x == tileset_x && other.tileset_y == tileset_y
-    end
-  end
-
   def initialize
     super
     @map = nil
@@ -49,21 +40,25 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
     # operation.
     # TODO: Depending on the active layer, set alpha on higher layers?
-    @map.tmx_map.layers.each do |layer|
+    @map.tmx_map.layers.each_with_index do |layer, mapz|
       layer.each_tile(@map.tmx_map) do |mapx, mapy, tile, id, tileset, flips|
-        # Convert the relative tile ID into coordinates on the tileset pixmap
-        tx, ty, x, y = tileset.tile_position(id)
+        if tileset
+          # Convert the relative tile ID into coordinates on the tileset pixmap
+          tx, ty, x, y  = tileset.tile_position(id)
 
-        # Extract the tile from the tileset pixmap and store it in
-        # the widget’s drawing storage.
-        set_cell(mapx,
-                 mapy,
-                 Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
-                                 x,
-                                 y,
-                                 tileset.tilewidth,
-                                 tileset.tileheight),
-                 TileInfo.new(mapx, mapy, layer, tileset, tx, ty))
+          # Extract the tile from the tileset pixmap and store it in
+          # the widget’s drawing storage.
+          set_cell(mapx,
+                   mapy,
+                   mapz,
+                   Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
+                                   x,
+                                   y,
+                                   tileset.tilewidth,
+                                   tileset.tileheight))
+        else # Empty cell
+          set_cell(mapx, mapy, mapz, nil)
+        end
       end
     end
 
@@ -128,21 +123,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return if !tiles or tiles.empty? # No tile selected
     tile = tiles.first  # Only one tile can actually be selected
 
-    selection.each do |cell_info|
-      # By-reference is great :-)
-      # Just update the layer and pixbuf referenced by this cell,
-      # and redraw the canvas — everything done! When the map
-      # gets saved, everything where it ought to be thanks
-      # to this.
-      index = cell_info.data.layer.pos2index(@map.tmx_map, cell_info.data.x, cell_info.data.y)
-      cell_info.data.layer[index] = tile.data[:gid]
-      # It should be possible to do this without dupping, but I don’t
-      # feel good if two entirely separate widgets hold references
-      # to the same image...
-      cell_info.pixbuf = tile.pixbuf.dup
-    end
+    apply! do |cell_pos, cell_info|
+      layer        = @map.tmx_map.layers[cell_pos.cell_z]
+      index        = layer.pos2index(@map.tmx_map, cell_pos.cell_x, cell_pos.cell_y)
+      layer[index] = tile.data[:gid]
 
-    clear_mask # Issues #redraw itself
+      # Instruct ImageGrid to replace this cell’s pixbuf
+      # with the pixbuf for the respective tile on the tileset.
+      tile.pixbuf.dup
+    end
   end
 
 end

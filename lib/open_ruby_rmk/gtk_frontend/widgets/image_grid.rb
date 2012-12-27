@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 # This is a nested widget that can be used to draw grids of images and
 # let the user interact with them. The images are internally stored as
-# a two-dimensional array of CellInfo objects, each subarray representing
-# a single row in the grid and each CellInfo a single cell. A CellInfo
+# a three-dimensional array of CellInfo objects, each subarray representing
+# a single layer in the grid and each CellInfo a single column (which itself
+# is an array representing the actual cells). A CellInfo
 # mainly consists of the Gdk::Pixbuf instance used to draw the cell,
 # but can contain arbitrary information via its +data+ attribute.
 #
@@ -23,10 +24,11 @@
 #    This does not mean they have to be squared, but each pixbuf’s width
 #    must be the same, and likewise each pixbuf’s height must also be the
 #    same.
-# 2. The internal cells array must always represent a rectangle when
-#    the widget is to be drawn, i.e. each row must have the same number
+# 2. The internal cells array if each layer must always represent a rectangle
+#    when the widget is to be drawn, i.e. each row must have the same number
 #    of cells. Use +nil+ instead of a CellInfo if you want to leave a
-#    single cell blank.
+#    single cell blank. Note the grid doesn’t have to be a cube, so you may
+#    choose any number of Z layers.
 #
 # If you don’t obey these rules, you may experience weird effects when
 # the widget is drawn.
@@ -94,6 +96,11 @@
 # be the same, i.e. +cell_button_motion+ will not receive the starting
 # point.
 #
+# All positions provided by the signals are always relative to the
+# _active_ Z layer, which defaults to 0 and can be configured via
+# the #active_layer attribute. Apart from this, the active layer
+# does not have any impact on any of the methods of this class.
+#
 # == The mask
 # Most likely you want your user to interact with the widget by clicking
 # on it, dragging, etc. As already mentioned, these interaction causes
@@ -104,15 +111,18 @@
 # that are "masked", usually representing a selection the user made by
 # clicking-and-dragging on the widget. By default, no mask is applied
 # as the default event handlers do nothing for you, but you can easily
-# hook into them and pass the CellInfo instances you will get as arguments
+# hook into them and pass the CellPos instances you will get as arguments
 # into the masking methods of this class, e.g. #add_to_mask. Whenever you
 # do so, the current mask will be shown to the user by drawing it over
-# the actual cell pixbuf images, and you may call #selection to use
+# the actual cell pixbuf images, and you may call #selection or #apply to use
 # the mask on the grid and retrieve all CellInfo instances it masks.
 # The mask is independent from the actual grid, as it’s a purely hypothetical
 # construct; you can easily extend the mask to areas that don’t even
-# reside inside the grid canvas. Until you call #selection, remember that
-# the mask may have dimensions unrelated to the grid canvas.
+# reside inside the grid canvas. Until you apply it, remember that
+# the mask may have dimensions unrelated to the grid canvas. Also note
+# that while it’s hypothetically possible to have the mask span multiple
+# Z layers, in general you want to avoid this to prevent really confusing
+# effects.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   include Enumerable
 
@@ -127,7 +137,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # These are purely mathematical objects that don’t have any relation
   # to a cell that may or may not be described through the coordinates
   # an instance of this class contains.
-  CellPos = Struct.new(:cell_x, :cell_y, :x, :y)
+  CellPos = Struct.new(:cell_x, :cell_y, :cell_z, :x, :y)
 
   # A CellInfo object encapsulates the information found in a single
   # cell. This is, most prominently, the Pixbuf instance used to
@@ -149,15 +159,21 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   #   [red, green, blue, alpha]
   attr_accessor :grid_color
 
+  ##
+  # :attr_accessor: active_layer
+  #
+  # The currently active layer’s index a user is operating on.
+
   # Creates a new and empty image grid.
   def initialize
     super
-    @cells = []
-    @layout = Gtk::Layout.new
+    @cells          = []
+    @active_layer   = 0
+    @layout         = Gtk::Layout.new
 
-    @draw_grid = false
-    @grid_color = [0.5, 0, 1, 1]
-    @mask = []
+    @draw_grid      = false
+    @grid_color     = [0.5, 0, 1, 1]
+    @mask           = []
     @button_is_down = false # Set to true while a mouse button is down
 
     @layout.set_size(*DEFAULT_SIZE)
@@ -174,23 +190,40 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   # Set the CellInfo instance at a specified coordinate. Use +nil+
   # for +cell_info+ if you want an empty cell.
-  def []=(x, y, cell_info)
+  def []=(x, y, z, cell_info)
     raise(TypeError, "Not a Gdk::Pixbuf nor nil: #{cell_info.pixbuf.inspect}") if cell_info and !cell_info.pixbuf.kind_of?(Gdk::Pixbuf)
 
-    0.upto(y){|i| @cells[i] = [] unless @cells[i]} unless @cells[y]
-    @cells[y][x] = cell_info
+    0.upto(z) do |iz|
+      @cells[iz] = [] unless @cells[iz]
+      0.upto(x) do |ix|
+        @cells[iz][ix] = [] unless @cells[iz][ix]
+      end
+    end
+
+    @cells[z][x][y] = cell_info # Fills the X array with nils if necessary
   end
 
   # Retrieves the CellInfo instance (or +nil+) at the specified coordinate.
-  def [](x, y)
-    @cells[y][x]
+  def [](x, y, z)
+    @cells[z][x][y]
+  end
+
+  # See attribute.
+  def active_layer # :nodoc:
+    @active_layer
+  end
+
+  # See attribute.
+  def active_layer=(z) # :nodoc:
+    raise(RangeError, "Z index out of bounds: #{z} (must be between 0 and #{layer_num - 1}, both inclusive)") if z < 0 or z >= layer_num
+    @active_layer = z
   end
 
   # call-seq:
-  #   set_cell(x, y, cell_info)
-  #   set_cell(x, y, nil)
-  #   set_cell(x, y, pixbuf)
-  #   set_cell(x, y, pixbuf, data)
+  #   set_cell(x, y, z, cell_info)
+  #   set_cell(x, y, z, nil)
+  #   set_cell(x, y, z, pixbuf)
+  #   set_cell(x, y, z, pixbuf, data)
   #
   # Set the CellInfo instance at the specified coordinate. The first form
   # is equal to using #[]= and directly assigns a CellInfo instance to
@@ -206,14 +239,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   #
   # The Hash instance will be assigned to the generated CellInfo instance’s
   # +data+ attribute and can be retrieved like any other data later on.
-  def set_cell(x, y, obj, data = nil)
+  def set_cell(x, y, z, obj, data = nil)
     if data
-      self[x, y] = CellInfo.new(obj, data) # Pixbuf typecheck done in #[]
+      self[x, y, z] = CellInfo.new(obj, data) # Pixbuf typecheck done in #[]
     else
       case obj
-      when Gdk::Pixbuf then self[x, y] = CellInfo.new(obj, data) # Some users may want to store `false'
-      when CellInfo    then self[x, y] = obj
-      when NilClass    then self[x, y] = nil
+      when Gdk::Pixbuf then self[x, y, z] = CellInfo.new(obj, data) # Some users may want to store `false'
+      when CellInfo    then self[x, y, z] = obj
+      when NilClass    then self[x, y, z] = nil
       else
         raise(TypeError, "Neither a CellInfo nor a Gdk::Pixbuf: #{obj.inspect}")
       end
@@ -221,29 +254,20 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   # For symmetry with #set_cell, equal to #[].
-  def get_cell(x, y)
-    self[x, y]
-  end
-
-  # Append an entire row of cells to the bottom of the grid.
-  def append_row(cells)
-    @cells.push(cells)
-  end
-
-  # Same as #append_row, but returns +self+ for method chaining.
-  def <<(cells)
-    append_row
-    self
+  def get_cell(x, y, z)
+    self[x, y, z]
   end
 
   # Iterates over all cells in this grid and yields their
   # coressponding CellInfo and CellPos objects to the block.
   # +cell+ may be +nil+ for an empty cell.
   def each
-    @cells.each_with_index do |col, y|
-      col.each_with_index do |cell, x|
-        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
-        yield(cell, pos)
+    @cells.each_with_index do |layer, z|
+      layer.each_with_index do |col, x|
+        col.each_with_index do |cell, y|
+          pos = CellPos.new(x, y, z, x * cell_width, y * cell_height)
+          yield(cell, pos)
+        end
       end
     end
   end
@@ -312,33 +336,41 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def canvas_size
     # Note this code makes two
     # important assumptions: Each pixbuf has the same dimensions,
-    # and the whole tabe is rectangular, i.e. no row has more columns
+    # and the whole table is rectangular, i.e. no row has more columns
     # than another, etc.
-    [cell_width * @cells.first.count, cell_height * @cells.count]
+    [cell_width * @cells.first.count, cell_height * @cells.first.first.count]
   end
 
   # The width of a single cell in pixels.
   def cell_width
-    @cells.first.first.pixbuf.width
+    @cells.first.first.first.pixbuf.width
   end
 
   # The height of a single cell in pixels.
   def cell_height
-    @cells.first.first.pixbuf.height
+    @cells.first.first.first.pixbuf.height
   end
 
   # The number of cell rows in the grid, i.e. how many cells are
   # in a single column.
   def row_num
-    @cells.count
+    return 0 unless @cells.first
+    return 0 unless @cells.first.first
+    @cells.first.first.count
   end
 
   # The number of cell columns in the grid, i.e. how many cells are
   # in a single row.
   def col_num
-    col = @cells.first
-    return 0 unless col
-    col.count
+    layer = @cells.first
+    return 0 unless layer
+    layer.count
+  end
+
+  # The number of grid layers in the grid, i.e. how many
+  # levels the grid is deep.
+  def layer_num
+    @cells.count
   end
 
   # Adds the given CellPos to the current mask and
@@ -353,10 +385,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # by the two CellPos instances +corner1+ and +corner2+,
   # taking care of the appropriate redrawing operations.
   # Depending on the coordinates of the two arguments to this
-  # method, this method may actually select a stripe or event
+  # method, this method may actually select a stripe or even
   # only a single cell. Entirely clearing the mask is not
   # possible with this method.
+  # The two corner’s Z layer indices must be equal, otherwise
+  # a RuntimeError is raised.
   def mask_rectangle(corner1, corner2)
+    raise("Z layer mismatch: #{corner1.cell_z} vs. #{corner2.cell_z}") unless corner1.cell_z == corner2.cell_z
+
     # Remove anything existing and redraw
     clear_mask
 
@@ -367,7 +403,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # Select the rectangle bounded by upper_left and lower_right
     first_x_corner.cell_x.upto(second_x_corner.cell_x) do |cell_x|
       first_y_corner.cell_y.upto(second_y_corner.cell_y) do |cell_y|
-        pos = CellPos.new(cell_x, cell_y, cell_x * cell_width, cell_y * cell_height)
+        pos = CellPos.new(cell_x, cell_y, corner1.cell_z, cell_x * cell_width, cell_y * cell_height)
         @mask.push(pos)
       end
     end
@@ -444,11 +480,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # cells and masks everything else. Note this method implicitely
   # clips the mask to the current canvas size. Automatically
   # redraws the widget.
+  #
+  # Raises a RuntimeError if not all masked fields have the same
+  # Z layer index.
   def invert_mask
+    first_z = @mask.first.cell_z
+    if err = @mask.find{|pos| pos.cell_z != first_z} # Single = intended
+      raise("Z layer mismatch: #{first_z} at (0|0) vs. #{err.cell_z} at (#{err.cell_x}|#{err.cell_y})")
+    end
+
     new_mask = []
     0.upto(col_num) do |y|
       0.upto(row_num) do |x|
-        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
+        pos = CellPos.new(x, y, first_z, x * cell_width, y * cell_height)
 
         new_mask << pos unless masked?(pos)
       end
@@ -458,15 +502,16 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw
   end
 
-  # Clears the current mask and then masks everything.
+  # Clears the current mask and then masks everything
+  # on the given layer.
   # Implicitely clips the mask to the current canvas size.
   # Automatically redraws the widget.
-  def mask_all
+  def mask_layer(z)
     @mask.clear
 
     0.upto(col_num) do |y|
       0.upto(row_num) do |x|
-        pos = CellPos.new(x, y, x * cell_width, y * cell_height)
+        pos = CellPos.new(x, y, z, x * cell_width, y * cell_height)
 
         @mask << pos
       end
@@ -481,7 +526,50 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # in the mask.
   # Does not clear the mask.
   def selection
-    @mask.map{|pos| get_cell(pos.cell_x, pos.cell_y)}
+    @mask.map{|pos| get_cell(pos.cell_x, pos.cell_y, pos.cell_z)}
+  end
+
+  # Applies the mask on the grid, yielding all matching
+  # CellPos and their corresponding CellInfo instances
+  # to the block one at a time (don’t assume a specific
+  # order). The return value of the block when called for
+  # a specific cell is used to replace that cells data,
+  # and may be in one of these forms:
+  #
+  # [+CellInfo+ instance]
+  #   This will simply be used as-is to replace the current
+  #   value of the cell.
+  # [<tt>Gdk::Pixbuf</tt> instance]
+  #   Replaces the cell’s value with a CellInfo whose +pixbuf+
+  #   attribute is set to this (by-reference). The CellInfo’s
+  #   +data+ will be +nil+.
+  # [Two-element array]
+  #   Replaces the cell’s value with a CellInfo whose +pixbuf+
+  #   attribute is set to the array’s first element and its
+  #   +data+ attribute set to the array’s second element.
+  # [nil]
+  #   This cell’s value is emptied, i.e. no CellInfo instance
+  #   will be associated with the cell afterwards.
+  #
+  # Does not clear the mask.
+  def apply
+    @mask.each do |pos|
+      result = yield(pos, get_cell(pos.cell_x, pos.cell_y, pos.cell_z))
+      case result
+      when CellInfo    then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, result)
+      when Gdk::Pixbuf then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, CellInfo.new(result))
+      when Array       then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, CellInfo.new(result[0], result[1]))
+      when NilClass    then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, nil)
+      else
+        raise(TypeError, "Don't know how to convert result for (#{pos.cell_x}|#{pos.cell_y}|#{pos.cell_z}) to a CellInfo: #{result.inspect}")
+      end
+    end
+  end
+
+  # Same as #apply, but clears the mask afterwards.
+  def apply!(&block)
+    apply(&block)
+    clear_mask
   end
 
   private
@@ -512,18 +600,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # of redrawing parts between them that don’t need to be
     # redrawn.
 
-    # TODO: Layers!
     # TODO: Instead of holding all the images in memory which
     # may consume extreme amounds depending on number of images,
     # fire a redraw_cell event here so the user can allocate the
     # image required for this cell temporarily.
     # TODO: Fire a redraw_layer event for non-grid layers.
-    @cells.each_with_index do |row, y|
-      row.each_with_index do |info, x|
-        next if info.nil? # Empty cell
+    @cells.each_with_index do |layer, z|
+      layer.each_with_index do |col, x|
+        col.each_with_index do |info, y|
+          next if info.nil? # Empty cell
 
-        cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
-        cc.paint
+          cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
+          cc.paint
+        end
       end
     end
 
@@ -539,13 +628,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       width, height = canvas_size
 
       # Create the Cairo paths for the vertical lines
-      0.step(width, @cells.first.first.pixbuf.width) do |x|
+      0.step(width, @cells.first.first.first.pixbuf.width) do |x|
         cc.move_to(x + 0.5, 0)
         cc.line_to(x + 0.5, height)
       end
 
       # Create the Cairo paths for the horizontal lines
-      0.step(height, @cells.first.first.pixbuf.height) do |y|
+      0.step(height, @cells.first.first.first.pixbuf.height) do |y|
         cc.move_to(0, y + 0.5)
         cc.line_to(width, y + 0.5)
       end
@@ -568,7 +657,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   def on_button_press(_, event)
     # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
     pos.x = pos.cell_x * cell_width
     pos.y = pos.cell_y * cell_height
 
@@ -583,7 +672,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
 
     # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
     pos.x = pos.cell_x * cell_width
     pos.y = pos.cell_y * cell_height
 
@@ -597,7 +686,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height)
+    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
     pos.x = pos.cell_x * cell_width
     pos.y = pos.cell_y * cell_height
 

@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 288113954b3254056bd188b9f0d2b711faca7d81
+  revision: 0e642d27dc273434f2ddd47b070451870dbaa2eb
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/Quintus/tmx-ruby.git
-  revision: 9464802bec1698dcef58468a63f0b6c2b2db9406
+  revision: 5d11ed378a627c77c65d2d21f770aeddafcb1874
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
