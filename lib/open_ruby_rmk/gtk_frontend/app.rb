@@ -44,6 +44,7 @@ class OpenRubyRMK::GTKFrontend::App
     @mainwindow  = nil
     @project     = nil
     $app         = self
+    @is_ready    = false
 
     parse_argv
     parse_config
@@ -56,6 +57,14 @@ class OpenRubyRMK::GTKFrontend::App
   # this is read-only.
   def space
     THE_SPACE
+  end
+
+  # Returns true if all setup (including main loop
+  # initialisation) has been done (i.e. whether
+  # we already handed control over to GTK completely).
+  # Otherwise, returns false.
+  def is_ready?
+    @is_ready
   end
 
   # Set the project we’re currently working on. Be *very*
@@ -89,6 +98,7 @@ class OpenRubyRMK::GTKFrontend::App
       settings.gtk_button_images = true
     end
 
+    @is_ready = true
     Gtk.main
   end
 

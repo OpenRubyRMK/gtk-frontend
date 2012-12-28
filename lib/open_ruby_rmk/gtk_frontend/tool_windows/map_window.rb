@@ -36,19 +36,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow < Gtk::Window
     @add_button.add(icon_image("ui/list-add.svg", width: 16))
     @del_button.add(icon_image("ui/list-remove.svg", width: 16))
     @settings_button.add(icon_image("ui/preferences-system.svg", width: 16))
-
-    # On startup, when no projects are loaded, these
-    # buttons are disabled.
-    @add_button.sensitive      = false
-    @del_button.sensitive      = false
-    @settings_button.sensitive = false
-
-    # Enable/Disable buttons depending on the project state
-    $app.observe(:project_changed) do |event, emitter, info|
-      [@add_button, @del_button, @settings_button].each do |button|
-        button.sensitive = !!info[:project]
-      end
-    end
   end
 
   def create_layout

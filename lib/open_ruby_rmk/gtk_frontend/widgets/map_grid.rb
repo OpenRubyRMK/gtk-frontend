@@ -40,6 +40,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
     clear_mask
     clear
+
     # Iterate over all map layers bottom to top, so upper layers get drawn
     # above lower ones. Note that the Pixbuf instanciation below is actually
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
