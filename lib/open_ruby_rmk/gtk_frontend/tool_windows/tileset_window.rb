@@ -40,7 +40,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
       @toolbar.insert(0, button)
     end
 
-    @tileset_grid            = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new
+    @tileset_grid            = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
+                                                                                OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
     @tileset_grid.draw_grid  = true
     @rect_mode_button.active = true
   end
@@ -75,6 +76,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
       start_id       = info[:map].tmx_map.tilesets.keys.first
       tileset        = info[:map].tmx_map.tilesets[start_id]
       tileset_pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)
+
+      @tileset_grid.cell_width  = tileset.tilewidth
+      @tileset_grid.cell_height = tileset.tileheight
 
       0.upto(Float::INFINITY) do |id|
         pos = tileset.tile_position(id)

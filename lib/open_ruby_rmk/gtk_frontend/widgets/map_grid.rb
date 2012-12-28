@@ -4,7 +4,8 @@
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
   include OpenRubyRMK::Backend::Eventable
 
-  def initialize
+  # Creates a new instance. All arguments are forwarded to ImageGrid::new.
+  def initialize(*)
     super
     @map = nil
     @tileset_pixbufs = {}
@@ -27,6 +28,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
     @map = map
     @tileset_pixbufs.clear
+    self.cell_width  = @map.tmx_map.tilewidth
+    self.cell_height = @map.tmx_map.tileheight
 
     # Preload all tileset images, so we don’t have to do this
     # when rendering.

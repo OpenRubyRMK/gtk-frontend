@@ -165,12 +165,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # The currently active layer’s index a user is operating on.
 
   # Creates a new and empty image grid.
-  def initialize
-    super
+  # == Parameters
+  # [cell_width]
+  #   The initial width of a single cell in pixels.
+  # [cell_height]
+  #   The initial height of a single cell in pixels.
+  def initialize(cell_width, cell_height)
+    super()
     @cells          = []
     @active_layer   = 0
     @layout         = Gtk::Layout.new
 
+    @cell_width     = cell_width
+    @cell_height    = cell_height
     @draw_grid      = false
     @grid_color     = [0.5, 0, 1, 1]
     @mask           = []
@@ -219,6 +226,30 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @active_layer = z
   end
 
+  # The width of a single cell, in pixels.
+  def cell_width
+    @cell_width
+  end
+
+  # The height of a single cell, in pixels.
+  def cell_height
+    @cell_height
+  end
+
+  # Adjust the width of all the cells. Automatically
+  # redraws the canvas.
+  def cell_width=(val)
+    @cell_width = val
+    redraw
+  end
+
+  # Adjust the height of all the cells. Automatically
+  # redraws the canvas.
+  def cell_height=(val)
+    @cell_height = val
+    redraw
+  end
+
   # call-seq:
   #   set_cell(x, y, z, cell_info)
   #   set_cell(x, y, z, nil)
@@ -265,7 +296,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cells.each_with_index do |layer, z|
       layer.each_with_index do |col, x|
         col.each_with_index do |cell, y|
-          pos = CellPos.new(x, y, z, x * cell_width, y * cell_height)
+          pos = CellPos.new(x, y, z, x * @cell_width, y * @cell_height)
           yield(cell, pos)
         end
       end
@@ -338,17 +369,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole table is rectangular, i.e. no row has more columns
     # than another, etc.
-    [cell_width * @cells.first.count, cell_height * @cells.first.first.count]
-  end
-
-  # The width of a single cell in pixels.
-  def cell_width
-    @cells.first.first.first.pixbuf.width
-  end
-
-  # The height of a single cell in pixels.
-  def cell_height
-    @cells.first.first.first.pixbuf.height
+    [@cell_width * @cells.first.count, @cell_height * @cells.first.first.count]
   end
 
   # The number of cell rows in the grid, i.e. how many cells are
@@ -378,7 +399,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Most useful inside the cell_button_* signal handlers.
   def add_to_mask(pos)
     @mask.push(pos)
-    redraw_area(pos.x, pos.y, cell_width, cell_height)
+    redraw_area(pos.x, pos.y, @cell_width, @cell_height)
   end
 
   # Replaces the current mask with the rectangle described
@@ -403,7 +424,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # Select the rectangle bounded by upper_left and lower_right
     first_x_corner.cell_x.upto(second_x_corner.cell_x) do |cell_x|
       first_y_corner.cell_y.upto(second_y_corner.cell_y) do |cell_y|
-        pos = CellPos.new(cell_x, cell_y, corner1.cell_z, cell_x * cell_width, cell_y * cell_height)
+        pos = CellPos.new(cell_x, cell_y, corner1.cell_z, cell_x * @cell_width, cell_y * @cell_height)
         @mask.push(pos)
       end
     end
@@ -411,8 +432,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # Redraw the area bounded by upper_left and lower_right
     redraw_area(first_x_corner.x,
                 first_y_corner.y,
-                (second_x_corner.x + cell_width)  - first_x_corner.x, # Right edge of second cell - Left edge of first cell
-                (second_y_corner.y + cell_height) - first_y_corner.y) # Likewise for vertical axis
+                (second_x_corner.x + @cell_width)  - first_x_corner.x, # Right edge of second cell - Left edge of first cell
+                (second_y_corner.y + @cell_height) - first_y_corner.y) # Likewise for vertical axis
   end
 
   # Replaces the mask by a mask that covers all cells that have
@@ -492,7 +513,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     new_mask = []
     0.upto(col_num) do |y|
       0.upto(row_num) do |x|
-        pos = CellPos.new(x, y, first_z, x * cell_width, y * cell_height)
+        pos = CellPos.new(x, y, first_z, x * @cell_width, y * @cell_height)
 
         new_mask << pos unless masked?(pos)
       end
@@ -511,7 +532,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     0.upto(col_num) do |y|
       0.upto(row_num) do |x|
-        pos = CellPos.new(x, y, z, x * cell_width, y * cell_height)
+        pos = CellPos.new(x, y, z, x * @cell_width, y * @cell_height)
 
         @mask << pos
       end
@@ -647,7 +668,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     # If a mask is active, also draw that one.
     @mask.each do |pos|
-      cc.rectangle(pos.x, pos.y, cell_width, cell_height)
+      cc.rectangle(pos.x, pos.y, @cell_width, @cell_height)
     end
     cc.set_source_rgba(1, 0, 0, 0.5)
     cc.fill
@@ -657,9 +678,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   def on_button_press(_, event)
     # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
-    pos.x = pos.cell_x * cell_width
-    pos.y = pos.cell_y * cell_height
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
     # Only care about clicks on the grid, not about those next to it
     return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
@@ -672,9 +693,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
 
     # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
-    pos.x = pos.cell_x * cell_width
-    pos.y = pos.cell_y * cell_height
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
     # Only care about clicks on the grid, not about those next to it
     return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
@@ -686,9 +707,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    pos   = CellPos.new(event.coords[0].to_i / cell_width, event.coords[1].to_i / cell_height, @active_layer)
-    pos.x = pos.cell_x * cell_width
-    pos.y = pos.cell_y * cell_height
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
     # Don’t provide coordinates outside the cell grid
     pos = nil if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num

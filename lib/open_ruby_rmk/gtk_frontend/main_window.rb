@@ -104,7 +104,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Instanciates the widgets needed for the window.
   def create_widgets
-    @map_grid = OpenRubyRMK::GTKFrontend::Widgets::MapGrid.new
+    @map_grid = OpenRubyRMK::GTKFrontend::Widgets::MapGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
+                                                               OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
     @map_grid.draw_grid = $app.config[:grid]
   end
 
