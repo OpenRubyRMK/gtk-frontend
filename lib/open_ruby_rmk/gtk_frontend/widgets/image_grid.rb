@@ -48,9 +48,11 @@
 # entire #redraw.
 #
 # == Signals
-# This widget provides three highlevel events for dealing with mouse
-# interaction on the grid’s cells. They are, in the order in which
-# they’re emitted:
+# This widget provides three highlevel signals for dealing with mouse
+# interaction on the grid’s cells and a few other things.
+#
+# === The mouse signals
+# Listed in the order in which they are emitted:
 #
 # [cell_button_press]
 #   The user pressed any mouse button over any of the grid’s cells. The
@@ -101,6 +103,23 @@
 # the #active_layer attribute. Apart from this, the active layer
 # does not have any impact on any of the methods of this class.
 #
+# === The other signals
+# Listed in no particular ordering.
+#
+# [draw_background]
+#   Emitted when part or whole of the widget’s background needs
+#   to be redrawn. By default, does nothing (but note that
+#   GTK by default clears any widget’s Cairo context to the
+#   default widget color before you can do anything). It
+#   takes a whole bunch of arguments:
+#   [event]
+#     The underlying +expose+ event.
+#   [cairo_context]
+#     The Cairo::Context you want to draw your background upon.
+#   [rectangle]
+#     A Gdk::Rectangle instance describing the area that needs
+#     to have the background redrawn.
+#
 # == The mask
 # Most likely you want your user to interact with the widget by clicking
 # on it, dragging, etc. As already mentioned, these interaction causes
@@ -130,6 +149,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
   signal_new :cell_button_motion,  GLib::Signal::RUN_LAST, nil, nil, Hash
   signal_new :cell_button_release, GLib::Signal::RUN_LAST, nil, nil, Hash
+  signal_new :draw_background,     GLib::Signal::RUN_FIRST, nil, nil, Hash
 
   # A CellPos struct represents the position of a single cell in the
   # grid. You usually don’t construct these objects yourself, but
@@ -607,12 +627,21 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def signal_do_cell_button_release(*)
   end
 
+  def signal_do_draw_background(*)
+  end
+
   ########################################
   # Event handlers
 
   def on_expose(_, event)
     return if @cells.empty?
     cc = @layout.bin_window.create_cairo_context
+
+    # Allow the user to draw the background the way he likes
+    signal_emit :draw_background,
+                :cairo_context => cc,
+                :event => event,
+                :rectangle => Gdk::Rectangle.new(0, 0, col_num * @cell_width, row_num * @cell_height)
 
     # TODO: Only redraw the parts that need to be redrawn,
     # available via `event.region'. The bounding box of all

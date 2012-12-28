@@ -14,6 +14,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     signal_connect(:cell_button_press, &method(:on_cell_button_press))
     signal_connect(:cell_button_motion, &method(:on_cell_button_motion))
     signal_connect(:cell_button_release, &method(:on_cell_button_release))
+    signal_connect(:draw_background, &method(:on_draw_background))
   end
 
   # Change the currently displayed map to another one, clearing
@@ -37,6 +38,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
     end
 
+    clear_mask
     clear
     # Iterate over all map layers bottom to top, so upper layers get drawn
     # above lower ones. Note that the Pixbuf instanciation below is actually
@@ -114,6 +116,16 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     when 2 then # Middle mouse button
       # TODO: Something useful?
     end
+  end
+
+  # We clear to a black background by default
+  def on_draw_background(_, hsh)
+    cc = hsh[:cairo_context]
+    rect = hsh[:rectangle]
+
+    cc.rectangle(rect.x, rect.y, rect.width, rect.height)
+    cc.set_source_rgb(0, 0, 0)
+    cc.fill
   end
 
   ########################################
