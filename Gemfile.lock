@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 0e642d27dc273434f2ddd47b070451870dbaa2eb
+  revision: fc8f85e93e273e8a91579bc39c089fb1f4906ec0
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -22,6 +22,14 @@ GEM
     bond (0.4.2)
     cairo (1.12.2)
       pkg-config
+    columnize (0.3.6)
+    debugger (1.2.3)
+      columnize (>= 0.3.1)
+      debugger-linecache (~> 1.1.1)
+      debugger-ruby_core_source (~> 1.1.5)
+    debugger-linecache (1.1.2)
+      debugger-ruby_core_source (>= 1.1.1)
+    debugger-ruby_core_source (1.1.6)
     gdk_pixbuf2 (1.1.5)
       glib2 (>= 1.1.5)
     glib2 (1.1.5)
@@ -53,6 +61,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  debugger
   gtk2
   openrubyrmk-backend!
   paint

@@ -16,4 +16,5 @@ group :development do
   gem "paint"
   gem "turn"
   gem "rake"
+  gem "debugger"
 end
