@@ -135,18 +135,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Fills the current mask with the selected tileset’s
   # selected tile, afterwards clears the mask.
   def fill_mask
-    tiles = $app.mainwindow.tileset_window.tileset_grid.selection
-    return if !tiles or tiles.empty? # No tile selected
-    tile = tiles.first  # Only one tile can actually be selected
-
     apply! do |cell_pos, cell_info|
+      return unless $app.state[:core][:brush_gid]
+      return unless $app.state[:core][:brush_pixbuf]
+
       layer        = @map.tmx_map.layers[cell_pos.cell_z]
       index        = layer.pos2index(@map.tmx_map, cell_pos.cell_x, cell_pos.cell_y)
-      layer[index] = tile.data[:gid]
+      layer[index] = $app.state[:core][:brush_gid]
 
       # Instruct ImageGrid to replace this cell’s pixbuf
       # with the pixbuf for the respective tile on the tileset.
-      tile.pixbuf.dup
+      $app.state[:core][:brush_pixbuf].dup
     end
   end
 

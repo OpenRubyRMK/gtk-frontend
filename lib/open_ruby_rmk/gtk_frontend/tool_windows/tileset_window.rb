@@ -31,14 +31,11 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   private
 
   def create_widgets
-    @tileset_grid = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
-                                                                     OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
-    @tileset_tabs    = Notebook.new
+    @tileset_tabs    = OpenRubyRMK::GTKFrontend::Widgets::TilesetBook.new
     @add_button      = Button.new
     @del_button      = Button.new
     @settings_button = Button.new
 
-    @tileset_grid.draw_grid = true
     @add_button.add(icon_image("ui/list-add.svg", width: 16))
     @del_button.add(icon_image("ui/list-remove.svg", width: 16))
     @settings_button.add(icon_image("ui/preferences-system.svg", width: 16))
@@ -63,7 +60,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
-    @tileset_grid.signal_connect(:cell_button_release, &method(:on_cell_button_release))
+    @tileset_tabs.signal_connect(:selection_changed, &method(:on_selection_changed))
     @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
     @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
     @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
@@ -74,27 +71,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   def map_grid_changed(event, sender, info)
     return unless event == :map_changed
-    @tileset_grid.clear
-
-    if info[:map] and !info[:map].tmx_map.tilesets.empty?
-      # TODO: Support multiple tilesets in tabs!
-      start_id       = info[:map].tmx_map.tilesets.keys.first
-      tileset        = info[:map].tmx_map.tilesets[start_id]
-      tileset_pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)
-
-      @tileset_grid.cell_width  = tileset.tilewidth
-      @tileset_grid.cell_height = tileset.tileheight
-
-      0.upto(Float::INFINITY) do |id|
-        pos = tileset.tile_position(id)
-        break unless pos
-
-        @tileset_grid.set_cell(pos[0], pos[1], 0, Gdk::Pixbuf.new(tileset_pixbuf, pos[2], pos[3], tileset.tilewidth, tileset.tileheight), :gid => start_id + id)
-      end
-    end
-
-
-    @tileset_grid.redraw!
+    @tileset_tabs.map = info[:map]
   end
   public :map_grid_changed # For Observable
 
@@ -103,11 +80,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     true # Do not destroy the window, just hide it
   end
 
-  def on_cell_button_release(_, hsh)
-    return unless hsh[:pos]
-
-    @tileset_grid.clear_mask
-    @tileset_grid.add_to_mask(hsh[:pos])
+  def on_selection_changed(_, hsh)
+    $app.state[:core][:brush_gid] = hsh[:info].data[:gid]
+    $app.state[:core][:brush_pixbuf] = hsh[:info].pixbuf
   end
 
   def on_add_button_clicked(event)
