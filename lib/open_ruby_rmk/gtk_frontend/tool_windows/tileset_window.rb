@@ -31,14 +31,31 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   private
 
   def create_widgets
-    @tileset_grid           = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
-                                                                               OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
+    @tileset_grid = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
+                                                                     OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
+    @tileset_tabs    = Notebook.new
+    @add_button      = Button.new
+    @del_button      = Button.new
+    @settings_button = Button.new
+
     @tileset_grid.draw_grid = true
+    @add_button.add(icon_image("ui/list-add.svg", width: 16))
+    @del_button.add(icon_image("ui/list-remove.svg", width: 16))
+    @settings_button.add(icon_image("ui/preferences-system.svg", width: 16))
   end
 
   def create_layout
     VBox.new.tap do |vbox|
-      vbox.pack_start(@tileset_grid, true, true)
+      HBox.new(false, $app.space).tap do |hbox|
+        hbox.pack_end(@settings_button, false)
+        hbox.pack_end(@del_button, false)
+        hbox.pack_end(@add_button, false)
+
+        hbox.border_width = $app.space
+        vbox.pack_start(hbox, false)
+      end
+
+      vbox.pack_start(@tileset_tabs, true, true)
 
       add(vbox)
     end
@@ -47,6 +64,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
     @tileset_grid.signal_connect(:cell_button_release, &method(:on_cell_button_release))
+    @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
+    @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
+    @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
   end
 
   ########################################
@@ -88,6 +108,18 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
     @tileset_grid.clear_mask
     @tileset_grid.add_to_mask(hsh[:pos])
+  end
+
+  def on_add_button_clicked(event)
+    raise(NotImplementedError, "Someone needs to implement adding tilesets to maps")
+  end
+
+  def on_del_button_clicked(event)
+    raise(NotImplementedError, "Someone needs to implement removing tilesets from maps")
+  end
+
+  def on_settings_button_clicked(event)
+    raise(NotImplementedError, "Someone needs to implement configuring map-specific tileset properties like terrain")
   end
 
 end
