@@ -93,7 +93,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return unless @pressed_button == 3 # Secondary mouse button
 
     # Mask adjustments for those selection modes that are motion-aware
-    case $app.mainwindow.tileset_window.selection_mode
+    case $app.state[:core][:selection_mode]
       when :rectangle then mask_rectangle(@first_selection, hsh[:pos])
       when :freehand  then add_to_mask(hsh[:pos])
     end
@@ -105,7 +105,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return unless @pressed_button == hsh[:event].button # Shouldn’t happen
 
     # Mask adjustments for those selection modes that aren’t motion-aware
-    case $app.mainwindow.tileset_window.selection_mode
+    case $app.state[:core][:selection_mode]
       when :magic then mask_adjascent(@first_selection)
     end
 

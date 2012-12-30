@@ -23,6 +23,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     set_default_size 400, 400
 
     create_menu
+    create_toolbar
     create_widgets
     create_layout
     create_extra_windows
@@ -102,6 +103,21 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     update_menu_entries($app.project)
   end
 
+  def create_toolbar
+    @toolbar = Toolbar.new
+    @tools = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
+
+    @tools[:selection][:rect]  = RadioToolButton.new(nil, :orr_rectangle_selection)
+    @tools[:selection][:magic] = RadioToolButton.new(@tools[:selection][:rect], :orr_magic_selection)
+    @tools[:selection][:free]  = RadioToolButton.new(@tools[:selection][:rect], :orr_freehand_selection)
+
+    @tools[:selection].each_value do |tool|
+      @toolbar.insert(0, tool)
+    end
+
+    @tools[:selection][:rect].active = true
+  end
+
   # Instanciates the widgets needed for the window.
   def create_widgets
     @map_grid = OpenRubyRMK::GTKFrontend::Widgets::MapGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
@@ -113,6 +129,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def create_layout
     VBox.new(false, 2).tap do |vbox|
       vbox.pack_start(@menubar, false)
+      vbox.pack_start(@toolbar, false)
 
       HBox.new.tap do |hbox|
         hbox.pack_start(@map_grid)
@@ -149,6 +166,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
     menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
+
+    # Toolbar
+    @tools[:selection][:rect].signal_connect(:toggled, &method(:on_tool_selection_rect))
+    @tools[:selection][:magic].signal_connect(:toggled, &method(:on_tool_selection_magic))
+    @tools[:selection][:free].signal_connect(:toggled, &method(:on_tool_selection_free))
   end
 
   ########################################
@@ -350,6 +372,18 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     ad.run do |response|
       ad.destroy
     end
+  end
+
+  def on_tool_selection_rect(widget)
+    $app.state[:core][:selection_mode] = :rectangle
+  end
+
+  def on_tool_selection_magic(widget)
+    $app.state[:core][:selection_mode] = :magic
+  end
+
+  def on_tool_selection_free(widget)
+    $app.state[:core][:selection_mode] = :freehand
   end
 
   ########################################

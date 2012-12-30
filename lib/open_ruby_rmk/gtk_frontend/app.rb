@@ -35,6 +35,13 @@ class OpenRubyRMK::GTKFrontend::App
   # menu icons.
   attr_reader :icon_factory
 
+  # A recursive hash that can be used for storing anything
+  # needed globally in the entire application.
+  # 'Recursive' in this context means accessing unset keys
+  # will automatically create a new hash for you (which
+  # in turn has this functionality itself).
+  attr_reader :state
+
   # Create the one and only instance of this class. Pass the
   # commandline options you want it to (destructively) parse.
   # Raises a RuntimeError if you call this more than once.
@@ -44,12 +51,14 @@ class OpenRubyRMK::GTKFrontend::App
     @mainwindow  = nil
     @project     = nil
     $app         = self
+    @state       = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
     @is_ready    = false
 
     parse_argv
     parse_config
     set_locale
     register_stock_icons
+    init_state
   end
 
   # Shortcut for dereferencing the THE_SPACE constant.
@@ -194,6 +203,12 @@ class OpenRubyRMK::GTKFrontend::App
     Gtk::Stock.add(name, label)
     iconset = Gtk::IconSet.new(icon_pixbuf(path))
     @icon_factory.add(name.to_s, iconset) # For some unknown reason, this must be a string
+  end
+
+  # Initialise the global state to the default
+  # values.
+  def init_state
+    @state[:core][:selection_mode] = :rectangle
   end
 
 end

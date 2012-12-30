@@ -31,25 +31,13 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   private
 
   def create_widgets
-    @toolbar           = Toolbar.new
-    @rect_mode_button  = RadioToolButton.new(nil, :orr_rectangle_selection)
-    @magic_mode_button = RadioToolButton.new(@rect_mode_button, :orr_magic_selection)
-    @free_mode_button  = RadioToolButton.new(@rect_mode_button, :orr_freehand_selection)
-
-    [@free_mode_button, @magic_mode_button, @rect_mode_button].each do |button|
-      @toolbar.insert(0, button)
-    end
-
-    @tileset_grid            = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
-                                                                                OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
-    @tileset_grid.draw_grid  = true
-    @rect_mode_button.active = true
+    @tileset_grid           = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
+                                                                               OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
+    @tileset_grid.draw_grid = true
   end
 
   def create_layout
     VBox.new.tap do |vbox|
-
-      vbox.pack_start(@toolbar, false)
       vbox.pack_start(@tileset_grid, true, true)
 
       add(vbox)
@@ -59,9 +47,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   def setup_event_handlers
     signal_connect(:delete_event, &method(:on_delete_event))
     @tileset_grid.signal_connect(:cell_button_release, &method(:on_cell_button_release))
-    @rect_mode_button.signal_connect(:toggled, &method(:rect_mode_button_toggled))
-    @magic_mode_button.signal_connect(:toggled, &method(:magic_mode_button_toggled))
-    @free_mode_button.signal_connect(:toggled, &method(:free_mode_button_toggled))
   end
 
   ########################################
@@ -103,18 +88,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
     @tileset_grid.clear_mask
     @tileset_grid.add_to_mask(hsh[:pos])
-  end
-
-  def rect_mode_button_toggled(widget)
-    @selection_mode = :rectangle if widget.active?
-  end
-
-  def magic_mode_button_toggled(widget)
-    @selection_mode = :magic if widget.active?
-  end
-
-  def free_mode_button_toggled(widget)
-    @selection_mode = :freehand if widget.active?
   end
 
 end
