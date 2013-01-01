@@ -92,6 +92,7 @@ class R18n::TranslatedString
 end
 
 require_relative "gtk_frontend/errors"
+require_relative "gtk_frontend/validatable"
 require_relative "gtk_frontend/licenser"
 require_relative "gtk_frontend/helpers/gtk_helper"
 require_relative "gtk_frontend/helpers/icons"

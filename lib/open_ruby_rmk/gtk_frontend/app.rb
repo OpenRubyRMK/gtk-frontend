@@ -148,6 +148,12 @@ class OpenRubyRMK::GTKFrontend::App
     result
   end
 
+  # Convenience method equivalent to:
+  #   msgbox(msg, type: :warning)
+  def warnbox(msg)
+    msgbox(msg, type: :warning)
+  end
+
   private
 
   # Parse the commandline arguments.

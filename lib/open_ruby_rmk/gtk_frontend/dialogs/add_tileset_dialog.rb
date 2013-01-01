@@ -3,6 +3,11 @@
 class OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
+  include OpenRubyRMK::GTKFrontend::Validatable
+
+  validate do
+    val_error "No tileset selected." if !@directory_tree.selected_path or !@directory_tree.selected_path.file?
+  end
 
   def initialize(map)
     super("Add tileset",
@@ -56,6 +61,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog < Gtk::Dialog
 
   def on_response(_, res)
     if res == Gtk::Dialog::RESPONSE_ACCEPT
+      $app.warnbox(validation_summary) and return unless valid?
       # TODO
     end
 
