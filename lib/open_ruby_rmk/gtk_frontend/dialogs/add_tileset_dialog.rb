@@ -62,7 +62,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog < Gtk::Dialog
   def on_response(_, res)
     if res == Gtk::Dialog::RESPONSE_ACCEPT
       $app.warnbox(validation_summary) and return unless valid?
-      # TODO
+
+      tileset = TiledTmx::Tileset.load_xml(@directory_tree.selected_path)
+      @map.add_tileset(tileset)
     end
 
     destroy
