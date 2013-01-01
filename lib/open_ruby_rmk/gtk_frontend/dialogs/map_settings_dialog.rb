@@ -108,7 +108,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog < Gtk::Dialog
       hbox.pack_start(@width_field)
       hbox.pack_start(Label.new("✕"), false)
       hbox.pack_start(@height_field)
-    
+
       vbox.pack_start(hbox, false)
     end
   end

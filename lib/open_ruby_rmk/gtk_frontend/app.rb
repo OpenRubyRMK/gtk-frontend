@@ -208,6 +208,7 @@ class OpenRubyRMK::GTKFrontend::App
   # Initialise the global state to the default
   # values.
   def init_state
+    @state[:core][:map]            = nil
     @state[:core][:selection_mode] = :rectangle
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil

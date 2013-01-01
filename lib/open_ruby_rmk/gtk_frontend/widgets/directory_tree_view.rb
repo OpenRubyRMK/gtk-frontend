@@ -3,10 +3,7 @@
 # This is a widget for displaying a directory tree. It’s a
 # normal Gtk::TreeView with the model part already being
 # included in it (the DirectoryTreeStore class) so you don’t
-# have to worry about the interna. It also registers itself
-# as an observer to the currently selected project, so that
-# when the project’s resources get reloaded, the widget
-# rebuilds all internal buffers and rebuilds itself.
+# have to worry about the interna.
 class OpenRubyRMK::GTKFrontend::Widgets::DirectoryTreeView < Gtk::TreeView
   include Gtk
 
@@ -63,9 +60,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::DirectoryTreeView < Gtk::TreeView
 
   end
 
-  # Creates a new instance of this widget.
-  def initialize(root_path)
-    super(DirectoryTreeStore.new(root_path))
+  # Creates a new instance of this widget. If +store_files+
+  # is true, the widget will also display files and not
+  # only directories.
+  def initialize(root_path, store_files = false)
+    super(DirectoryTreeStore.new(root_path, store_files))
 
     path_renderer          = CellRendererText.new
     path_column            = TreeViewColumn.new("", path_renderer, text: 1) # model[1] => path as a string

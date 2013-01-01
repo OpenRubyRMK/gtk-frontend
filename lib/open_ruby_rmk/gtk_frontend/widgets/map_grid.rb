@@ -28,6 +28,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     changed
 
     @map = map
+    $app.state[:core][:map] = @map
     @tileset_pixbufs.clear
     self.cell_width  = @map.tmx_map.tilewidth
     self.cell_height = @map.tmx_map.tileheight

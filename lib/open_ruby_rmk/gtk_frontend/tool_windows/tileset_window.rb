@@ -86,7 +86,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
   end
 
   def on_add_button_clicked(event)
-    raise(NotImplementedError, "Someone needs to implement adding tilesets to maps")
+    return unless $app.state[:core][:map]
+    ad = OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog.new($app.state[:core][:map])
+    ad.run
   end
 
   def on_del_button_clicked(event)
