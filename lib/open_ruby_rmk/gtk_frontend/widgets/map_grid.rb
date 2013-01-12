@@ -35,7 +35,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
     # Preload all tileset images, so we don’t have to do this
     # when rendering.
-    @map.tmx_map.tilesets.each_value do |tileset|
+    @map.tmx_map.each_tileset do |first_gid, tileset|
       @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
     end
 
@@ -47,8 +47,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
     # operation.
     # TODO: Depending on the active layer, set alpha on higher layers?
-    @map.tmx_map.layers.each_with_index do |layer, mapz|
-      layer.each_tile(@map.tmx_map) do |mapx, mapy, tile, id, tileset, flips|
+    @map.tmx_map.each_layer.with_index do |layer, mapz|
+      layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
         if tileset
           # Convert the relative tile ID into coordinates on the tileset pixmap
           tx, ty, x, y  = tileset.tile_position(id)
@@ -140,7 +140,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       return unless $app.state[:core][:brush_gid]
       return unless $app.state[:core][:brush_pixbuf]
 
-      layer        = @map.tmx_map.layers[cell_pos.cell_z]
+      layer        = @map.tmx_map.get_layer(cell_pos.cell_z)
       index        = layer.pos2index(@map.tmx_map, cell_pos.cell_x, cell_pos.cell_y)
       layer[index] = $app.state[:core][:brush_gid]
 

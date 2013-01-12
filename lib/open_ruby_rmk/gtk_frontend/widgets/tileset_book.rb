@@ -17,7 +17,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TilesetBook < Gtk::Notebook
     return unless @map # Allow setting to nil
 
     # Add tabs for all tilesets we have *now*
-    map.tmx_map.tilesets.each_pair do |start_id, tileset|
+    map.tmx_map.each_tileset do |start_id, tileset|
       add_tileset_tab(start_id, tileset)
     end
 

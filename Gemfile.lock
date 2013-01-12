@@ -1,6 +1,6 @@
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: d58ab5f57b0997ccc7fd494d6923ab03156b729d
+  revision: 7870a3c5047409510b220374d5326f8236b87129
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -8,10 +8,11 @@ GIT
 
 GIT
   remote: git://github.com/Quintus/tmx-ruby.git
-  revision: 8b319bf901e445c8f5827aa0fe08d2f60aab3270
+  revision: 8add349c6934e4533200213e57fe795a74d8557d
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
+      rbtree
 
 GEM
   remote: https://rubygems.org/
@@ -48,6 +49,7 @@ GEM
     r18n-desktop (1.1.2)
       r18n-core (= 1.1.2)
     rake (10.0.1)
+    rbtree (0.3.0)
     ripl (0.7.0)
       bond (~> 0.4.2)
     ripl-multi_line (0.3.0)
