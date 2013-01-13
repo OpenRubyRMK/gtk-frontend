@@ -220,6 +220,7 @@ class OpenRubyRMK::GTKFrontend::App
     @state[:core][:selection_mode] = :rectangle
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil
+    @state[:core][:test_pid]       = nil
   end
 
 end

@@ -7,10 +7,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include OpenRubyRMK::Backend
   include OpenRubyRMK::GTKFrontend::Helpers::GtkHelper
 
-  # PID of the process running the game test. +nil+
-  # if no testing is done currently.
-  attr_reader :test_pid
-
   # Creates the application window.
   def initialize
     super
@@ -22,8 +18,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_layout
     create_extra_windows
     setup_event_handlers
-
-    @test_pid = nil
 
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
@@ -248,15 +242,15 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # File -> Test
   def on_menu_file_test(event)
-    @test_pid = spawn({
-                        "BUNDLE_BIN_PATH" => nil,
-                        "BUNDLE_GEMFILE" => nil,
-                        "RUBYOPT" => nil,
-                        "GEM_HOME" => nil,
-                        "GEM_PATH" => nil
-                      },
-                      "bundle exec '#{$app.project.paths.start_file}'",
-                      chdir: $app.project.paths.root.to_s)
+    $app.state[:core][:test_pid] = spawn({
+                                           "BUNDLE_BIN_PATH" => nil,
+                                           "BUNDLE_GEMFILE" => nil,
+                                           "RUBYOPT" => nil,
+                                           "GEM_HOME" => nil,
+                                           "GEM_PATH" => nil
+                                         },
+                                         "#{ENV['BUNDLE_BIN_PATH']} exec '#{$app.project.paths.start_file}'",
+                                         chdir: $app.project.paths.root.to_s)
     # FIXME: Add a modal dialog with a stop button so
     # the main UI is blocked, but the test can still be
     # aborted.
