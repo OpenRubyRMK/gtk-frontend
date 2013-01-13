@@ -249,7 +249,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
                                            "GEM_HOME" => nil,
                                            "GEM_PATH" => nil
                                          },
-                                         "#{ENV['BUNDLE_BIN_PATH']} exec '#{$app.project.paths.start_file}'",
+                                         "'#{ENV['BUNDLE_BIN_PATH']}' exec '#{$app.project.paths.start_file}'",
                                          chdir: $app.project.paths.root.to_s)
     # FIXME: Add a modal dialog with a stop button so
     # the main UI is blocked, but the test can still be
