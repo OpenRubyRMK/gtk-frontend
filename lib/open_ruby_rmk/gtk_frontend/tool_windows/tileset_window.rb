@@ -21,7 +21,10 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
     @selection_mode = :rectangle
 
-    parent.map_grid.add_observer(self, :map_grid_changed)
+    $app.state[:core].observe(:value_set) do |event, sender, info|
+      next unless info[:key] == :map
+      @tileset_tabs.map = info[:value]
+    end
 
     create_widgets
     create_layout
@@ -68,12 +71,6 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   ########################################
   # Event handlers
-
-  def map_grid_changed(event, sender, info)
-    return unless event == :map_changed
-    @tileset_tabs.map = info[:map]
-  end
-  public :map_grid_changed # For Observable
 
   def on_delete_event(*)
     hide

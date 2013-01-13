@@ -7,12 +7,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   include OpenRubyRMK::Backend
   include OpenRubyRMK::GTKFrontend::Helpers::GtkHelper
 
-  # The widget that shows the map.
-  attr_reader :map_grid
-
-  # The window showing the tileset stuff.
-  attr_reader :tileset_window
-
   # PID of the process running the game test. +nil+
   # if no testing is done currently.
   attr_reader :test_pid

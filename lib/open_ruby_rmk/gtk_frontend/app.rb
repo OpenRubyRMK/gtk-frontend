@@ -40,7 +40,7 @@ class OpenRubyRMK::GTKFrontend::App
   # 'Recursive' in this context means accessing unset keys
   # will automatically create a new object of this type for you (which
   # in turn has this functionality itself).
-  # You can +observe+ this object, listening for the +key_set+ event,
+  # You can +observe+ this object, listening for the +value_set+ event,
   # to get informed whenever something in here changes.
   attr_reader :state
 

@@ -2,7 +2,6 @@
 
 # This is the widget that displays the map on the main window.
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
-  include OpenRubyRMK::Backend::Eventable
 
   # Creates a new instance. All arguments are forwarded to ImageGrid::new.
   def initialize(*)
@@ -15,62 +14,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     signal_connect(:cell_button_motion, &method(:on_cell_button_motion))
     signal_connect(:cell_button_release, &method(:on_cell_button_release))
     signal_connect(:draw_background, &method(:on_draw_background))
-  end
 
-  # Change the currently displayed map to another one, clearing
-  # all internal graphic buffers, reloading them from disk and
-  # finally redrawing the entire widget.
-  # == Events
-  # [map_changed]
-  #   Always emitted when this method is called. Callback
-  #   receives +map+ via the :map parameter.
-  def map=(map)
-    changed
+    $app.state[:core].observe(:value_set) do |event, sender, info|
+      next unless info[:key] == :map
 
-    @map = map
-    $app.state[:core][:map] = @map
-    @tileset_pixbufs.clear
-    self.cell_width  = @map.tmx_map.tilewidth
-    self.cell_height = @map.tmx_map.tileheight
-
-    # Preload all tileset images, so we don’t have to do this
-    # when rendering.
-    @map.tmx_map.each_tileset do |first_gid, tileset|
-      @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
+      update_map(info[:value])
     end
-
-    clear_mask
-    clear
-
-    # Iterate over all map layers bottom to top, so upper layers get drawn
-    # above lower ones. Note that the Pixbuf instanciation below is actually
-    # a clipping operation on the tileset Pixbuf, and therefore a very fast
-    # operation.
-    # TODO: Depending on the active layer, set alpha on higher layers?
-    @map.tmx_map.each_layer.with_index do |layer, mapz|
-      layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
-        if tileset
-          # Convert the relative tile ID into coordinates on the tileset pixmap
-          tx, ty, x, y  = tileset.tile_position(id)
-
-          # Extract the tile from the tileset pixmap and store it in
-          # the widget’s drawing storage.
-          set_cell(mapx,
-                   mapy,
-                   mapz,
-                   Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
-                                   x,
-                                   y,
-                                   tileset.tilewidth,
-                                   tileset.tileheight))
-        else # Empty cell
-          set_cell(mapx, mapy, mapz, nil)
-        end
-      end
-    end
-
-    redraw!
-    notify_observers(:map_changed, :map => map)
   end
 
   private
@@ -132,6 +81,54 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
   ########################################
   # Helpers
+
+  # Change the currently displayed map to another one, clearing
+  # all internal graphic buffers, reloading them from disk and
+  # finally redrawing the entire widget.
+  def update_map(map)
+    @map = map
+    @tileset_pixbufs.clear
+    self.cell_width  = @map.tmx_map.tilewidth
+    self.cell_height = @map.tmx_map.tileheight
+
+    # Preload all tileset images, so we don’t have to do this
+    # when rendering.
+    @map.tmx_map.each_tileset do |first_gid, tileset|
+      @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
+    end
+
+    clear_mask
+    clear
+
+    # Iterate over all map layers bottom to top, so upper layers get drawn
+    # above lower ones. Note that the Pixbuf instanciation below is actually
+    # a clipping operation on the tileset Pixbuf, and therefore a very fast
+    # operation.
+    # TODO: Depending on the active layer, set alpha on higher layers?
+    @map.tmx_map.each_layer.with_index do |layer, mapz|
+      layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
+        if tileset
+          # Convert the relative tile ID into coordinates on the tileset pixmap
+          tx, ty, x, y  = tileset.tile_position(id)
+
+          # Extract the tile from the tileset pixmap and store it in
+          # the widget’s drawing storage.
+          set_cell(mapx,
+                   mapy,
+                   mapz,
+                   Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
+                                   x,
+                                   y,
+                                   tileset.tilewidth,
+                                   tileset.tileheight))
+        else # Empty cell
+          set_cell(mapx, mapy, mapz, nil)
+        end
+      end
+    end
+
+    redraw!
+  end
 
   # Fills the current mask with the selected tileset’s
   # selected tile, afterwards clears the mask.
