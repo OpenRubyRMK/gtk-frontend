@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+# mdump - Dumps a Marshal file to standard output.
+
+if ARGV.include?("-h") or ARGV.include?("--help")
+  puts <<-HELP
+  mdump <file>
+
+Reads in <file> as a Ruby Marshal binary file and writes the
+contents out to standard output.
+  HELP
+  exit
+end
+
+if ARGV.count != 1
+  $stderr.puts("Incorrect arguments. See -h for help.")
+  exit 1
+end
+
+unless File.file?(ARGV[0]) and File.readable?(ARGV[0])
+  $stderr.puts("Not a file or not readable: #{ARGV[0]}")
+  exit 2
+end
+
+begin
+  result = File.open(ARGV[0]){|file| Marshal.load(file)}
+  puts result.inspect
+rescue => e
+  $stderr.puts(e.message)
+end
