@@ -29,6 +29,13 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     super
     @map_window.show_all
     @tileset_window.show_all
+
+    # Restore window positions if requested and possible
+    if $app.config[:remember_window_positions]
+      move(*$app.cache[:main_window_position])                    if $app.cache[:main_window_position]
+      @map_window.move(*$app.cache[:map_window_position])         if $app.cache[:map_window_position]
+      @tileset_window.move(*$app.cache[:tileset_window_position]) if $app.cache[:tileset_window_position]
+    end
   end
 
   # Event handler triggered by the observed App.
@@ -166,6 +173,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # Application quit request.
   def on_destroy(event)
+    # Remember the positions (this is done always, regardless
+    # of the config option. Instead, the config option
+    # just determines whether we *load* this info on
+    # startup).
+    $app.cache[:main_window_position]    = position
+    $app.cache[:map_window_position]     = @map_window.position
+    $app.cache[:tileset_window_position] = @tileset_window.position
+
     Gtk.main_quit
   end
 

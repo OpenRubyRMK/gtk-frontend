@@ -19,3 +19,10 @@ locale:
 # Wether or not to display the map grid by default.
 ## off
 grid: off
+
+# Whether or not to remember the positions of the
+# windows on exiting so they can be restored on
+# the next start. If your window manager already
+# does this, you probably don’t want to set this.
+## off
+remember_window_positions: off
