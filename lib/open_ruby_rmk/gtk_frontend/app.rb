@@ -31,6 +31,16 @@ class OpenRubyRMK::GTKFrontend::App
   #   {:key => value}
   attr_reader :config
 
+  # The parsed contents of the cache file, as a hash. This
+  # hash gets written out to disk as-is in the user’s cache
+  # directory and is not meant to be edited by the user. You
+  # can use this to store non-critical data that speeds up
+  # some operations or provides other conveniences, but do not
+  # rely on it to be available — the cache directory may be
+  # deleted by the user, which shouldn’t have any serious
+  # impact on the application.
+  attr_reader :cache
+
   # The Gtk::IconFactory we use to provide GTK with our own
   # menu icons.
   attr_reader :icon_factory
@@ -58,6 +68,7 @@ class OpenRubyRMK::GTKFrontend::App
 
     parse_argv
     parse_config
+    load_cache
     set_locale
     register_stock_icons
     init_state
@@ -98,6 +109,9 @@ class OpenRubyRMK::GTKFrontend::App
   # Starts the main application loop, handing over the control
   # to the GTK library. Call this when you have set up everything
   # else and want to let the event handling begin.
+  #
+  # When the main loop has finished, automatically calls #finalize
+  # (a private method).
   def main_loop
     Gtk.init
     GLib.application_name = t.general.application_name
@@ -111,6 +125,8 @@ class OpenRubyRMK::GTKFrontend::App
 
     @is_ready = true
     Gtk.main
+
+    finalize
   end
 
   # Displays a message box modal to the given window. The
@@ -158,6 +174,12 @@ class OpenRubyRMK::GTKFrontend::App
 
   private
 
+  # Run once the main loop has exited. Clean up code belongs
+  # here.
+  def finalize
+    dump_cache
+  end
+
   # Parse the commandline arguments.
   def parse_argv
     return if @argv.empty?
@@ -175,6 +197,26 @@ class OpenRubyRMK::GTKFrontend::App
   def parse_config
     # Turn the string keys to symbols
     @config = Hash[OpenRubyRMK::GTKFrontend.bare_config.to_a.map{|k, v| [k.to_sym, v]}]
+  end
+
+  # Read the cache file (i.e. the file for storing non-critical,
+  # non-user-editable information).
+  def load_cache
+    # Create the cache directory if it doesn’t exist
+    cache_file = OpenRubyRMK::GTKFrontend::USER_CACHE_DIR + "cache.bin"
+    cache_file.parent.mkpath unless cache_file.parent.directory?
+
+    # If there’s no cache file, just use an empty cache.
+    @cache = cache_file.file? ? cache_file.open("rb"){|f| Marshal.load(f)} : {}
+  end
+
+  # Write the cache file from the current content of @cache.
+  # The cache file is not meant to be user-editable nor to
+  # contain permanent, critical information.
+  def dump_cache
+    # The cache directory is guaranteed to exist by #read_cache.
+    cache_file = OpenRubyRMK::GTKFrontend::USER_CACHE_DIR + "cache.bin"
+    cache_file.open("wb"){|f| Marshal.dump(@cache, f)}
   end
 
   # Set the application’s locale.

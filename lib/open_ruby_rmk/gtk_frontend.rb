@@ -28,10 +28,14 @@ module OpenRubyRMK
     DATA_DIR = ROOT_DIR + "data"
     # The directory containing the locale files.
     LOCALE_DIR = DATA_DIR + "locales"
-    # The path to the configuration file.
-    CONFIG_FILE = DATA_DIR + "config.yml"
+    # The path to the global configuration file.
+    GLOBAL_CONFIG_FILE = DATA_DIR + "config.yml"
     # The directory where GUI icons are kept.
     ICONS_DIR = DATA_DIR + "icons"
+    # The path to the user-specific configuration file.
+    USER_CONFIG_FILE = Pathname.new(GLib.filename_to_utf8(GLib.user_config_dir)) + "openrubyrmk" + "config-gtk.yml"
+    # The path to the user-specific cache directory.
+    USER_CACHE_DIR   = Pathname.new(GLib.filename_to_utf8(GLib.user_cache_dir)) + "openrubyrmk" + "gtk-frontend"
 
     # The version of this software.
     def self.version
@@ -52,11 +56,29 @@ module OpenRubyRMK
       LICENSE_FILE.read
     end
 
-    # The contents of the configuration file as a hash,
-    # merely unparsed. Use App#config to get a more meaningful
-    # value.
+    # The contents of the configuration files as a hash, where
+    # the global configuration file is loaded first, followed by
+    # the per-user configuration file (which overwrites any
+    # values from the global configuration file where requested).
+    # The hash’s content is merely unparsed, so use App#config
+    # to get a more meaningful value.
     def self.bare_config
-      YAML.load_file(CONFIG_FILE)
+      # If the user doesn’t have a config file yet, create one
+      unless USER_CONFIG_FILE.file?
+        USER_CONFIG_FILE.parent.mkpath unless USER_CONFIG_FILE.parent.directory?
+
+        USER_CONFIG_FILE.open("w") do |file|
+          file.puts("# User configuration file for the OpenRubyRMK")
+          file.puts("#")
+          file.puts("# Place your user-specific configuration options here.")
+          file.puts("# The format is the same as for the global config file.")
+        end
+      end
+
+      # Load the config, where the user config overrides values
+      # in the global config.
+      hsh = YAML.load_file(GLOBAL_CONFIG_FILE.to_s)
+      hsh.merge(YAML.load_file(USER_CONFIG_FILE.to_s) || {}) # Returns `false' for an empty file
     end
 
     ########################################
