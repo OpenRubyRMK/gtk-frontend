@@ -35,11 +35,13 @@ class OpenRubyRMK::GTKFrontend::App
   # menu icons.
   attr_reader :icon_factory
 
-  # A recursive hash that can be used for storing anything
+  # A recursive hash-alike that can be used for storing anything
   # needed globally in the entire application.
   # 'Recursive' in this context means accessing unset keys
-  # will automatically create a new hash for you (which
+  # will automatically create a new object of this type for you (which
   # in turn has this functionality itself).
+  # You can +observe+ this object, listening for the +key_set+ event,
+  # to get informed whenever something in here changes.
   attr_reader :state
 
   # Create the one and only instance of this class. Pass the
@@ -51,7 +53,7 @@ class OpenRubyRMK::GTKFrontend::App
     @mainwindow  = nil
     @project     = nil
     $app         = self
-    @state       = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
+    @state       = OpenRubyRMK::GTKFrontend::EventedStorage.new
     @is_ready    = false
 
     parse_argv
