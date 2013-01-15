@@ -262,7 +262,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
                                            "BUNDLE_GEMFILE" => nil,
                                            "RUBYOPT" => nil,
                                            "GEM_HOME" => nil,
-                                           "GEM_PATH" => nil
+                                           "GEM_PATH" => nil,
+                                           "ORR_DEBUG" => "1",
                                          },
                                          "'#{ENV['BUNDLE_BIN_PATH']}' exec '#{$app.project.paths.start_file}'",
                                          chdir: $app.project.paths.root.to_s)
