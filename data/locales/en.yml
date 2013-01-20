@@ -108,7 +108,8 @@ menus:
     entries:
       map_tree: "M_ap tree"
       console: "C_onsole"
-      tileset: T_ileset
+      tileset: "T_ileset"
+      layer: "L_ayer"
   help:
     name: _Help
     entries:

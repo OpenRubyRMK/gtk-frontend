@@ -29,12 +29,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     super
     @map_window.show_all
     @tileset_window.show_all
+    @layer_window.show_all
 
     # Restore window positions if requested and possible
     if $app.config[:remember_window_positions]
       move(*$app.cache[:main_window_position])                    if $app.cache[:main_window_position]
       @map_window.move(*$app.cache[:map_window_position])         if $app.cache[:map_window_position]
       @tileset_window.move(*$app.cache[:tileset_window_position]) if $app.cache[:tileset_window_position]
+      @layer_window.move(*$app.cache[:layer_window_position])     if $app.cache[:layer_window_position]
     end
   end
 
@@ -84,6 +86,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.windows.name do |windows|
       append_menu_item windows, t.menus.windows.entries.map_tree, :windows_map_tree
       append_menu_item windows, t.menus.windows.entries.tileset, :windows_tileset
+      append_menu_item windows, t.menus.windows.entries.layer, :windows_layer
       append_menu_separator windows
       append_menu_item windows, t.menus.windows.entries.console, :windows_console
     end
@@ -139,6 +142,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   def create_extra_windows
     @map_window     = OpenRubyRMK::GTKFrontend::ToolWindows::MapWindow.new(self)
     @tileset_window = OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow.new(self)
+    @layer_window   = OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow.new(self)
     @console_window = OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow.new(self)
   end
 
@@ -159,6 +163,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:view_grid].signal_connect(:activate, &method(:on_menu_view_grid))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
+    menu_items[:windows_layer].signal_connect(:activate, &method(:on_menu_windows_layer))
     menu_items[:windows_console].signal_connect(:activate, &method(:on_menu_windows_console))
     menu_items[:help_about].signal_connect(:activate, &method(:on_menu_help_about))
 
@@ -180,6 +185,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     $app.cache[:main_window_position]    = position
     $app.cache[:map_window_position]     = @map_window.position
     $app.cache[:tileset_window_position] = @tileset_window.position
+    $app.cache[:layer_window_position]   = @layer_window.position
 
     Gtk.main_quit
   end
@@ -343,11 +349,21 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   #toggleable_window :map_tree
   #toggleable_window :settings
 
+  # Windows -> Tileset
   def on_menu_windows_tileset(event)
     if @tileset_window.visible?
       @tileset_window.hide
     else
       @tileset_window.show
+    end
+  end
+
+  # Windows -> Layer
+  def on_menu_windows_layer(event)
+    if @layer_window.visible?
+      @layer_window.hide
+    else
+      @layer_window.show
     end
   end
 
