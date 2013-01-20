@@ -114,3 +114,9 @@ menus:
     name: _Help
     entries:
       about: A_bout…
+
+# This section contains all the stuff that didn’t fit
+# in anywhere else.
+misc:
+  # The default name for a newly created layer.
+  new_layer_name: "A new layer"

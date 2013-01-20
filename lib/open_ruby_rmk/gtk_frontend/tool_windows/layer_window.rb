@@ -29,7 +29,12 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     @add_button      = Button.new
     @del_button      = Button.new
     @settings_button = Button.new
-    @layer_list      = Gtk::TreeView.new(Gtk::ListStore.new(TiledTmx::Layer, String))
+
+    # The second column is a the layer name directly as this
+    # allows us to use the easier and more performant text
+    # renderer instead of a virtual one grabbing that property
+    # from the layer instance.
+    @layer_list = Gtk::TreeView.new(Gtk::ListStore.new(TiledTmx::Layer, String))
 
     @add_button.add(icon_image("ui/list-add.svg", width: 16))
     @del_button.add(icon_image("ui/list-remove.svg", width: 16))
@@ -61,7 +66,34 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
   end
 
   def setup_event_handlers
+    @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
+    @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
+    @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
   end
+
+  ########################################
+  # Event handlers
+
+  def on_add_button_clicked(event)
+    return unless $app.state[:core][:map]
+
+    new_layer = $app.state[:core][:map].add_layer(:tile, :name => t.misc.new_layer_name)
+
+    row = @layer_list.model.append
+    row[0] = new_layer
+    row[1] = new_layer.name
+  end
+
+  def on_del_button_clicked(event)
+    raise(NotImplementedError, "Someone needs to implement the layer deletion button!")
+  end
+
+  def on_settings_button_clicked(event)
+    raise(NotImplementedError, "Someone needs to implement the layer settings button!")
+  end
+
+  ########################################
+  # Helpers
 
   # Clears the list and rebuilds it from the layers found
   # in +map+.
