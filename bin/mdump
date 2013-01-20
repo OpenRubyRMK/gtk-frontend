@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # mdump - Dumps a Marshal file to standard output.
+require "pp"
 
 if ARGV.include?("-h") or ARGV.include?("--help")
   puts <<-HELP
@@ -22,8 +23,8 @@ unless File.file?(ARGV[0]) and File.readable?(ARGV[0])
 end
 
 begin
-  result = File.open(ARGV[0]){|file| Marshal.load(file)}
-  puts result.inspect
+  result = File.open(ARGV[0], "rb"){|file| Marshal.load(file)}
+  pp result
 rescue => e
   $stderr.puts(e.message)
 end
