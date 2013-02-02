@@ -33,7 +33,8 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     # The second column is a the layer name directly as this
     # allows us to use the easier and more performant text
     # renderer instead of a virtual one grabbing that property
-    # from the layer instance.
+    # from the layer instance. The integer is the Z index of
+    # the layer.
     @layer_list = Gtk::TreeView.new(Gtk::ListStore.new(TiledTmx::Layer, String))
 
     @add_button.add(icon_image("ui/list-add.svg", width: 16))
@@ -69,6 +70,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
     @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
     @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
+    @layer_list.signal_connect(:cursor_changed, &method(:on_list_cursor_changed))
   end
 
   ########################################
@@ -77,7 +79,20 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
   def on_add_button_clicked(event)
     return unless $app.state[:core][:map]
 
-    new_layer = $app.state[:core][:map].add_layer(:tile, :name => t.misc.new_layer_name)
+    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, "Enter layer name", "Enter layer name")
+    td.run
+    return if td.text.nil? or td.text.empty?
+
+    # We requre unique names for the layers so we can easily
+    # determine the current Z index later on.
+    if $app.state[:core][:map].tmx_map.layers.any?{|l| l.name == td.text}
+      $app.msgbox("This name is already taken for this map.",
+                  parent: self,
+                  type: :warning)
+      return
+    end
+
+    new_layer = $app.state[:core][:map].add_layer(:tile, :name => td.text)
 
     row = @layer_list.model.append
     row[0] = new_layer
@@ -90,6 +105,13 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
 
   def on_settings_button_clicked(event)
     raise(NotImplementedError, "Someone needs to implement the layer settings button!")
+  end
+
+  def on_list_cursor_changed(*)
+    return unless @layer_list.cursor[0] # If no treepath is available, nothing is selected
+    name = @layer_list.model.get_iter(@layer_list.cursor[0])[1] # model[1] => item text
+
+    $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l.name == name}
   end
 
   ########################################

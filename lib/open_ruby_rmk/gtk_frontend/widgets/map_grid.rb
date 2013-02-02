@@ -16,9 +16,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     signal_connect(:draw_background, &method(:on_draw_background))
 
     $app.state[:core].observe(:value_set) do |event, sender, info|
-      next unless info[:key] == :map
-
-      update_map(info[:value])
+      case info[:key]
+      when :map     then update_map(info[:value])
+      when :z_index then self.active_layer = info[:value]
+      end
     end
   end
 
@@ -125,6 +126,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
           set_cell(mapx, mapy, mapz, nil)
         end
       end
+    end
+
+    # New layers are always empty and are always appended
+    # to the top of the current Z layers, i.e. the new layer
+    # is always the topmost one. Therefore, whenever a new
+    # layer is added, we just append an empty one to the
+    # image grid at the end (-1). Cell setting is not
+    # necessary, because the new layer is guaranteed to
+    # be empty, and insert_layer already creates an empty
+    # layer.
+    @map.observe(:layer_added) do |event, sender, info|
+      insert_layer(-1)
+      redraw
     end
 
     redraw!

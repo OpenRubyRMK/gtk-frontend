@@ -259,6 +259,7 @@ class OpenRubyRMK::GTKFrontend::App
   # values.
   def init_state
     @state[:core][:map]            = nil
+    @state[:core][:z_index]        = 0
     @state[:core][:selection_mode] = :rectangle
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil

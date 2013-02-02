@@ -414,6 +414,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cells.count
   end
 
+  # Inserts an empty layer at Z index +z+. All higher
+  # layers are shifted up by one. A +z+ of -1 appends
+  # the layer onto the top of the layer stack.
+  def insert_layer(z)
+    @cells.insert(z, Array.new(col_num){Array.new(row_num)})
+  end
+
   # Adds the given CellPos to the current mask and
   # redraws the affected part of the canvas.
   # Most useful inside the cell_button_* signal handlers.
