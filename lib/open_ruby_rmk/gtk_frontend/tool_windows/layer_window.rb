@@ -79,14 +79,14 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
   def on_add_button_clicked(event)
     return unless $app.state[:core][:map]
 
-    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, "Enter layer name", "Enter layer name")
+    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, t.dialogs.add_layer.title, t.dialogs.add_layer.message)
     td.run
     return if td.text.nil? or td.text.empty?
 
     # We requre unique names for the layers so we can easily
     # determine the current Z index later on.
     if $app.state[:core][:map].tmx_map.layers.any?{|l| l.name == td.text}
-      $app.msgbox("This name is already taken for this map.",
+      $app.msgbox(sprintf(t.dialogs.layer_name_taken, :name => td.text),
                   parent: self,
                   type: :warning)
       return
@@ -111,6 +111,10 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     return unless @layer_list.cursor[0] # If no treepath is available, nothing is selected
     name = @layer_list.model.get_iter(@layer_list.cursor[0])[1] # model[1] => item text
 
+    # As we require the layer name to be unique, we can
+    # easily find the index of the newly selected layer
+    # in the list of layers by name. That index also is
+    # its Z position.
     $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l.name == name}
   end
 

@@ -15,6 +15,7 @@ dialogs:
   not_empty: "The directory %{dir} is not empty."
   dir_not_found: "The directory %{dir} couldn’t be found."
   file_not_found: "The file %{file} couldn’t be found."
+  layer_name_taken: "The layer name “%{name}” is already taken."
   map_settings:
     name: "Map settings"
     labels:
@@ -25,6 +26,9 @@ dialogs:
     errors:
       map_name_empty: "The map name cannot be empty."
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
+  add_layer:
+    title: "Add a new layer"
+    message: "Enter the new layer’s name:"
   resources:
     name: "Resources"
     labels:
@@ -118,6 +122,3 @@ menus:
 # This section contains all the stuff that didn’t fit
 # in anywhere else.
 misc:
-  # The default name for a newly created layer.
-  # `num' is a number to make the layer name unique.
-  new_layer_name: "New layer %{num}"
