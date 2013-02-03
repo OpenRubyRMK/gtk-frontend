@@ -77,6 +77,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.edit.name do |edit|
       append_menu_item edit, t.menus.edit.entries.resources, :edit_resources
       append_menu_item edit, t.menus.edit.entries.project_settings, :edit_project_settings
+      append_menu_item edit, t.menus.edit.entries.categories, :edit_categories
     end
 
     menu @menubar, t.menus.view.name do |view|
@@ -160,6 +161,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu_items[:file_quit].signal_connect(:activate, &method(:on_menu_file_quit))
     menu_items[:edit_resources].signal_connect(:activate, &method(:on_menu_edit_resources))
     menu_items[:edit_project_settings].signal_connect(:activate, &method(:on_menu_edit_project_settings))
+    menu_items[:edit_categories].signal_connect(:activate, &method(:on_menu_edit_categories))
     menu_items[:view_grid].signal_connect(:activate, &method(:on_menu_view_grid))
     menu_items[:windows_map_tree].signal_connect(:activate, &method(:on_menu_windows_map_tree))
     menu_items[:windows_tileset].signal_connect(:activate, &method(:on_menu_windows_tileset))
@@ -319,9 +321,16 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     rd.run
   end
 
+  # Edit -> Project Settings...
   def on_menu_edit_project_settings(event)
     sd = OpenRubyRMK::GTKFrontend::Dialogs::SettingsDialog.new
     sd.run
+  end
+
+  # Edit -> Categories
+  def on_menu_edit_categories(event)
+    cd = OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog.new
+    cd.run
   end
 
   # View -> Grid

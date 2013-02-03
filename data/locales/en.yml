@@ -25,6 +25,8 @@ dialogs:
       width_height: "Width ✕ Height"
     errors:
       map_name_empty: "The map name cannot be empty."
+  categories:
+    name: "Configure categories"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"
@@ -103,6 +105,7 @@ menus:
     entries:
       resources: Re_ssources…
       project_settings: P_roject settings…
+      categories: Cate_gories…
   view:
     name: _View
     entries:
