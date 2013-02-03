@@ -312,7 +312,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # File -> Quit
   def on_menu_file_quit(event)
-    Gtk.main_quit
+    destroy # Fires the `destroy' event, which in turn triggers #on_destroy
   end
 
   # Edit -> Resources...
