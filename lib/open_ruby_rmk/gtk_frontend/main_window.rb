@@ -265,16 +265,13 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   # File -> Test
   def on_menu_file_test(event)
-    $app.state[:core][:test_pid] = spawn({
-                                           "BUNDLE_BIN_PATH" => nil,
-                                           "BUNDLE_GEMFILE" => nil,
-                                           "RUBYOPT" => nil,
-                                           "GEM_HOME" => nil,
-                                           "GEM_PATH" => nil,
-                                           "ORR_DEBUG" => "1",
-                                         },
-                                         "'#{ENV['BUNDLE_BIN_PATH']}' exec '#{$app.project.paths.start_file}'",
-                                         chdir: $app.project.paths.root.to_s)
+    Bundler.with_clean_env do
+      $app.state[:core][:test_pid] = spawn({"ORR_DEBUG" => "1"},
+                                           "'#{ENV['BUNDLE_BIN_PATH']}' exec '#{$app.project.paths.start_file}'",
+                                           chdir: $app.project.paths.root.to_s)
+
+    end
+
     # FIXME: Add a modal dialog with a stop button so
     # the main UI is blocked, but the test can still be
     # aborted.
