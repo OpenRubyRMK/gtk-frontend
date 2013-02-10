@@ -94,7 +94,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
 
     new_layer = $app.state[:core][:map].add_layer(:tile, :name => td.text)
 
-    row = @layer_list.model.append
+    row = @layer_list.model.prepend
     row[0] = new_layer
     row[1] = new_layer.name
   end
