@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 # mdump - Dumps a Marshal file to standard output.
+require "bundler/setup"
 require "pp"
 
 if ARGV.include?("-h") or ARGV.include?("--help")
