@@ -28,4 +28,5 @@ begin
   pp result
 rescue => e
   $stderr.puts(e.message)
+  exit 3
 end
