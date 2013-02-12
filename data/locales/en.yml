@@ -53,6 +53,35 @@ dialogs:
         name: "Name"
         descr: "Description"
         base_path: "Project-Path"
+      detailed:
+        title: "Game Design Outline"
+        concept: "Basic Concept"
+        story: "Backgroundstory"
+        objective: "Objective"
+        gameplay: "Gameplay"
+        intro: "Intro"
+        additonal: "Additonal Informations"
+      product_design:
+        title: "Product Design"
+        characters: "Charakters"
+        world: "World"
+        controls: "Controls"
+        interface: "Interface"
+        sound: "Soundeffects"
+    hints:
+      detailed:
+        concept: "What makes your game special. What overall concept does it have?\n (Maybe famous examples?)"
+        story: "If it's an RPG: How does your adventure begin?\n What will happen during the game?"
+        objective: "What is the player's goal and why would they want to accomplish it?"
+        gameplay: "How does the game works (maybe the well-known run-around-and-fight-in-a-special-turnbased-combat-screen type)?\n Are there Levels or Chapters or is it OpenWorld?"
+        intro: "Is there a (animated) title screen?\n Are there any options available?\n What happens by 'starting a new game': Any video or text explaining your goal?"
+        additonal: "All the additonal stuff not mentioned before. (e.g.: Gamedifficulty or Average playtime)"
+      product_design:
+        characters: "Who are the main charakters? (role in story, skills, their own story)"
+        world: "Which scene(s) are out there, waiting to be explored?\nHow does the world looks like?\nAny historic relations?"
+        controls: "Are there any special controls, like mouse-input, jumps or multitouch gestures?"
+        interface: "How does the interface looks like. Any bars, displaying information?\nWhat kind of menu awaits the player?"
+        sound: "Whats the general music-sound-usage concept.\nIs the whole game flavoured with random or scene-related background music?\nAre there sounds for skills, walking or events?\nWhat music style will be used?"
   package: "Select a target directory"
 
 # Texts for the debugging console.
