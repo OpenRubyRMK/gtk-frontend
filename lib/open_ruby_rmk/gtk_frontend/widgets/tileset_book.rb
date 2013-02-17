@@ -81,12 +81,18 @@ class OpenRubyRMK::GTKFrontend::Widgets::TilesetBook < Gtk::Notebook
         pos = tileset.tile_position(id)
         break unless pos
 
-        tileset_grid.set_cell(pos[0],
-                              pos[1],
+        # FIXME: When tmx-ruby provides a possibility to
+        # calculate the logical tile position via a method
+        # on Tileset, use that instead of doing the calculation
+        # ourself.
+        tx, ty = id % tileset.dimension[0], id / tileset.dimension[0]
+
+        tileset_grid.set_cell(tx,
+                              ty,
                               tileset_grid.active_layer,
                               Gdk::Pixbuf.new(tileset_pixbuf,
-                                              pos[2],
-                                              pos[3],
+                                              pos[0],
+                                              pos[1],
                                               tileset.tilewidth,
                                               tileset.tileheight),
                               :gid => start_id + id)

@@ -110,7 +110,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
         if tileset
           # Convert the relative tile ID into coordinates on the tileset pixmap
-          tx, ty, x, y  = tileset.tile_position(id)
+          x, y  = tileset.tile_position(id)
 
           # Extract the tile from the tileset pixmap and store it in
           # the widget’s drawing storage.
@@ -151,8 +151,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       return unless $app.state[:core][:brush_gid]
       return unless $app.state[:core][:brush_pixbuf]
 
+      # FIXME: When ruby-tmx provides a possibility to calculate
+      # the tile index from the pixel position, use that method
+      # instead of calculating this ourself. Note that the
+      # following calculation does ONLY work for tilesets
+      # WITHOUT spacing and the-like!
+      index = cell_pos.cell_x + @map.tmx_map.width * cell_pos.cell_y
+
       layer        = @map.tmx_map.get_layer(cell_pos.cell_z)
-      index        = layer.pos2index(@map.tmx_map, cell_pos.cell_x, cell_pos.cell_y)
       layer[index] = $app.state[:core][:brush_gid]
 
       # Instruct ImageGrid to replace this cell’s pixbuf
