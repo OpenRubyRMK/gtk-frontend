@@ -1,8 +1,8 @@
 # -*- ruby -*-
-source "https://rubygems.org"
+source "http://rubygems.org"
 
 # Backend library
-gem "ruby-tmx", :git => "git://github.com/Quintus/tmx-ruby.git" # Remove this when ruby-tmx becomes stable
+gem "ruby-tmx", :git => "git://github.com/Hanmac/tmx-ruby.git" # Remove this when ruby-tmx becomes stable
 gem "openrubyrmk-backend", :git => "git://github.com/OpenRubyRMK/backend.git"
 
 # GUI
