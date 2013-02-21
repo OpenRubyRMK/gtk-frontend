@@ -400,6 +400,25 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cells.first.first.count
   end
 
+  # Resets the number of X rows to +val+, creating
+  # empty rows at the bottom end or removing them
+  # from there as necessary. Redraws the canvas.
+  def row_num=(val)
+    return if val == row_num
+
+    # If less than now, cut off. Otherwise, append
+    # empty rows.
+    if val <= row_num
+      @cells.each{|layer| layer.each{|row| row.replace(row[0..val])}}
+    else
+      (row_num - val).times do
+        insert_row
+      end
+    end
+
+    redraw!
+  end
+
   # The number of cell columns in the grid, i.e. how many cells are
   # in a single row.
   def col_num
@@ -408,10 +427,60 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     layer.count
   end
 
+  # Resets the number of Y columns to +val+, creating
+  # empty columns at the right end or removing them
+  # from there as necessary. Redraws the canvas.
+  def col_num=(val)
+    return if val == col_num
+
+    # If less than now, cut off. Otherwise, append
+    # empty columns.
+    if val < col_num
+      @cells.each{|layer| layer.replace(layer[0..val])}
+    else
+      (col_num - val).times do
+        insert_col(-1)
+      end
+    end
+
+    redraw!
+  end
+
   # The number of grid layers in the grid, i.e. how many
   # levels the grid is deep.
   def layer_num
     @cells.count
+  end
+
+  # Resets the number of Z layers to +val+, creating
+  # empty layers at the top or removing them from
+  # there as necessary. Redraws the canvas.
+  def layer_num=(val)
+    return if val == layer_num
+
+    # If less than now, cut off. Otherwise, append
+    # empty layers.
+    if val < layer_num
+      @cells = @cells[0..layer_num]
+    else
+      (layer_num - val).times do
+        insert_layer(-1)
+      end
+    end
+
+    redraw!
+  end
+
+  # Resize the entire internal cells array securely
+  # at will to the given number of columns (+width+),
+  # rows (+height+), and even layers (+depth+, defaulting
+  # to the current number of layers). Redraws the canvas.
+  def resize!(width, height, depth = layer_num)
+    self.layer_num = depth  unless depth  == layer_num
+    self.col_num   = width  unless height == col_num
+    self.row_num   = height unless width  == row_num
+
+    redraw!
   end
 
   # Inserts an empty layer at Z index +z+. All higher
@@ -419,6 +488,28 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # the layer onto the top of the layer stack.
   def insert_layer(z)
     @cells.insert(z, Array.new(col_num){Array.new(row_num)})
+  end
+
+  # Insert an empty column at X index +x+ on all layers.
+  # All columns beyond +x+ are moved one to the right.
+  # An +x+ of -1 appends a new column at the right end.
+  def insert_col(x)
+    @cells.each do |layer|
+      layer.insert(x, Array.new(row_num))
+    end
+  end
+  alias insert_column insert_col
+
+  # Insert an empty row at Y index +y+ on all
+  # layers. All rows below +y+ are moved one
+  # to the bottom. A +y+ of -1 appends a new
+  # row at the bottom end.
+  def insert_row(y)
+    @cells.each do |layer|
+      layer.each do |row|
+        row.insert(y, nil)
+      end
+    end
   end
 
   # Adds the given CellPos to the current mask and

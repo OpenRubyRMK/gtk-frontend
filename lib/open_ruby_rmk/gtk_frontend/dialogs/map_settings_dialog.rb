@@ -124,9 +124,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::MapSettingsDialog < Gtk::Dialog
 
       @map.parent = @parent if new_map? and @parent
 
-      @map.tmx_map.width  = @width_field.value
-      @map.tmx_map.height = @height_field.value
-      @map[:name]         = @name_field.text
+      @map.width  = @width_field.value.to_i
+      @map.height = @height_field.value.to_i
+      @map[:name] = @name_field.text
 
       # If we created this map and it’s a root map,
       # we need to make the project aware of it.
