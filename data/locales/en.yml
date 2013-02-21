@@ -125,6 +125,7 @@ menus:
     entries:
       new: Ne_w
       open: O_pen…
+      recent_opened: "R_ecent Opened"
       save: Sav_e
       test: Test
       package: P_ackage…

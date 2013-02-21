@@ -10,7 +10,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # Creates the application window.
   def initialize
     super
-    set_default_size 400, 400
+    set_default_size 800, 600
 
     create_menu
     create_toolbar
@@ -18,11 +18,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_layout
     create_extra_windows
     setup_event_handlers
-
+    
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
   end
-
+  
   # As superclass method, but also calls
   # #show_all on all desired child windows.
   def show_all
@@ -65,7 +65,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     menu @menubar, t.menus.file.name do |file|
       append_menu_item file, t.menus.file.entries.new, :file_new
-      append_menu_item file, t.menus.file.entries.open, :file_open
+      append_menu_item(file, t.menus.file.entries.open, :file_open)
+      append_menu_item(file, t.menus.file.entries.recent_opened, :file_recent_opened).set_submenu(OpenRubyRMK::GTKFrontend::Widgets::RecentOpenMenu.new(file))
+      append_menu_separator file
       append_menu_item file, t.menus.file.entries.save, :file_save
       append_menu_separator file
       append_menu_item file, t.menus.file.entries.test, :file_test
@@ -155,6 +157,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     # Menus
     menu_items[:file_new].signal_connect(:activate, &method(:on_menu_file_new))
     menu_items[:file_open].signal_connect(:activate, &method(:on_menu_file_open))
+    menu_items[:file_recent_opened].submenu.signal_connect('item-activated', &method(:on_menu_file_recent_opened))
     menu_items[:file_save].signal_connect(:activate, &method(:on_menu_file_save))
     menu_items[:file_test].signal_connect(:activate, &method(:on_menu_file_test))
     menu_items[:file_package].signal_connect(:activate, &method(:on_menu_file_package))
@@ -252,6 +255,17 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     begin
       $app.project = Project.load_project_file(path)
+    rescue OpenRubyRMK::Backend::Errors::NonexistantFile => e
+      $app.msgbox(t.dialogs.file_not_found, type: :error, buttons: :close, params: {:file => e.path})
+      $app.project = nil # Ensure we have a clean state
+    end
+  end
+  
+  # File -> Open Recent 
+  # The rescue isn't really neccessary because I set the "existing files only" filter
+  def on_menu_file_recent_opened(event)
+    begin
+      $app.project = Project.load_project_file(event.current_uri.gsub('file://',''))
     rescue OpenRubyRMK::Backend::Errors::NonexistantFile => e
       $app.msgbox(t.dialogs.file_not_found, type: :error, buttons: :close, params: {:file => e.path})
       $app.project = nil # Ensure we have a clean state
@@ -385,7 +399,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # Help -> About
   def on_menu_help_about(event)
     ad                    = AboutDialog.new
-    ad.copyright          = "Copyright © 2012 The OpenRubyRMK Team"
+    ad.copyright          = "Copyright © #{Time.now.year} The OpenRubyRMK Team"
     ad.website            = "http://devel.pegasus-alpha.eu/projects/openrubyrmk"
     ad.version            = OpenRubyRMK::GTKFrontend.version
     ad.license            = OpenRubyRMK::GTKFrontend.license
