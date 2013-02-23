@@ -49,6 +49,26 @@ class OpenRubyRMK::GTKFrontend::Widgets::ListView < Gtk::TreeView
     model.clear
   end
 
+  # The number of items in the list.
+  def count
+    iter = model.iter_first
+
+    iter.nil? ? 0 : iter.n_children
+  end
+
+  # True if no items are in the list currently.
+  def empty?
+    model.iter_first.nil?
+  end
+
+  # Iterates over all text rows in the list
+  # and yields them (the texts) into the block.
+  def each
+    model.each do |m, path, iter|
+      yield(iter[0])
+    end
+  end
+
   # Appends an item to the list. +item+ will automatically
   # be converted to a string.
   def append(item)
