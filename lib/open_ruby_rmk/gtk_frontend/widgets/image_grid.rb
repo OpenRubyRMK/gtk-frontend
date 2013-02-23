@@ -411,8 +411,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     if val <= row_num
       @cells.each{|layer| layer.each{|row| row.replace(row[0..val])}}
     else
-      (row_num - val).times do
-        insert_row
+      (val - row_num).times do
+        insert_row(-1)
       end
     end
 
@@ -438,7 +438,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     if val < col_num
       @cells.each{|layer| layer.replace(layer[0..val])}
     else
-      (col_num - val).times do
+      (val - col_num).times do
         insert_col(-1)
       end
     end
@@ -463,7 +463,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     if val < layer_num
       @cells = @cells[0..layer_num]
     else
-      (layer_num - val).times do
+      (val - layer_num).times do
         insert_layer(-1)
       end
     end

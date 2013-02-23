@@ -141,6 +141,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       redraw
     end
 
+    # When the map size is changed, we definitely need to
+    # redraw the map grid.
+    @map.observe(:size_changed) do |event, sender, info|
+      self.col_num = info[:size][0]
+      self.row_num = info[:size][1]
+
+      redraw!
+    end
+
     redraw!
   end
 
