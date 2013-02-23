@@ -16,6 +16,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
     create_widgets
     create_layout
     setup_event_handlers
+
+    #$app.project.categories.each do |cat|
+    #  append_category(cat)
+    #end
   end
 
   # Shows all child widgets, then calls the superclass’
@@ -52,6 +56,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
 
   def setup_event_handlers
     signal_connect(:response, &method(:on_response))
+    @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
+    @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
   end
 
   ########################################
@@ -59,6 +65,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
 
   def on_response(_, res)
     destroy
+  end
+
+  def on_add_button_clicked(*)
+    cd = Dialogs::CategorySettingsDialog.new(self)
+    cd.run
+  end
+
+  def on_del_button_clicked(*)
+    raise(NotImplementedError, "Someone needs to implement deletion of categories")
+  end
+
+  ########################################
+  # Helpers
+
+  def append_category(cat)
+    raise(NotImplementedError, "Someone must implemented appending categories")
   end
 
 end
