@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# Dialog for adding and adjusting categories and their attribute definitions.
 class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
@@ -7,6 +8,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   include OpenRubyRMK::GTKFrontend::Helpers::Icons
   include OpenRubyRMK::GTKFrontend::Helpers::Labels
 
+  # Creates a new instance of this class. +parent_window+ is the
+  # window this dialog shall be modal to, +category+ is the
+  # category to be edited. If this is nil, a new category
+  # is created.
   def initialize(parent_window, category = nil)
     super("Category settings",
           parent_window,
@@ -16,19 +21,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
     set_default_size 400, 300
 
-    @is_new   = !category
-    @category = category || OpenRubyRMK::Backend::Category.new("stuff")
+    @category = category || OpenRubyRMK::Backend::Category.new("NewCategory")
+    @is_new   = !!category
 
     create_widgets
     create_layout
     setup_event_handlers
-  end
-
-  # Checks if the category being edited was also created
-  # by this dialog. This will be the case if you passed
-  # +nil+ as the first parameter to ::new.
-  def new_category?
-    @is_new
   end
 
   # Shows all child widgets, then calls the superclass’
@@ -38,26 +36,38 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     super
   end
 
+  # Returns true if the category was created by this window,
+  # i.e. if you passed +nil+ to ::new.
+  def new_category?
+    @is_new
+  end
+
   private
 
   def create_widgets
     @name_field      = Entry.new
-    @attribute_list  = Widgets::ListView.new(true)
+    @attribute_list  = TreeView.new(ListStore.new(String, Symbol, String)) # Name, Type, Description
     @type_select     = ComboBox.new
     @desc_field      = TextView.new
     @list_add_button = Button.new
     @list_del_button = Button.new
 
+    @attribute_list.rules_hint             = true
+    @attribute_list.headers_visible        = false
+    @attribute_list.selection.mode         = SELECTION_SINGLE
+    @attribute_list_name_renderer          = CellRendererText.new
+    @attribute_list_name_renderer.editable = true
+    @attribute_list.append_column(TreeViewColumn.new("", @attribute_list_name_renderer, text: 0)) # model[0] => Attribute name
+
+    @name_field.text = @category.name
+
     OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.each do |sym|
       @type_select.append_text(sym.to_s)
     end
+    @type_select.active = 0 # Autoselect the first available option
 
     @list_add_button.add(icon_image("ui/list-add.svg", width: 16))
     @list_del_button.add(icon_image("ui/list-remove.svg", width: 16))
-
-    @attribute_list.edit_cell do
-      puts "Editing!"
-    end
   end
 
   def create_layout
@@ -105,14 +115,110 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
   def setup_event_handlers
     signal_connect(:response, &method(:on_response))
+    @attribute_list.signal_connect(:cursor_changed, &method(:on_list_cursor_changed))
+    @attribute_list_name_renderer.signal_connect(:edited, &method(:on_list_edited))
+    @type_select.signal_connect(:changed, &method(:on_type_select_changed))
+    @desc_field.buffer.signal_connect(:changed, &method(:on_desc_field_changed))
+    @list_add_button.signal_connect(:clicked, &method(:on_list_add_button_clicked))
+    @list_del_button.signal_connect(:clicked, &method(:on_list_del_button_clicked))
   end
 
   ########################################
   # Event handlers
 
   def on_response(_, res)
-    # TODO: Modify the category!
+    if res == Gtk::Dialog::RESPONSE_ACCEPT
+      raise(Errors::ValidationError, "No name given") if @name_field.text.empty?
+      raise(Errors::ValidationError, "No attributes defined") if @attribute_list.model.iter_first.nil?
+
+      # (Re)set the category’s name
+      @category.name = @name_field.text
+
+      # Add new attributes, adjust existing ones
+      @attribute_list.model.each do |model, path, iter|
+        name, type, desc = iter[0].to_sym, iter[1].to_s.to_sym, iter[2] # Come on, nobody exploits a GUI program, and the second to_sym is fine anyway. Also note the Gtk bug described in on_list_cursor_changed.
+
+        if @category.valid_attribute?(name)
+          @category[name].type        = type # FIXME: Convert existing entries?
+          @category[name].description = desc
+        else
+          @category.define_attribute(name, type, desc)
+        end
+      end
+    end
+
+    # Remove attributes not in the list anymore
+    @category.attribute_names.each do |name|
+      unless @attribute_list.model.find{|model, path, iter| iter[1].to_sym == name}
+        @category.remove_attribute(name)
+      end
+    end
+
+    # Finally, if we created a new category, let the project know
+    # about it.
+    $app.project.add_category(@category)
+
     destroy
+  rescue Errors::ValidationError => e
+    $app.msgbox(e.message,
+                parent: self,
+                type: :warning,
+                buttons: :close)
+  end
+
+  # The user double-clicked on a list item.
+  def on_list_edited(cell, path, value)
+    @attribute_list.model.get_iter(path)[0] = value
+  end
+
+  # The user selected another attribute.
+  def on_list_cursor_changed(*args)
+    # FIXME: ruby-gtk2 can’t store Symbols in models it seems.
+    # If this is deemed a bug (I’ve asked on the ML) and fixed,
+    # remove the to_sym below. Otherwise, write the code differently.
+    # The to_s is currently necessary to catch the nil case, and can
+    # also be removed if this really is a bug (there's key nil in the
+    # ATTRIBUTE_TYPE_CONVERSIONS hash).
+    @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_s.to_sym) || 0
+    @desc_field.buffer.text = current_list_iter[2].to_s # May be nil
+  end
+
+  # The user edited the description field.
+  def on_desc_field_changed(*)
+    return unless current_list_iter
+
+    current_list_iter[2] = @desc_field.buffer.text
+  end
+
+  # The user edited the type combo box.
+  def on_type_select_changed(*)
+    return unless current_list_iter
+    return if @type_select.active_text.empty?
+
+    current_list_iter[1] = @type_select.active_text.to_sym # Only a limited number of choices, hence to_sym is safe
+  end
+
+  # The user clicked the add button below the attribute list.
+  def on_list_add_button_clicked(*)
+    row = @attribute_list.model.append
+    row[0] = "NewAttribute"
+  end
+
+  # The user clicked the deletion button below the attribute list.
+  def on_list_del_button_clicked(*)
+    return unless current_list_iter
+
+    @attribute_list.model.remove(current_list_iter)
+  end
+
+  ########################################
+  # Helpers
+
+  # Returns the Gtk::TreeIter for the currently selected item.
+  # Returns nil if no item is currently selected.
+  def current_list_iter
+    return nil unless @attribute_list.cursor[0]
+    @attribute_list.model.get_iter(@attribute_list.cursor[0])
   end
 
 end
