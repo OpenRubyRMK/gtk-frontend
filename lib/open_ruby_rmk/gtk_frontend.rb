@@ -113,6 +113,10 @@ class R18n::TranslatedString
   end
 end
 
+class Gtk::ListStore
+  include Enumerable # They have #each, why not Enumerable?
+end
+
 require_relative "gtk_frontend/errors"
 require_relative "gtk_frontend/validatable"
 require_relative "gtk_frontend/licenser"

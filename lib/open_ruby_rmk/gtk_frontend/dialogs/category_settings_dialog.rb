@@ -136,7 +136,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
       # Add new attributes, adjust existing ones
       @attribute_list.model.each do |model, path, iter|
-        name, type, desc = iter[0].to_sym, iter[1].to_s.to_sym, iter[2] # Come on, nobody exploits a GUI program, and the second to_sym is fine anyway. Also note the Gtk bug described in on_list_cursor_changed.
+        name, type, desc = iter[0].to_sym, iter[1].to_sym, iter[2] # Come on, nobody exploits a GUI program, and the second to_sym is fine anyway.
 
         if @category.valid_attribute?(name)
           @category[name].type        = type # FIXME: Convert existing entries?
@@ -149,14 +149,14 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
     # Remove attributes not in the list anymore
     @category.attribute_names.each do |name|
-      unless @attribute_list.model.find{|model, path, iter| iter[1].to_sym == name}
+      unless @attribute_list.model.find{|model, path, iter| iter[1].to_sym == name} # to_sym necessary due to Gtk bug, see #on_cursor_changed
         @category.remove_attribute(name)
       end
     end
 
     # Finally, if we created a new category, let the project know
     # about it.
-    $app.project.add_category(@category)
+    $app.project.add_category(@category) if new_category?
 
     destroy
   rescue Errors::ValidationError => e
@@ -176,11 +176,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     # FIXME: ruby-gtk2 can’t store Symbols in models it seems.
     # If this is deemed a bug (I’ve asked on the ML) and fixed,
     # remove the to_sym below. Otherwise, write the code differently.
-    # The to_s is currently necessary to catch the nil case, and can
-    # also be removed if this really is a bug (there's key nil in the
-    # ATTRIBUTE_TYPE_CONVERSIONS hash).
-    @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_s.to_sym) || 0
-    @desc_field.buffer.text = current_list_iter[2].to_s # May be nil
+    @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_sym) || 0
+    @desc_field.buffer.text = current_list_iter[2]
   end
 
   # The user edited the description field.
@@ -202,6 +199,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   def on_list_add_button_clicked(*)
     row = @attribute_list.model.append
     row[0] = "NewAttribute"
+    row[1] = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.first
+    row[2] = ""
   end
 
   # The user clicked the deletion button below the attribute list.
