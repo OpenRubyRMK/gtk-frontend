@@ -124,29 +124,27 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
       table.row_spacings    = $app.space
       row, col              = 0, 0
 
-      cat.each do |entry|
-        cat.each_allowed_attribute do |sym, definition|
-          label = Label.new("#{sym.to_s.capitalize}:")
-          label.xalign = 0
+      cat.each_allowed_attribute do |sym, definition|
+        label = Label.new("#{sym.to_s.capitalize}:")
+        label.xalign = 0
 
-          widget = case definition.type
-                   when :number then Entry.new
-                   when :float  then Entry.new
-                   when :ident  then Entry.new
-                   when :string then Entry.new
-                   end
+        widget = case definition.type
+                 when :number then Entry.new
+                 when :float  then Entry.new
+                 when :ident  then Entry.new
+                 when :string then Entry.new
+                 end
 
-          box = VBox.new
-          box.pack_start(label, false, false)
-          box.pack_start(widget, true, true)
+        box = VBox.new
+        box.pack_start(label, false, false)
+        box.pack_start(widget, true, true)
 
-          table.attach_defaults(box, row, row + 1, col, col + 1)
-          col += 1
+        table.attach_defaults(box, row, row + 1, col, col + 1)
+        col += 1
 
-          if col >= TABLE_COLUMNS
-            col = 0
-            row += 1
-          end
+        if col >= TABLE_COLUMNS
+          col = 0
+          row += 1
         end
       end
     end
