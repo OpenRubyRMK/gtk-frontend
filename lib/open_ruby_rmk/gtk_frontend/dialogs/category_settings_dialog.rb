@@ -19,7 +19,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
           [Stock::CANCEL, Dialog::RESPONSE_REJECT])
 
-    set_default_size 400, 300
+    set_default_size 400, 400
 
     @category = category || OpenRubyRMK::Backend::Category.new("NewCategory")
     @is_new   = !!category
@@ -46,9 +46,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
   def create_widgets
     @name_field      = Entry.new
-    @attribute_list  = TreeView.new(ListStore.new(String, Symbol, String)) # Name, Type, Description
+    @attribute_list  = TreeView.new(ListStore.new(String, OpenRubyRMK::Backend::AttributeDefinition)) # Name, full definition instance
     @type_select     = ComboBox.new
     @desc_field      = TextView.new
+    @min_spin        = Gtk::SpinButton.new
+    @max_spin        = Gtk::SpinButton.new
+    @choices_entry   = Gtk::Entry.new
     @list_add_button = Button.new
     @list_del_button = Button.new
 
@@ -65,6 +68,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       @type_select.append_text(sym.to_s)
     end
     @type_select.active = 0 # Autoselect the first available option
+    @min_spin.value = 0
+    @max_spin.value = 0
 
     @list_add_button.add(icon_image("ui/list-add.png", width: 16))
     @list_del_button.add(icon_image("ui/list-remove.png", width: 16))
@@ -103,6 +108,19 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
         right_vbox.pack_start(label("Attribute type:"), false)
         right_vbox.pack_start(@type_select, false)
+
+        right_vbox.pack_start(label("Minimum and maximum values\n(for types “number” and “float”):"), false)
+        HBox.new.tap do |spin_hbox|
+          spin_hbox.spacing = $app.space
+          spin_hbox.pack_end(@min_spin, true)
+          spin_hbox.pack_end(@max_spin, true)
+
+          right_vbox.pack_start(spin_hbox, false)
+        end
+
+        right_vbox.pack_start(label("Possible comma-separated choices\n(for type “ident”):"), false)
+        right_vbox.pack_start(@choices_entry, false)
+
         right_vbox.pack_start(label("Attribute description"), false)
         right_vbox.pack_start(@desc_field, true)
 
@@ -176,8 +194,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     # FIXME: ruby-gtk2 can’t store Symbols in models it seems.
     # If this is deemed a bug (I’ve asked on the ML) and fixed,
     # remove the to_sym below. Otherwise, write the code differently.
-    @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_sym) || 0
-    @desc_field.buffer.text = current_list_iter[2]
+    # @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_sym) || 0
+    # @desc_field.buffer.text = current_list_iter[2]
+    @type_select.active     = current_list_iter[1].type
+    @desc_field.buffer.text = current_list_iter[1].description
+    @min_spin.value         = current_list_iter[1].minimum
+    @max_spin.value         = current_list_iter[1].maximum
   end
 
   # The user edited the description field.
@@ -192,15 +214,14 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     return unless current_list_iter
     return if @type_select.active_text.empty?
 
-    current_list_iter[1] = @type_select.active_text.to_sym # Only a limited number of choices, hence to_sym is safe
+    current_list_iter[1].type = @type_select.active_text.to_sym # Only a limited number of choices, hence to_sym is safe
   end
 
   # The user clicked the add button below the attribute list.
   def on_list_add_button_clicked(*)
     row = @attribute_list.model.append
     row[0] = "NewAttribute"
-    row[1] = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.first
-    row[2] = ""
+    row[1] = OpenRubyRMK::Backend::Category::AttributeDefinition.new(OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.first)
   end
 
   # The user clicked the deletion button below the attribute list.
