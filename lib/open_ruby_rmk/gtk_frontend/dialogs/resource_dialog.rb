@@ -298,9 +298,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceDialog < Gtk::Dialog
     @preview_button.remove(@preview_button.children.first) unless @preview_button.children.count.zero?
 
     if type == :stop
-      @preview_button.add(icon_image("ui/media-playback-stop.svg", width: 32))
+      @preview_button.add(icon_image("ui/media-playback-stop.png", width: 32))
     elsif type == :start
-      @preview_button.add(icon_image("ui/media-playback-start.svg", width: 32))
+      @preview_button.add(icon_image("ui/media-playback-start.png", width: 32))
     end
 
     # Remember the type so we can act differently depending on

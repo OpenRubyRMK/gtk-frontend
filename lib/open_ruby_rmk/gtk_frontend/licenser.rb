@@ -9,7 +9,7 @@ module OpenRubyRMK::GTKFrontend::Licenser
 
   # Filename relative to data/icons/licenses representing the
   # default copyright icon.
-  DEFAULT_ICON_NAME = "default.svg"
+  DEFAULT_ICON_NAME = "default.png"
 
   # Maps license names to online license URLs and display images.
   # Both the URL and the icon path may be +nil+, but generally you
@@ -18,27 +18,27 @@ module OpenRubyRMK::GTKFrontend::Licenser
   # value of DEFAULT_ICON_NAME.
   LICENSES = {
     # Creative Commons defaults
-    /^CC-BY      (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by/3.0/", "cc/by.svg"],
-    /^CC-BY-SA   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-sa/3.0/", "cc/by-sa.svg"],
-    /^CC-BY-ND   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nd/3.0/", "cc/by-nd.svg"],
-    /^CC-BY-NC   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc/3.0/", "cc/by-nc.svg"],
-    /^CC-BY-NC-SA(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-sa/3.0/", "cc/by-nc-sa.svg"],
-    /^CC-BY-NC-ND(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-nd/3.0/", "cc/by-nc-nd.svg"],
-    /^CC-ZERO|CC0$/xi => ["http://creativecommons.org/publicdomain/zero/1.0/", "cc/cc-zero.svg"],
+    /^CC-BY      (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by/3.0/", "cc/by.png"],
+    /^CC-BY-SA   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-sa/3.0/", "cc/by-sa.png"],
+    /^CC-BY-ND   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nd/3.0/", "cc/by-nd.png"],
+    /^CC-BY-NC   (\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc/3.0/", "cc/by-nc.png"],
+    /^CC-BY-NC-SA(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-sa/3.0/", "cc/by-nc-sa.png"],
+    /^CC-BY-NC-ND(\s+ 3\.0)?$/xi => ["http://creativecommons.org/licenses/by-nc-nd/3.0/", "cc/by-nc-nd.png"],
+    /^CC-ZERO|CC0$/xi => ["http://creativecommons.org/publicdomain/zero/1.0/", "cc/cc-zero.png"],
 
     # Creative Commons 2.5
-    /^CC-BY       \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by/2.5/", "cc/by.svg"],
-    /^CC-BY-SA    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-sa/2.5/", "cc/by-sa.svg"],
-    /^CC-BY-ND    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nd/2.5/", "cc/by-nd.svg"],
-    /^CC-BY-NC    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc/2.5/", "cc/by-nc.svg"],
-    /^CC-BY-NC-SA \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc-sa/2.5/", "cc/by-nc-sa.svg"],
-    /^CC-BY-NC-ND \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc-nd/2.5/", "cc/by-nc-nd.svg"],
+    /^CC-BY       \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by/2.5/", "cc/by.png"],
+    /^CC-BY-SA    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-sa/2.5/", "cc/by-sa.png"],
+    /^CC-BY-ND    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nd/2.5/", "cc/by-nd.png"],
+    /^CC-BY-NC    \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc/2.5/", "cc/by-nc.png"],
+    /^CC-BY-NC-SA \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc-sa/2.5/", "cc/by-nc-sa.png"],
+    /^CC-BY-NC-ND \s+ 2\.5$/xi => ["http://creativecommons.org/licenses/by-nc-nd/2.5/", "cc/by-nc-nd.png"],
 
     # GNU license defaults
-    /^GPL(v3)?$/xi => ["http://www.gnu.org/licenses/gpl-3.0", "gnu/gpl-v3-logo.svg"],
-    /^LGPL(v3)?$/xi => ["http://www.gnu.org/licenses/lgpl-3.0", "gnu/lgpl-v3-logo.svg"],
-    /^AGPL(v3)?$/xi => ["http://www.gnu.org/licenses/agpl-3.0", "gnu/agpl-v3-logo.svg"],
-    /^GFDL$/xi => ["http://www.gnu.org/licenses/fdl-1.3", "gnu/gfdl-logo.svg"],
+    /^GPL(v3)?$/xi => ["http://www.gnu.org/licenses/gpl-3.0", "gnu/gpl-v3-logo.png"],
+    /^LGPL(v3)?$/xi => ["http://www.gnu.org/licenses/lgpl-3.0", "gnu/lgpl-v3-logo.png"],
+    /^AGPL(v3)?$/xi => ["http://www.gnu.org/licenses/agpl-3.0", "gnu/agpl-v3-logo.png"],
+    /^GFDL$/xi => ["http://www.gnu.org/licenses/fdl-1.3", "gnu/gfdl-logo.png"],
 
     # GNU v2 licenses
     /^GPLv2$/xi => ["http://www.gnu.org/licenses/gpl-2.0", nil],
@@ -46,7 +46,7 @@ module OpenRubyRMK::GTKFrontend::Licenser
     /^AGPLv2$/xi => ["http://www.gnu.org/licenses/agpl-2.0", nil],
 
     # Proprietary stuff
-    /^proprietary$/i => ["https://en.wikipedia.org/wiki/Copyright", "proprietary.svg"]
+    /^proprietary$/i => ["https://en.wikipedia.org/wiki/Copyright", "proprietary.png"]
   }
 
   # Takes a license string à la "CC-BY-SA 2.5", "CC-BY", "GPLv3", etc.
@@ -67,7 +67,7 @@ module OpenRubyRMK::GTKFrontend::Licenser
   def self.decompose_license(str)
     *,(url, icon_path) = LICENSES.find { |regexp, *| str =~ regexp }
     icon_path ||= DEFAULT_ICON_NAME
-    return {:url => url, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("licenses", icon_path)}
+    return {:url => url, :icon => OpenRubyRMK::GTKFrontend::ICONS_DIR.join("nativesize", "licenses", icon_path)}
   end
 
 end
