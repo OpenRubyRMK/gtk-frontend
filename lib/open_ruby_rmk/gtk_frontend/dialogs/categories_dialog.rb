@@ -41,8 +41,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
     @add_button = Button.new
     @del_button = Button.new
 
-    @add_button.add(icon_image("ui/list-add.svg", width: 16))
-    @del_button.add(icon_image("ui/list-remove.svg", width: 16))
+    @add_button.add(icon_image("ui/list-add.png", width: 16))
+    @del_button.add(icon_image("ui/list-remove.png", width: 16))
   end
 
   def create_layout

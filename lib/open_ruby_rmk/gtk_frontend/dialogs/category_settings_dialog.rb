@@ -66,8 +66,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     end
     @type_select.active = 0 # Autoselect the first available option
 
-    @list_add_button.add(icon_image("ui/list-add.svg", width: 16))
-    @list_del_button.add(icon_image("ui/list-remove.svg", width: 16))
+    @list_add_button.add(icon_image("ui/list-add.png", width: 16))
+    @list_del_button.add(icon_image("ui/list-remove.png", width: 16))
   end
 
   def create_layout

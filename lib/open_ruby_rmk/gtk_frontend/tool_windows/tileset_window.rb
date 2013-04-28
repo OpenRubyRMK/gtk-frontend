@@ -39,9 +39,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     @del_button      = Button.new
     @settings_button = Button.new
 
-    @add_button.add(icon_image("ui/list-add.svg", width: 16))
-    @del_button.add(icon_image("ui/list-remove.svg", width: 16))
-    @settings_button.add(icon_image("ui/preferences-system.svg", width: 16))
+    @add_button.add(icon_image("ui/list-add.png", width: 16))
+    @del_button.add(icon_image("ui/list-remove.png", width: 16))
+    @settings_button.add(icon_image("ui/preferences-system.png", width: 16))
   end
 
   def create_layout
