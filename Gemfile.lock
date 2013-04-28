@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 38dd4330f5418c3c961addb5affe3388eec34c99
+  revision: 76fc0bbc3c93e4599fa94e7dc4e806c7530b536c
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -18,38 +18,38 @@ GEM
   remote: http://rubygems.org/
   specs:
     ansi (1.4.3)
-    atk (1.1.5)
-      glib2 (>= 1.1.5)
-    bond (0.4.2)
-    cairo (1.12.2)
+    atk (1.2.6)
+      glib2 (>= 1.2.6)
+    bond (0.4.3)
+    cairo (1.12.4)
       pkg-config
-    gdk_pixbuf2 (1.1.5)
-      glib2 (>= 1.1.5)
-    glib2 (1.1.5)
+    gdk_pixbuf2 (1.2.6)
+      glib2 (>= 1.2.6)
+    glib2 (1.2.6)
       pkg-config
-    gtk2 (1.1.5)
-      atk (>= 1.1.5)
-      gdk_pixbuf2 (>= 1.1.5)
-      pango (>= 1.1.5)
-    nokogiri (1.5.6)
-    paint (0.8.5)
-    pango (1.1.5)
+    gtk2 (1.2.6)
+      atk (>= 1.2.6)
+      gdk_pixbuf2 (>= 1.2.6)
+      pango (>= 1.2.6)
+    nokogiri (1.5.9)
+    paint (0.8.6)
+    pango (1.2.6)
       cairo (>= 1.10.0)
-      glib2 (>= 1.1.5)
+      glib2 (>= 1.2.6)
     pkg-config (1.1.4)
-    r18n-core (1.1.2)
-    r18n-desktop (1.1.2)
-      r18n-core (= 1.1.2)
-    rake (10.0.1)
-    rbtree (0.3.0)
+    r18n-core (1.1.4)
+    r18n-desktop (1.1.4)
+      r18n-core (= 1.1.4)
+    rake (10.0.4)
+    rbtree (0.4.1)
     ripl (0.7.0)
       bond (~> 0.4.2)
-    ripl-multi_line (0.3.0)
+    ripl-multi_line (0.3.1)
       ripl (>= 0.3.6)
     turn (0.9.6)
       ansi
-    vte (1.1.5)
-      gtk2 (>= 1.1.5)
+    vte (1.2.6)
+      gtk2 (>= 1.2.6)
 
 PLATFORMS
   ruby
