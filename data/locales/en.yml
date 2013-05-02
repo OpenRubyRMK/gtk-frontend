@@ -27,6 +27,14 @@ dialogs:
       map_name_empty: "The map name cannot be empty."
   categories:
     name: "Configure categories"
+  category_settings:
+    name: "Category settings"
+    new_category_name: "New category"
+    allowed_attributes: "Allowed attributes:"
+    attribute_type: "Attribute type:"
+    minimum_and_maximum: "Minimum and maximum values\n(for types “number” and “float”):"
+    choices: "Possible comma-separated choices\n(for type “ident”):"
+    attribute_description: "Attribute description:"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"

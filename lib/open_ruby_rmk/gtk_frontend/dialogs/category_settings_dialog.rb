@@ -13,7 +13,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   # category to be edited. If this is nil, a new category
   # is created.
   def initialize(parent_window, category = nil)
-    super("Category settings",
+    super(t.dialogs.category_settings.name,
           parent_window,
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
@@ -21,7 +21,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
     set_default_size 400, 400
 
-    @category = category || OpenRubyRMK::Backend::Category.new("NewCategory")
+    @category = category || OpenRubyRMK::Backend::Category.new(t.dialogs.category_settings.new_category_name)
     @is_new   = !!category
 
     create_widgets
@@ -90,7 +90,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       VBox.new.tap do |left_vbox|
         left_vbox.spacing = $app.space
 
-        left_vbox.pack_start(label("Allowed atttributes:"), false)
+        left_vbox.pack_start(label(t.dialogs.category_settings.allowed_attributes), false)
         left_vbox.pack_start(@attribute_list, true)
 
         HBox.new.tap do |list_button_hbox|
@@ -108,10 +108,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       VBox.new.tap do |right_vbox|
         right_vbox.spacing = $app.space
 
-        right_vbox.pack_start(label("Attribute type:"), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.attribute_type), false)
         right_vbox.pack_start(@type_select, false)
 
-        right_vbox.pack_start(label("Minimum and maximum values\n(for types “number” and “float”):"), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.minimum_and_maximum), false)
         HBox.new.tap do |spin_hbox|
           spin_hbox.spacing = $app.space
           spin_hbox.pack_end(@max_inf_button, false)
@@ -122,10 +122,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
           right_vbox.pack_start(spin_hbox, false)
         end
 
-        right_vbox.pack_start(label("Possible comma-separated choices\n(for type “ident”):"), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.choices), false)
         right_vbox.pack_start(@choices_entry, false)
 
-        right_vbox.pack_start(label("Attribute description"), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.choices), false)
         right_vbox.pack_start(@desc_field, true)
 
         hbox.pack_start(right_vbox)
