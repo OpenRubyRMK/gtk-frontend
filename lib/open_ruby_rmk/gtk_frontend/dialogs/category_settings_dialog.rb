@@ -46,12 +46,14 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
   def create_widgets
     @name_field      = Entry.new
-    @attribute_list  = TreeView.new(ListStore.new(String, OpenRubyRMK::Backend::AttributeDefinition)) # Name, full definition instance
+    @attribute_list  = TreeView.new(ListStore.new(String, OpenRubyRMK::Backend::Category::AttributeDefinition)) # Name, full definition instance
     @type_select     = ComboBox.new
     @desc_field      = TextView.new
-    @min_spin        = Gtk::SpinButton.new
-    @max_spin        = Gtk::SpinButton.new
-    @choices_entry   = Gtk::Entry.new
+    @min_field       = Entry.new
+    @max_field       = Entry.new
+    @min_inf_button  = Button.new("-∞")
+    @max_inf_button  = Button.new("∞")
+    @choices_entry   = Entry.new
     @list_add_button = Button.new
     @list_del_button = Button.new
 
@@ -68,8 +70,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       @type_select.append_text(sym.to_s)
     end
     @type_select.active = 0 # Autoselect the first available option
-    @min_spin.value = 0
-    @max_spin.value = 0
+    @min_field.text = "-∞"
+    @max_field.text = "∞"
 
     @list_add_button.add(icon_image("ui/list-add.png", width: 16))
     @list_del_button.add(icon_image("ui/list-remove.png", width: 16))
@@ -112,8 +114,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
         right_vbox.pack_start(label("Minimum and maximum values\n(for types “number” and “float”):"), false)
         HBox.new.tap do |spin_hbox|
           spin_hbox.spacing = $app.space
-          spin_hbox.pack_end(@min_spin, true)
-          spin_hbox.pack_end(@max_spin, true)
+          spin_hbox.pack_end(@max_inf_button, false)
+          spin_hbox.pack_end(@max_field, true)
+          spin_hbox.pack_end(@min_field, true)
+          spin_hbox.pack_end(@min_inf_button, false)
 
           right_vbox.pack_start(spin_hbox, false)
         end
@@ -139,6 +143,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     @desc_field.buffer.signal_connect(:changed, &method(:on_desc_field_changed))
     @list_add_button.signal_connect(:clicked, &method(:on_list_add_button_clicked))
     @list_del_button.signal_connect(:clicked, &method(:on_list_del_button_clicked))
+    @min_field.signal_connect(:changed, &method(:on_minimum_field_changed))
+    @max_field.signal_connect(:changed, &method(:on_maximum_field_changed))
+    @min_inf_button.signal_connect(:clicked){@min_field.text = "-∞"}
+    @max_inf_button.signal_connect(:clicked){@max_field.text = "∞"}
+    @choices_entry.signal_connect(:changed, &method(:on_choices_entry_changed))
   end
 
   ########################################
@@ -154,20 +163,23 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
       # Add new attributes, adjust existing ones
       @attribute_list.model.each do |model, path, iter|
-        name, type, desc = iter[0].to_sym, iter[1].to_sym, iter[2] # Come on, nobody exploits a GUI program, and the second to_sym is fine anyway.
+        name, definition = iter[0].to_sym, iter[1] # Come on, nobody exploits a GUI program
 
         if @category.valid_attribute?(name)
           @category[name].type        = type # FIXME: Convert existing entries?
-          @category[name].description = desc
+          @category[name].description = definition.description
+          @category[name].minimum = definition.minimum
+          @category[name].maximum = definition.maximum
+          @category[name].choices = definition.choices
         else
-          @category.define_attribute(name, type, desc)
+          @category.define_attribute(name, definition)
         end
       end
     end
 
     # Remove attributes not in the list anymore
     @category.attribute_names.each do |name|
-      unless @attribute_list.model.find{|model, path, iter| iter[1].to_sym == name} # to_sym necessary due to Gtk bug, see #on_cursor_changed
+      unless @attribute_list.model.find{|model, path, iter| iter[0].to_sym == name} # to_sym as above
         @category.remove_attribute(name)
       end
     end
@@ -196,17 +208,37 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     # remove the to_sym below. Otherwise, write the code differently.
     # @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].to_sym) || 0
     # @desc_field.buffer.text = current_list_iter[2]
-    @type_select.active     = current_list_iter[1].type
+    @type_select.active     = OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.index(current_list_iter[1].type)
     @desc_field.buffer.text = current_list_iter[1].description
-    @min_spin.value         = current_list_iter[1].minimum
-    @max_spin.value         = current_list_iter[1].maximum
+    @min_field.text         = current_list_iter[1].minimum == -Float::INFINITY ? "-∞" : current_list_iter[1].minimum.to_s
+    @max_field.text         = current_list_iter[1].maximum == Float::INFINITY ? "∞" : current_list_iter[1].maximum.to_s
+    @choices_entry.text     = current_list_iter[1].choices.map(&:to_s).join(", ")
   end
 
   # The user edited the description field.
   def on_desc_field_changed(*)
     return unless current_list_iter
 
-    current_list_iter[2] = @desc_field.buffer.text
+    current_list_iter[1].description = @desc_field.buffer.text
+  end
+
+  def on_minimum_field_changed(*)
+    return unless current_list_iter
+
+    current_list_iter[1].minimum = @min_field.text == "-∞" ? -Float::INFINITY : @min_field.text.to_f
+  end
+
+  def on_maximum_field_changed(*)
+    return unless current_list_iter
+
+    current_list_iter[1].maximum = @max_field.text == "∞" ? Float::INFINITY : @max_field.text.to_f
+  end
+
+  def on_choices_entry_changed(*)
+    return unless current_list_iter
+
+    # FIXME: This generates a whole lot of symbols, one for each letter typed in
+    current_list_iter[1].choices = @choices_entry.text.split(/,\s?/).map(&:to_sym)
   end
 
   # The user edited the type combo box.
