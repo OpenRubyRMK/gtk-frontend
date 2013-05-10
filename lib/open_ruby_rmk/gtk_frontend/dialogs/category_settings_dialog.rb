@@ -8,6 +8,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   include OpenRubyRMK::GTKFrontend::Helpers::Icons
   include OpenRubyRMK::GTKFrontend::Helpers::Labels
 
+  # The category edited/created by this dialog.
+  attr_reader :category
+
   # Creates a new instance of this class. +parent_window+ is the
   # window this dialog shall be modal to, +category+ is the
   # category to be edited. If this is nil, a new category

@@ -75,6 +75,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
   def on_add_button_clicked(*)
     cd = Dialogs::CategorySettingsDialog.new(self)
     cd.run
+    append_category(cd.category)
+    @notebook.show_all
   end
 
   def on_del_button_clicked(*)
