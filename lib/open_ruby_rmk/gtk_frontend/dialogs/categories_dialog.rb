@@ -37,12 +37,14 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
   private
 
   def create_widgets
-    @notebook   = Notebook.new
-    @add_button = Button.new
-    @del_button = Button.new
+    @notebook        = Notebook.new
+    @add_button      = Button.new
+    @del_button      = Button.new
+    @settings_button = Button.new
 
     @add_button.add(icon_image("ui/list-add.png", width: 16))
     @del_button.add(icon_image("ui/list-remove.png", width: 16))
+    @settings_button.add(icon_image("ui/preferences-system.png", width: 16))
   end
 
   def create_layout
@@ -51,6 +53,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
     HBox.new.tap do |hbox|
       hbox.pack_end(@del_button, false)
       hbox.pack_end(@add_button, false)
+      hbox.pack_end(@settings_button, false)
 
       hbox.border_width = $app.space
       vbox.pack_start(hbox, false)
@@ -63,6 +66,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
     signal_connect(:response, &method(:on_response))
     @add_button.signal_connect(:clicked, &method(:on_add_button_clicked))
     @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
+    @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
   end
 
   ########################################
@@ -81,6 +85,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
 
   def on_del_button_clicked(*)
     raise(NotImplementedError, "Someone needs to implement deletion of categories")
+  end
+
+  def on_settings_button_clicked(*)
+    raise(NotImplementedError, "Someone needs to implement editing of categories")
   end
 
   ########################################
