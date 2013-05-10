@@ -22,7 +22,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     set_default_size 400, 400
 
     @category = category || OpenRubyRMK::Backend::Category.new(t.dialogs.category_settings.new_category_name)
-    @is_new   = !!category
+    @is_new   = !category
 
     create_widgets
     create_layout
