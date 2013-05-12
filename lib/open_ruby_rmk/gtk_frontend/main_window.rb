@@ -18,11 +18,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_layout
     create_extra_windows
     setup_event_handlers
-    
+
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
   end
-  
+
   # As superclass method, but also calls
   # #show_all on all desired child windows.
   def show_all
@@ -37,21 +37,21 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       @map_window.move(*$app.cache[:map_window_position])         if $app.cache[:map_window_position]
       @tileset_window.move(*$app.cache[:tileset_window_position]) if $app.cache[:tileset_window_position]
       @layer_window.move(*$app.cache[:layer_window_position])     if $app.cache[:layer_window_position]
-    
+
     # Otherwise try to position best suited for the current screen resolution
-    else 
+    else
       dw = screen.width - @map_window.default_width - @tileset_window.default_width - 100
       dh = screen.height
       resize(dw,dh)
-      
+
       @map_window.move(0,0)
       @map_window.resize(@map_window.default_width, dh)
-      
+
       move(@map_window.default_width+70,0)
-      
+
       @tileset_window.move(@map_window.default_width+dw+100,0)
       @tileset_window.resize(@tileset_window.default_width, dh / 2 - 100)
-      
+
       @layer_window.move(@map_window.default_width+dw+100,dh / 2)
       @layer_window.resize(@layer_window.default_width, dh / 2)
     end
@@ -277,8 +277,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       $app.project = nil # Ensure we have a clean state
     end
   end
-  
-  # File -> Open Recent 
+
+  # File -> Open Recent
   # The rescue isn't really neccessary because I set the "existing files only" filter
   def on_menu_file_recent_opened(event)
     begin
