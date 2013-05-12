@@ -99,6 +99,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
 
     # Add a page for the new category
     append_category(cd.category)
+    @notebook.page = @notebook.n_pages - 1
     @notebook.show_all
   end
 
@@ -119,6 +120,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
     @notebook.remove_page(page)
 
     append_category(cat, page)
+    @notebook.page = page
     @notebook.show_all
   end
 

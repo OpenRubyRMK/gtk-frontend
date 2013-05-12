@@ -172,7 +172,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
         name, definition = iter[0].to_sym, iter[1] # Come on, nobody exploits a GUI program
 
         if @category.valid_attribute?(name)
-          @category[name].type        = type # FIXME: Convert existing entries?
+          @category[name].type        = definition.type # FIXME: Convert existing entries?
           @category[name].description = definition.description
           @category[name].minimum = definition.minimum
           @category[name].maximum = definition.maximum
