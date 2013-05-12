@@ -26,17 +26,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
     @category = category || OpenRubyRMK::Backend::Category.new(t.dialogs.category_settings.new_category_name)
     @is_new   = !category
+    @accepted = false
 
     create_widgets
     create_layout
     setup_event_handlers
+    fill_in_category_infos
   end
 
   # Shows all child widgets, then calls the superclass’
-  # method.
+  # method. Returns false if the user aborted the dialog,
+  # true otherwise.
   def run(*)
     show_all
     super
+
+    @accepted
   end
 
   # Returns true if the category was created by this window,
@@ -66,8 +71,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
     @attribute_list_name_renderer          = CellRendererText.new
     @attribute_list_name_renderer.editable = true
     @attribute_list.append_column(TreeViewColumn.new("", @attribute_list_name_renderer, text: 0)) # model[0] => Attribute name
-
-    @name_field.text = @category.name
 
     OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.each do |sym|
       @type_select.append_text(sym.to_s)
@@ -178,18 +181,20 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
           @category.define_attribute(name, definition)
         end
       end
-    end
 
-    # Remove attributes not in the list anymore
-    @category.attribute_names.each do |name|
-      unless @attribute_list.model.find{|model, path, iter| iter[0].to_sym == name} # to_sym as above
-        @category.remove_attribute(name)
+      # Remove attributes not in the list anymore
+      @category.attribute_names.each do |name|
+        unless @attribute_list.model.find{|model, path, iter| iter[0].to_sym == name} # to_sym as above
+          @category.remove_attribute(name)
+        end
       end
-    end
 
-    # Finally, if we created a new category, let the project know
-    # about it.
-    $app.project.add_category(@category) if new_category?
+      # Finally, if we created a new category, let the project know
+      # about it.
+      $app.project.add_category(@category) if new_category?
+
+      @accepted = true # Return value of #run, see above
+    end
 
     destroy
   rescue Errors::ValidationError => e
@@ -274,6 +279,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   def current_list_iter
     return nil unless @attribute_list.cursor[0]
     @attribute_list.model.get_iter(@attribute_list.cursor[0])
+  end
+
+  def fill_in_category_infos
+    # The category name field
+    @name_field.text = @category.name
+
+    # The already existing attribute definitions
+    @category.each_allowed_attribute do |name, definition|
+      row = @attribute_list.model.append
+
+      # Note the dupping so we don’t accidentally change something
+      # in the project although the user after having done some edits
+      # clicks “abort”.
+      row[0] = name.to_s
+      row[1] = definition.dup
+    end
   end
 
 end

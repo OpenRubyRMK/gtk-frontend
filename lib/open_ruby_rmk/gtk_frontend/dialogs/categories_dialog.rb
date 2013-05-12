@@ -5,6 +5,21 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
   include OpenRubyRMK::GTKFrontend
   include OpenRubyRMK::GTKFrontend::Helpers::Icons
 
+  # A Gtk::Label wrapped around a Backend::Categoy.
+  class CategoryTabLabel < Gtk::Label
+
+    # The underlying Category instance.
+    attr_reader :category
+
+    # Creates a new instance of this class, delagating to
+    # Label::new with `category.name` as the argument.
+    def initialize(category)
+      super(category.name)
+      @category = category
+    end
+
+  end
+
   # The attribute values’ table’s number of rows.
   TABLE_ROWS    = 5
   # The attribute values’ table’s number of columns.
@@ -77,8 +92,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
   end
 
   def on_add_button_clicked(*)
+    # Let the user edit the category (the dialog keeps track
+    # of adding the new category the the current project)
     cd = Dialogs::CategorySettingsDialog.new(self)
-    cd.run
+    return unless cd.run
+
+    # Add a page for the new category
     append_category(cd.category)
     @notebook.show_all
   end
@@ -88,13 +107,28 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
   end
 
   def on_settings_button_clicked(*)
-    raise(NotImplementedError, "Someone needs to implement editing of categories")
+    # Let the user edit the category
+    cat = active_category
+    cd  = Dialogs::CategorySettingsDialog.new(self, cat)
+    return unless cd.run
+
+    # Rather than deleting all widgets and recreating them,
+    # just create an entirely new page and move it where the
+    # old page was (this is easier).
+    page = @notebook.page
+    @notebook.remove_page(page)
+
+    append_category(cat, page)
+    @notebook.show_all
   end
 
   ########################################
   # Helpers
 
-  def append_category(cat)
+  # Add a page with all the necessary widgets for a given category
+  # to @notebook. If +target_num+ is specified, insert the page at
+  # that position, otherwise just append it at the end.
+  def append_category(cat, target_num = nil)
     HBox.new.tap do |hbox|
       hbox.spacing      = $app.space
       hbox.border_width = $app.space
@@ -102,7 +136,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
       hbox.pack_start(create_entry_list(cat), true, true)
       hbox.pack_start(create_attribute_widgets(cat), true, true)
 
-      @notebook.append_page(hbox, Label.new(cat.name))
+      if target_num
+        @notebook.insert_page(target_num, hbox, CategoryTabLabel.new(cat))
+      else
+        @notebook.append_page(hbox, CategoryTabLabel.new(cat))
+      end
     end
   end
 
@@ -158,6 +196,13 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategoriesDialog < Gtk::Dialog
         end
       end
     end
+  end
+
+  def active_category
+    index = @notebook.page
+    return nil if index < 0
+
+    @notebook.get_tab_label(@notebook.get_nth_page(index)).category
   end
 
 end
