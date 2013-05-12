@@ -457,6 +457,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:file_package].sensitive          = true
       menu_items[:edit_resources].sensitive        = true
       menu_items[:edit_project_settings].sensitive = true
+      menu_items[:edit_categories].sensitive       = true
     else
       menu_items[:file_new].sensitive              = true
       menu_items[:file_open].sensitive             = true
@@ -465,6 +466,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:file_package].sensitive          = false
       menu_items[:edit_resources].sensitive        = false
       menu_items[:edit_project_settings].sensitive = false
+      menu_items[:edit_categories].sensitive       = false
     end
   end
 
