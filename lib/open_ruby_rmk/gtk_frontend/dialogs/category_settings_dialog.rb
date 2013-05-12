@@ -86,7 +86,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   def create_layout
     vbox.spacing = $app.space
 
-    vbox.pack_start(label("Name:"), false)
+    vbox.pack_start(label(t.dialogs.category_settings.labels.name), false)
     vbox.pack_start(@name_field, false)
 
     HBox.new.tap do |hbox|
@@ -96,7 +96,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       VBox.new.tap do |left_vbox|
         left_vbox.spacing = $app.space
 
-        left_vbox.pack_start(label(t.dialogs.category_settings.allowed_attributes), false)
+        left_vbox.pack_start(label(t.dialogs.category_settings.labels.allowed_attributes), false)
         left_vbox.pack_start(@attribute_list, true)
 
         HBox.new.tap do |list_button_hbox|
@@ -114,10 +114,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
       VBox.new.tap do |right_vbox|
         right_vbox.spacing = $app.space
 
-        right_vbox.pack_start(label(t.dialogs.category_settings.attribute_type), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.labels.attribute_type), false)
         right_vbox.pack_start(@type_select, false)
 
-        right_vbox.pack_start(label(t.dialogs.category_settings.minimum_and_maximum), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.labels.minimum_and_maximum), false)
         HBox.new.tap do |spin_hbox|
           spin_hbox.spacing = $app.space
           spin_hbox.pack_end(@max_inf_button, false)
@@ -128,10 +128,10 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
           right_vbox.pack_start(spin_hbox, false)
         end
 
-        right_vbox.pack_start(label(t.dialogs.category_settings.choices), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.labels.choices), false)
         right_vbox.pack_start(@choices_entry, false)
 
-        right_vbox.pack_start(label(t.dialogs.category_settings.choices), false)
+        right_vbox.pack_start(label(t.dialogs.category_settings.labels.attribute_description), false)
         right_vbox.pack_start(@desc_field, true)
 
         hbox.pack_start(right_vbox)
@@ -161,8 +161,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
 
   def on_response(_, res)
     if res == Gtk::Dialog::RESPONSE_ACCEPT
-      raise(Errors::ValidationError, "No name given") if @name_field.text.empty?
-      raise(Errors::ValidationError, "No attributes defined") if @attribute_list.model.iter_first.nil?
+      raise(Errors::ValidationError, t.dialogs.category_settings.errors.no_name) if @name_field.text.empty?
+      raise(Errors::ValidationError, t.dialogs.category_settings.errors.no_attrs) if @attribute_list.model.iter_first.nil?
 
       # (Re)set the category’s name
       @category.name = @name_field.text
@@ -260,7 +260,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::CategorySettingsDialog < Gtk::Dialog
   # The user clicked the add button below the attribute list.
   def on_list_add_button_clicked(*)
     row = @attribute_list.model.append
-    row[0] = "NewAttribute"
+    row[0] = t.dialogs.category_settings.new_attribute_name
     row[1] = OpenRubyRMK::Backend::Category::AttributeDefinition.new(OpenRubyRMK::Backend::Category::ATTRIBUTE_TYPE_CONVERSIONS.keys.sort.first)
   end
 

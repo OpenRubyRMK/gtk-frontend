@@ -30,11 +30,18 @@ dialogs:
   category_settings:
     name: "Category settings"
     new_category_name: "New category"
-    allowed_attributes: "Allowed attributes:"
-    attribute_type: "Attribute type:"
-    minimum_and_maximum: "Minimum and maximum values\n(for types “number” and “float”):"
-    choices: "Possible comma-separated choices\n(for type “ident”):"
-    attribute_description: "Attribute description:"
+    # The attribute name should not contain any whitespace.
+    new_attribute_name: "NewAttribute"
+    labels:
+      name: "Name:"
+      allowed_attributes: "Allowed attributes:"
+      attribute_type: "Attribute type:"
+      minimum_and_maximum: "Minimum and maximum values\n(for types “number” and “float”):"
+      choices: "Possible comma-separated choices\n(for type “ident”):"
+      attribute_description: "Attribute description:"
+    errors:
+      no_name: "No name given"
+      no_attrs: "No attributes defined"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"
