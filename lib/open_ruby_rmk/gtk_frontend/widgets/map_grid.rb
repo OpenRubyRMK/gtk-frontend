@@ -18,7 +18,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     $app.state[:core].observe(:value_set) do |event, sender, info|
       case info[:key]
       when :map     then update_map(info[:value])
-      when :z_index then self.active_layer = info[:value]
+      when :z_index then
+        self.active_layer = info[:value]
+        redraw!
       end
     end
   end
@@ -105,7 +107,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # above lower ones. Note that the Pixbuf instanciation below is actually
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
     # operation.
-    # TODO: Depending on the active layer, set alpha on higher layers?
     @map.tmx_map.each_layer.with_index do |layer, mapz|
       layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
         if tileset

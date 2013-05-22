@@ -173,6 +173,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Set to +true+ if you want to draw visual lines between the cells.
   attr_writer :draw_grid
 
+  # Set to a value between 0 and 1, denoting the alpha value to
+  # apply to higher layers. Defaults to 0.5.
+  attr_accessor :alpha_layers
+
   # Color for the grid lines if +draw_grid+ is +true+. A four-element
   # array of color values as Cairo expects it, i.e. each component
   # may reach from 0 (nothing) up to 1 (full):
@@ -199,6 +203,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cell_width     = cell_width
     @cell_height    = cell_height
     @draw_grid      = false
+    @alpha_layers   = 0.5
     @grid_color     = [0.5, 0, 1, 1]
     @mask           = []
     @button_is_down = false # Set to true while a mouse button is down
@@ -759,7 +764,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
           next if info.nil? # Empty cell
 
           cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
-          cc.paint
+
+          if z > active_layer && @alpha_layers <= 0.99
+            cc.paint(@alpha_layers)
+          else
+            cc.paint
+          end
         end
       end
     end
