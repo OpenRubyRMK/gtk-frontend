@@ -26,3 +26,8 @@ grid: off
 # does this, you probably don’t want to set this.
 ## off
 remember_window_positions: off
+
+# Activate if you want layers above the current one
+# to fade out.
+## on
+alpha_layers: on

@@ -141,6 +141,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @map_grid = OpenRubyRMK::GTKFrontend::Widgets::MapGrid.new(OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE,
                                                                OpenRubyRMK::Backend::Map::DEFAULT_TILE_EDGE)
     @map_grid.draw_grid = $app.config[:grid]
+    @map_grid.alpha_layers = $app.config[:alpha_layers] ? 0.5 : 1
   end
 
   # Lays out the previously created widgets.
