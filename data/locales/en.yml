@@ -46,6 +46,9 @@ dialogs:
   add_layer:
     title: "Add a new layer"
     message: "Enter the new layer’s name:"
+  add_tileset:
+    title: "Add tileset"
+    no_tileset_selected: "No tileset selected."
   resources:
     name: "Resources"
     labels:

@@ -3,12 +3,12 @@
 class OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog < OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog
 
   validate do
-    val_error "No tileset selected." if !@directory_tree.selected_path or !@directory_tree.selected_path.file?
+    val_error t.dialogs.add_tileset.no_tileset_selected if !@directory_tree.selected_path or !@directory_tree.selected_path.file?
   end
 
   def initialize(map)
     @map = map
-    super("Add tileset", "tilesets", $app.mainwindow)
+    super(t.dialogs.add_tileset.title, "tilesets", $app.mainwindow)
   end
 
   def create_preview_widget
