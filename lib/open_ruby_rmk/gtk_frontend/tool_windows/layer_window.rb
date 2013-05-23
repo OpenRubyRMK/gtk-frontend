@@ -128,7 +128,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     return unless map
 
     map.tmx_map.each_layer do |layer|
-      row = @layer_list.model.append
+      row = @layer_list.model.prepend
       row[0] = layer
       row[1] = layer.name
     end
