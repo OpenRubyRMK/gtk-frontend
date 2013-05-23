@@ -215,6 +215,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       @cell_height = cell_height
     end
 
+    # Human-readable description
+    def inspect
+      "#<#{self.class} #{col_num}x#{row_num} z=#{z}>"
+    end
+
     # Iterate over each column and their respective cells, yielding
     # the CellInfo objects.
     def each
@@ -429,12 +434,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # (mostly applicable immediately after instanciation).
   DEFAULT_SIZE = [32, 32]
 
-  # Number of columns in the table, i.e. the table’s width.
-  attr_reader :colnum
-
-  # Number of rows in the table, i.e. the table’s height.
-  attr_reader :rownum
-
   # Set to +true+ if you want to draw visual lines between the cells.
   attr_writer :draw_grid
 
@@ -454,11 +453,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   #   The initial width of a single cell in pixels.
   # [cell_height]
   #   The initial height of a single cell in pixels.
-  # [colnum]
-  #   Number of columns in the grid, i.e. the table’s width.
-  # [rownum]
-  #   Number of rows in the grid, i.e. the table’s height.
-  def initialize(cell_width, cell_height, colnum, rownum)
+  def initialize(cell_width, cell_height)
     super()
     @layers         = []
     @active_layer   = 0
@@ -466,13 +461,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
     @cell_width     = cell_width
     @cell_height    = cell_height
-    @colnum         = colnum
-    @rownum         = rownum
     @draw_grid      = false
     @alpha_layers   = 0.5
     @grid_color     = [0.5, 0, 1, 1]
     @mask           = []
     @button_is_down = false # Set to true while a mouse button is down
+    @__first_cell_layer = nil
 
     @layout.set_size(*DEFAULT_SIZE)
     @layout.signal_connect(:expose_event, &method(:on_expose))
@@ -484,6 +478,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @layout.signal_connect(:motion_notify_event, &method(:on_motion))
 
     redraw!
+  end
+
+  # Human-readable description.
+  def inspect
+    "#<#{self.class} layers: #{@layers.count} active: #@active_layer tables: #{col_num}x#{row_num}>"
   end
 
   # Retrieves the Layer at the given Z position (or nil if there is none),
@@ -544,17 +543,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw
   end
 
+  # Number of columns in the CellLayer layers.
+  def col_num
+    # FIXME: Use the caching from #canvas_size
+    @layers.find{|l| l.kind_of?(CellLayer)}.col_num
+  rescue NoMethodError
+    0
+  end
+
+  # Number of rows in the CellLayer layers.
+  def row_num
+    # FIXME: Use the caching from #canvas_size
+    @layers.find{|l| l.kind_of?(CellLayer)}.row_num
+  rescue NoMethodError
+    0
+  end
+
   # Resize all CellLayers to the given number of columns.
   # See CellLayer#col_num= for more info.
   def col_num=(val)
-    @colnum = val
     @layers.each{|l| l.col_num = val if l.kind_of?(CellLayer)}
   end
 
   # Resize all CellLayers to the given number of rows.
   # See CellLayer#row_num= for more info.
   def row_num=(val)
-    @rownum = val
     @layers.each{|l| l.row_num = val if l.kind_of?(CellLayer)}
   end
 
@@ -622,24 +635,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   # Calculates the width and height of the table by means of the
-  # values you passed to ::new. Return value is a two-element array
+  # first CellLayer found in the table. Return value is a two-element array
   # of form <tt>[width, height]</tt> (both values are pixel values).
+  # The results are cached as long as possible.
   def canvas_size
     # Note this code makes two
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole table is rectangular, i.e. no row has more columns
     # than another, etc.
-    [@cell_width * @colnum, @cell_height * @rownum]
-  end
 
-  # Number of columns in each cell layer.
-  def col_num
-    @colnum
-  end
+    # @layers.find is a quite unperformant operation and #canvas_size
+    # gets called really often in event handlers, so we try to
+    # cache the result as long as possible (i.e. until the found Z
+    # coordinate doesn’t refer to a CellLayer anymore. Note that we
+    # don’t care if some other layer gets moved onto that Z as long as
+    # this other layer is a CellLayer — all CellLayers in the table should
+    # have the same dimensions.
+    if !@__first_cell_layer || !@layers[@__first_cell_layer.z].kind_of?(CellLayer)
+      @__first_cell_layer = @layers.find{|l| l.kind_of?(CellLayer)}
+    end
 
-  # Number of rows in each cell layer.
-  def row_num
-    @rownum
+    # Note we can’t cache the canvas size itself, because @cell_width, @cell_height and
+    # the number of rows and columns in a layer can be changed dynamically.
+    [@cell_width * @__first_cell_layer.col_num, @cell_height * @__first_cell_layer.row_num]
+  rescue NoMethodError
+    [0, 0] # No active layer = no layers = size is 0x0
   end
 
   # The number of layers in the table.
@@ -693,7 +713,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   # Like #insert_layer, but directly inserts an empty CellLayer.
   def insert_cell_layer(z)
-    insert_layer(z, CellLayer.new(col_num, row_num, @cell_width, @cell_height))
+    insert_layer(z, CellLayer.new(z, col_num, row_num, @cell_width, @cell_height))
   end
 
   # Like #insert_layer, but directly inserts an empty ObjectLayer.
@@ -903,7 +923,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Does not clear the mask.
   def apply
     @mask.each do |pos|
-      result = yield(pos, @layers[post.cell_z][pos.cell_x, pos.cell_y])
+      result = yield(pos, @layers[pos.cell_z][pos.cell_x, pos.cell_y])
       case result
       when CellInfo    then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, result)
       when Gdk::Pixbuf then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, CellInfo.new(result))
@@ -966,7 +986,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # image required for this cell temporarily.
     @layers.each_with_index do |layer, z|
       layer.expose(cc,
-                   Gdk::Rectangle.new(0, 0, @colnum * @cell_width, @rownum * @cell_height),
+                   Gdk::Rectangle.new(0, 0, col_num * @cell_width, row_num * @cell_height),
                    alpha: z > @active_layer && @alpha_layers <= 0.99 ? @alpha_layers : false)
     end
 
@@ -1017,7 +1037,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = pos.cell_y * @cell_height
 
       # Only care about clicks on the grid, not about those next to it
-      return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      return if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
     else
       # For other layers, hand the raw coordinates and ommit cell_x and cell_y
       pos = CellPos.new
@@ -1026,7 +1046,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = event.coords[1].to_i
 
       # But still don’t care for clicks outside the grid
-      return if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+      return if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
     end
 
     @button_is_down = true
@@ -1043,7 +1063,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = pos.cell_y * @cell_height
 
       # Only care about clicks on the grid, not about those next to it
-      return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      return if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
     else
       # For other layers, hand the raw coordinates and ommit cell_x and cell_y
       pos = CellPos.new
@@ -1052,7 +1072,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = event.coords[1].to_i
 
       # But still don’t care for stuff outside the grid
-      return if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+      return if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
     end
 
     signal_emit :cell_button_motion, :pos => pos, :event => event
@@ -1068,7 +1088,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = pos.cell_y * @cell_height
 
       # Don’t provide coordinates outside the cell grid
-      pos = nil if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      pos = nil if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
     else
       pos = CellPos.new
       pos.cell_z = @active_layer
@@ -1076,7 +1096,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       pos.y = event.coords[1].to_i
 
       # But still don’t care for stuff outside the grid
-      pos = nil if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+      pos = nil if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
     end
 
     signal_emit :cell_button_release, :event => event, :pos => pos
