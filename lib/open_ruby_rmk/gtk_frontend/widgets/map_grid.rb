@@ -33,22 +33,26 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   def on_cell_button_press(_, hsh)
     return unless @map
 
-    @pressed_button = hsh[:event].button
-    return unless hsh[:event].button == 3 # Secondary mouse button
+    if active_layer.kind_of?(CellLayer)
+      @pressed_button = hsh[:event].button
+      return unless hsh[:event].button == 3 # Secondary mouse button
 
-    clear_mask
-    add_to_mask(hsh[:pos])
-    @first_selection = hsh[:pos]
+      clear_mask
+      add_to_mask(hsh[:pos])
+      @first_selection = hsh[:pos]
+    end
   end
 
   def on_cell_button_motion(_, hsh)
     return unless @map
     return unless @pressed_button == 3 # Secondary mouse button
 
-    # Mask adjustments for those selection modes that are motion-aware
-    case $app.state[:core][:selection_mode]
+    if active_layer.kind_of?(CellLayer)
+      # Mask adjustments for those selection modes that are motion-aware
+      case $app.state[:core][:selection_mode]
       when :rectangle then mask_rectangle(@first_selection, hsh[:pos])
       when :freehand  then add_to_mask(hsh[:pos])
+      end
     end
   end
 
@@ -57,18 +61,20 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return unless hsh[:pos]
     return unless @pressed_button == hsh[:event].button # Shouldn’t happen
 
-    # Mask adjustments for those selection modes that aren’t motion-aware
-    case $app.state[:core][:selection_mode]
+    if active_layer.kind_of?(CellLayer)
+      # Mask adjustments for those selection modes that aren’t motion-aware
+      case $app.state[:core][:selection_mode]
       when :magic then mask_adjascent(@first_selection)
-    end
+      end
 
-    case @pressed_button
-    when 1 then # Primary mouse button
-      fill_mask
-    when 3 then # Secondary mouse button
+      case @pressed_button
+      when 1 then # Primary mouse button
+        fill_mask
+      when 3 then # Secondary mouse button
       @first_selection = nil
-    when 2 then # Middle mouse button
-      # TODO: Something useful?
+      when 2 then # Middle mouse button
+        # TODO: Something useful?
+      end
     end
   end
 
@@ -108,24 +114,36 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
     # operation.
     @map.tmx_map.each_layer.with_index do |layer, mapz|
-      layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
-        if tileset
-          # Convert the relative tile ID into coordinates on the tileset pixmap
-          x, y  = tileset.tile_position(id)
+      if layer.kind_of?(TiledTmx::TileLayer)
+        insert_cell_layer(mapz)
 
-          # Extract the tile from the tileset pixmap and store it in
-          # the widget’s drawing storage.
-          set_cell(mapx,
-                   mapy,
-                   mapz,
-                   Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
-                                   x,
-                                   y,
-                                   tileset.tilewidth,
-                                   tileset.tileheight))
-        else # Empty cell
-          set_cell(mapx, mapy, mapz, nil)
+        layer.each_tile do |mapx, mapy, tile, id, tileset, flips|
+          if tileset
+            # Convert the relative tile ID into coordinates on the tileset pixmap
+            x, y  = tileset.tile_position(id)
+
+            # Extract the tile from the tileset pixmap and store it in
+            # the widget’s drawing storage.
+            set_cell(mapx,
+                     mapy,
+                     mapz,
+                     Gdk::Pixbuf.new(@tileset_pixbufs[tileset],
+                                     x,
+                                     y,
+                                     tileset.tilewidth,
+                                     tileset.tileheight))
+          else # Empty cell
+            set_cell(mapx, mapy, mapz, nil)
+          end
         end
+      elsif layer.kind_of?(TiledTmx::ObjectGroup)
+        insert_object_layer(mapz)
+        # FIXME
+      elsif layer.kind_of?(TiledTmx::ImageLayer)
+        insert_object_layer(mapz)
+        # FIXME
+      else
+        raise("Unsupported layer type: #{layer.class}")
       end
     end
 
@@ -138,7 +156,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # be empty, and insert_layer already creates an empty
     # layer.
     @map.observe(:layer_added) do |event, sender, info|
-      insert_layer(-1)
+      case info[:layer]
+      when TiledTmx::TileLayer then insert_cell_layer(-1)
+      when TiledTmx::ObjectGroup then insert_object_layer(-1)
+      when TiledTmx::ImageLayer then insert_object_layer(-1)
+      else
+        raise("Unsupported layer type: #{info[:layer].class}")
+      end
+
       redraw
     end
 

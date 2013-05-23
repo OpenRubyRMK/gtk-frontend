@@ -201,6 +201,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   class CellLayer < Layer
     include Enumerable
 
+    # The width of a single cell, in pixels.
+    attr_accessor :cell_width
+    # The height of a single cell, in pixels.
+    attr_accessor :cell_height
+
     # Create a new layer with the given dimensions.
     def initialize(z, width, height, cell_width, cell_height)
       super(z)
@@ -443,11 +448,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   #   [red, green, blue, alpha]
   attr_accessor :grid_color
 
-  ##
-  # :attr_accessor: active_layer
-  #
-  # The currently active layer’s index a user is operating on.
-
   # Creates a new and empty image grid.
   # == Parameters
   # [cell_width]
@@ -498,16 +498,25 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     insert_layer(z, layer)
   end
 
-  # See attribute.
-  def active_layer # :nodoc:
+  # The currently active Layer subclass instance, if any, otherwise
+  # nil.
+  def active_layer
+    @layers[@active_layer]
+  end
+
+  # The index of the currently active layer.
+  def active_layer_index
     @active_layer
   end
 
-  # See attribute.
-  def active_layer=(z) # :nodoc:
+  # Set the index of the currently active layer. +z+ must be
+  # an integer, directly setting a Layer subclass instance is
+  # not allowed.
+  def active_layer=(z)
     raise(RangeError, "Z index out of bounds: #{z} (must be between 0 and #{layer_num - 1}, both inclusive)") if z < 0 or z >= layer_num
     @active_layer = z
   end
+  alias active_layer_index= active_layer=
 
   # The width of a single cell, in pixels.
   def cell_width
@@ -523,6 +532,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # redraws the canvas.
   def cell_width=(val)
     @cell_width = val
+    @layers.each{|l| l.cell_width = val if l.kind_of?(CellLayer)}
     redraw
   end
 
@@ -530,7 +540,22 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # redraws the canvas.
   def cell_height=(val)
     @cell_height = val
+    @layers.each{|l| l.cell_height = val if l.kind_of?(CellLayer)}
     redraw
+  end
+
+  # Resize all CellLayers to the given number of columns.
+  # See CellLayer#col_num= for more info.
+  def col_num=(val)
+    @colnum = val
+    @layers.each{|l| l.col_num = val if l.kind_of?(CellLayer)}
+  end
+
+  # Resize all CellLayers to the given number of rows.
+  # See CellLayer#row_num= for more info.
+  def row_num=(val)
+    @rownum = val
+    @layers.each{|l| l.row_num = val if l.kind_of?(CellLayer)}
   end
 
   # Iterates over all cells in this grid and yields their
@@ -652,7 +677,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Inserts the given Layer at Z index +z+. All higher
   # layers are shifted up by one. A +z+ of -1 appends
   # the layer onto the top of the layer stack.
+  # A Z value greater than the number of currently available
+  # layers causes a RangeError.
   def insert_layer(z, layer)
+    raise(RangeError, "Z index #{z} out of bounds (#{@layers.count})!") if z > @layers.count
     @layers.insert(z, layer)
 
     # Don’t forget to tell the moved layers their new coordinate
@@ -939,7 +967,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @layers.each_with_index do |layer, z|
       layer.expose(cc,
                    Gdk::Rectangle.new(0, 0, @colnum * @cell_width, @rownum * @cell_height),
-                   alpha: z > active_layer && @alpha_layers <= 0.99 ? @alpha_layers : false)
+                   alpha: z > @active_layer && @alpha_layers <= 0.99 ? @alpha_layers : false)
     end
 
     # Draw the grid if requested. Note the 0.5px offset when drawing creating
@@ -982,7 +1010,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   def on_button_press(_, event)
-    if @layers[@active_layer].kind_of?(CellLayer)
+    if active_layer.kind_of?(CellLayer)
       # Snap click coordinates to cell grid if the active layer is a CellLayer
       pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
       pos.x = pos.cell_x * @cell_width
@@ -1009,7 +1037,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
 
     # Snap click coordinates to cell grid if the active layer is a CellLayer
-    if @layers[@active_layer].kind_of?(CellLayer)
+    if active_layer.kind_of?(CellLayer)
       pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
       pos.x = pos.cell_x * @cell_width
       pos.y = pos.cell_y * @cell_height
@@ -1034,7 +1062,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    if @layers[@active_layer].kind_of?(CellLayer)
+    if active_layer.kind_of?(CellLayer)
       pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
       pos.x = pos.cell_x * @cell_width
       pos.y = pos.cell_y * @cell_height
