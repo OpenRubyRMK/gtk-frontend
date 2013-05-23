@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
+
 # This is a nested widget that can be used to draw grids of images and
-# let the user interact with them. The images are internally stored as
-# a three-dimensional array of CellInfo objects, each subarray representing
-# a single layer in the grid and each CellInfo a single column (which itself
-# is an array representing the actual cells). A CellInfo
-# mainly consists of the Gdk::Pixbuf instance used to draw the cell,
-# but can contain arbitrary information via its +data+ attribute.
+# let the user interact with them. It consists of a number of layers
+# which may either be cell-oriented (mainly) or allow for arbitraryly
+# positioned objects. The images are internally stored in the cell layers
+# (class CellLayer) in a two-dimensional array representing the given
+# layer’s table structure or in the PixelObject objects for PixelLayer
+# instances.
+#
+# In the CellLayer instances, the actual information is stored inside
+# CellInfo objects, which mainly consist of the Gdk::Pixbuf instance
+# used to draw the cell, but can contain arbitrary information via its
+# +data+ attribute.
 #
 # This widget consists basicly of two widgets: A Gtk::Layout, which
 # is the canvas we draw the images onto and which may have an arbitrary
@@ -14,36 +20,38 @@
 # to see parts of the canvas otherwise flipping off the window or even
 # the screen.
 #
-# When the widget is to be drawn, the internal array of CellInfo instances
-# is iterated, and each’s Pixbuf is then drawn onto the canvas according
-# to its position in that array, representing a single cell. Note that
-# the internal calculation of the size of the canvas depends on two
-# things:
+# When the widget is to be drawn, all layers are iterated bottom to
+# top, and each’s Pixbuf is then drawn onto the canvas according
+# to its position in their respective layer, as interpreted by
+# the layer type. Note that the internal calculation of the size
+# of the canvas depends on two things:
 #
-# 1. All Pixbufs you add to this widget must share the same dimensions.
+# 1. All Pixbufs you add to CellLayers in this widget must share the same dimensions.
 #    This does not mean they have to be squared, but each pixbuf’s width
 #    must be the same, and likewise each pixbuf’s height must also be the
-#    same.
-# 2. The internal cells array if each layer must always represent a rectangle
+#    same. This restriction does not apply to PixelLayer layers.
+# 2. The internal cells array of each each CellLayer must always represent a rectangle
 #    when the widget is to be drawn, i.e. each row must have the same number
-#    of cells. Use +nil+ instead of a CellInfo if you want to leave a
-#    single cell blank. Note the grid doesn’t have to be a cube, so you may
-#    choose any number of Z layers.
+#    of cells (also, each CellLayer should use the same number of
+#    cells to prevent weird drawing effects). Use +nil+ instead of a CellInfo
+#    if you want to leave a single cell blank. Note the grid doesn’t have to be
+#    a cube, so you may choose any number of Z layers (you can freely intermix
+#    normal CellLayer instances with PixelLayers).
 #
 # If you don’t obey these rules, you may experience weird effects when
 # the widget is drawn.
 #
 # == Redrawing
-# Whenever you change the underlying cells array, that what is visible
+# Whenever you change the underlying layer and cell arrays, that what is visible
 # on the screen differs from the internal data. Therefore, whenever you
 # change pixbuf information of this widget, call the #redraw! method
 # afterwards so the visible part can be resynchronised with the internal
 # data. This isn’t done automatically for you, because redrawing the
-# widget each time you set something via #[]= in a loop is a severe
+# widget each time you set something in a loop is a severe
 # performance hit. So instead, just do the entire loop and _then_ redraw
 # the widget by ordering it to do so.
 #
-# FIXME: Use #redraw_area in methods like #[]= to only update part of
+# FIXME: Use #redraw_area in methods like #insert_layer to only update part of
 # the canvas, which should have a much better performance than an
 # entire #redraw.
 #
@@ -59,7 +67,9 @@
 #   signal handlers gets passed a hash with the following keys:
 #   [pos]
 #     An instance of CellPos, describing the cell that has been
-#     clicked.
+#     clicked. Note that for PixelLayers, +cell_x+ and +cell_y+ are
+#     blank and +x+ and +y+ are set to the real pixel coodinates of
+#     the click rather than simplified cell coordinates.
 #   [event]
 #     The underlying +button_press+ event. You can use this to find the
 #     button that has been pressed.
@@ -67,14 +77,17 @@
 #   The user continues pressing a mouse button and moves the cursor to
 #   other cells ("dragging"). Note that in contrast to the normal
 #   +button_motion+ signal, this signal only gets triggered on a per-cell
-#   basis, so if the cursor never leaves the cell dragging started on
-#   before releasing the button, you never receive this signal. The
+#   basis (this is not the case for PixelLayers), so if the cursor never
+#   leaves the cell dragging started on before releasing the button,
+#   you never receive this signal. The
 #   handler gets passed a hash with the following keys:
 #   [pos]
 #     An instance of CellPos describing the cell the user has hovered
 #     to. Depending on the cursor’s velocity and the input device (think
 #     touchscreens) this does not necessarily need to be adjascent to
-#     the cell you received in the +cell_button_press+ event.
+#     the cell you received in the +cell_button_press+ event. For PixelLayers,
+#     +cell_x+ and +cell_y+ are blank and +x+ and +y+ are set to the real
+#     event coordinates.
 #   [event]
 #     The underlying +button_motion+ event.
 # [cell_button_release]
@@ -83,7 +96,8 @@
 #   [pos]
 #     An instance of CellPos, describing the cell that has been
 #     clicked. +nil+ if the release was outside the canvas
-#     (see below).
+#     (see below). For PixelLayers, +cell_x+ and +cell_y+ are blank
+#     and +x+ and +y+ are set to the real event coordinates.
 #   [event]
 #     The underlying +button_release+ event.
 #
@@ -101,7 +115,7 @@
 # All positions provided by the signals are always relative to the
 # _active_ Z layer, which defaults to 0 and can be configured via
 # the #active_layer attribute. Apart from this, the active layer
-# does not have any impact on any of the methods of this class.
+# does not have any impact on most of the methods of this class.
 #
 # === The other signals
 # Listed in no particular ordering.
@@ -142,8 +156,248 @@
 # that while it’s hypothetically possible to have the mask span multiple
 # Z layers, in general you want to avoid this to prevent really confusing
 # effects.
+#
+# The mask can only be applied to CellLayers, and inventing CellPos instances
+# pointing to PixelLayers may cause unexpected effects.
 class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   include Enumerable
+
+  # Base class for all layers on the grid.
+  class Layer
+
+    # The Z layer we sit on.
+    attr_reader :z
+
+    # Create a layer which is supposed to sit on the given Z
+    # coordinate.
+    def initialize(z)
+      @z = z
+    end
+
+    # (Private API). Set the Z layer this layer resides on.
+    # This method has to be called each time the layer is moved
+    # around.
+    def z=(val) # :nodoc:
+      @z = val
+    end
+
+    # Called when the grid widget needs to be redrawn.
+    # This method receives a Cairo::Context and a Gdk::Rectangle
+    # describing the region that needs to be updated in pixels.
+    # It must be overridden in a subclass.
+    #
+    # +opts+ is a hash that may contain the following settings:
+    # [:alpha]
+    #   Paint (Cairo::Context#paint) everything with the given alpha
+    #   value.
+    def expose(cc, rect, opts)
+      raise(NotImplementedError, "This must be overridden in a subclass.")
+    end
+
+  end
+
+  # A layer consisting solely for rastered cells, i.e.
+  # a table.
+  class CellLayer < Layer
+    include Enumerable
+
+    # Create a new layer with the given dimensions.
+    def initialize(z, width, height, cell_width, cell_height)
+      super(z)
+
+      @table       = Array.new(width){Array.new(height)}
+      @cell_width  = cell_width
+      @cell_height = cell_height
+    end
+
+    # Iterate over each column and their respective cells, yielding
+    # the CellInfo objects.
+    def each
+      return enum_for(__method__) unless block_given?
+
+      @table.each{|col| col.each{|cell| yield(cell)}}
+    end
+
+    # Iterate over each column and their respective cells, yielding
+    # the CellInfo object and a corresponding CellPos object.
+    def each_with_pos
+      return enum_for(__method__) unless block_given?
+
+      @table.each_with_index{|col, x| col.each_with_index{|cell, y| yield(cell, CellPos.new(x, y, self.z, x * @cell_width, y * @cell_height))}}
+    end
+
+    # Number of columns, i.e. the width, of the table.
+    def col_num
+      @table.length
+    end
+
+    # Number of rows in a column, i.e. the height of the table.
+    def row_num
+      @table.first.length
+    end
+
+    # Resets the number of columns to +val+, creating
+    # empty columns at the right end or removing them
+    # from there as necessary.
+    def col_num=(val)
+      # If less than now, cut off. Otherwise, append
+      # empty columns.
+      if val < col_num
+        @table.replace(@table[0..val])
+      else
+        (val - col_num).times do
+          insert_col(-1)
+        end
+      end
+    end
+
+    # Resets the number of rows to +val+, creating
+    # empty rows at the bottom end or removing them
+    # from there as necessary.
+    def row_num=(val)
+      return if val == row_num
+
+      # If less than now, cut off. Otherwise, append
+      # empty rows.
+      if val <= row_num
+        @table.each{|col| col.replace(col[0..val])}
+      else
+        (val - row_num).times do
+          insert_row(-1)
+        end
+      end
+    end
+
+    # Set both the #col_num and #row_num at once to
+    # the given values (+width+ being the new number of
+    # columns and +height+ the new number of rows). The
+    # same semantics as for #col_num= and #row_num= apply.
+    def resize!(width, height)
+      self.col_num = height
+      self.row_num = width
+    end
+
+    # Insert an empty column at X index +x+.
+    # All columns beyond +x+ are moved one to the right.
+    # An +x+ of -1 appends a new column at the right end.
+    def insert_col(x)
+      @table.insert(x, Array.new(row_num))
+    end
+    alias insert_column insert_col
+
+    # Insert an empty row at Y index +y+ on all
+    # layers. All rows below +y+ are moved one
+    # to the bottom. A +y+ of -1 appends a new
+    # row at the bottom end.
+    def insert_row(y)
+      @table.each{|col| col.insert(y, nil)}
+    end
+
+    # Set the CellInfo instance at a specified coordinate. Use +nil+
+    # for +cell_info+ if you want an empty cell. Note that this method
+    # automatically creates empty rows and columns if you set a cell
+    # outside the current dimensions of the table.
+    def set_cell(x, y, cell_info)
+      raise(TypeError, "Not a Gdk::Pixbuf nor nil: #{cell_info.pixbuf.inspect}") if !cell_info.nil? and !cell_info.pixbuf.kind_of?(Gdk::Pixbuf)
+
+      0.upto(x) do |ix|
+        @table[ix] = [] unless @table[ix]
+      end
+
+      @table[x][y] = cell_info # Fills the X array with nils if necessary
+    end
+
+    # Retrieves the CellInfo instance (or +nil+) at the specified coordinate.
+    def [](x, y)
+      raise(RangeError, "X out of range (>= #{@table.length})") if x >= @table.length
+      raise(RangeError, "Y out of range (>= #{@table.first.length}") if y >= @table.first.length
+
+      @table[x][y]
+    end
+
+    # call-seq:
+    #   self[x, y] = cell_info
+    #   self[x, y] = nil
+    #   self[x, y] = pixbuf
+    #   self[x, y] = [pixbuf, data]
+    #
+    # Set the CellInfo instance at the specified coordinate. The first form
+    # is equal to using #set_cell and directly assigns a CellInfo instance to
+    # the specified cell coordinate. The second form is equal to using #set_cell
+    # with +nil+ as the target argument and erases the specified cell by
+    # removing its content. The third form is a convenience form for contructing
+    # a CellInfo instance around a Gdk::Pixbuf object without adding any
+    # additional data, and the fourth form also sets the data on the CellInfo
+    # instance. That form can be used like this:
+    #
+    #   grid[1, 2] = [my_pixbuf, {:foo => "bar", :baz => "blubb"}]
+    #
+    # The Hash instance will be assigned to the generated CellInfo instance’s
+    # +data+ attribute and can be retrieved like any other data later on.
+    def []=(x, y, obj)
+      if obj.respond_to?(:to_ary)
+        set_cell(x, y, CellInfo.new(obj.to_ary.first, obj.to_ary.last)) # Pixbuf typecheck done in #set_cell
+      else
+        case obj
+        when Gdk::Pixbuf then set_cell(x, y, CellInfo.new(obj))
+        when CellInfo then set_cell(x, y, obj)
+        when NilClass then set_cell(x, y, nil)
+        else
+          raise(TypeError, "Neither a CellInfo nor an array nor a Gdk::Pixbuf: #{obj.inspect}")
+        end
+      end
+    end
+
+    def expose(cc, rect, opts)
+      # FIXME: For now, just redraw everything and ignore +rect+
+      @table.each_with_index do |col, x|
+        col.each_with_index do |info, y|
+          next if info.nil? # Empty cell
+
+          cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
+
+          if opts[:alpha]
+            cc.paint(opts[:alpha])
+          else
+            cc.paint
+          end
+        end
+      end
+    end
+
+  end
+
+  class PixelLayer < Layer
+    include Enumerable
+
+    class PixelObject < Gdk::Rectangle
+
+      attr_accessor :info
+
+      def initialize(x, y, width, height, info = {})
+        super(x, y, width, height)
+        @info = info
+      end
+
+    end
+
+    def initialize(z)
+      super(z)
+
+      @objects = []
+    end
+
+    def add_object(x, y, width, height, info = {})
+      @objects << PixelObject.new(x, y, width, height, info.dup)
+    end
+
+    def each
+      return enum_for(__method__) unless block_given?
+
+      @objects.each{|obj| yield(obj)}
+    end
+
+  end
 
   type_register
   signal_new :cell_button_press,   GLib::Signal::RUN_LAST, nil, nil, Hash
@@ -170,6 +424,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # (mostly applicable immediately after instanciation).
   DEFAULT_SIZE = [32, 32]
 
+  # Number of columns in the table, i.e. the table’s width.
+  attr_reader :colnum
+
+  # Number of rows in the table, i.e. the table’s height.
+  attr_reader :rownum
+
   # Set to +true+ if you want to draw visual lines between the cells.
   attr_writer :draw_grid
 
@@ -194,14 +454,20 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   #   The initial width of a single cell in pixels.
   # [cell_height]
   #   The initial height of a single cell in pixels.
-  def initialize(cell_width, cell_height)
+  # [colnum]
+  #   Number of columns in the grid, i.e. the table’s width.
+  # [rownum]
+  #   Number of rows in the grid, i.e. the table’s height.
+  def initialize(cell_width, cell_height, colnum, rownum)
     super()
-    @cells          = []
+    @layers         = []
     @active_layer   = 0
     @layout         = Gtk::Layout.new
 
     @cell_width     = cell_width
     @cell_height    = cell_height
+    @colnum         = colnum
+    @rownum         = rownum
     @draw_grid      = false
     @alpha_layers   = 0.5
     @grid_color     = [0.5, 0, 1, 1]
@@ -220,24 +486,16 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw!
   end
 
-  # Set the CellInfo instance at a specified coordinate. Use +nil+
-  # for +cell_info+ if you want an empty cell.
-  def []=(x, y, z, cell_info)
-    raise(TypeError, "Not a Gdk::Pixbuf nor nil: #{cell_info.pixbuf.inspect}") if cell_info and !cell_info.pixbuf.kind_of?(Gdk::Pixbuf)
-
-    0.upto(z) do |iz|
-      @cells[iz] = [] unless @cells[iz]
-      0.upto(x) do |ix|
-        @cells[iz][ix] = [] unless @cells[iz][ix]
-      end
-    end
-
-    @cells[z][x][y] = cell_info # Fills the X array with nils if necessary
+  # Retrieves the Layer at the given Z position (or nil if there is none),
+  # with 0 being the bottom layer. Negative values count from the top.
+  def [](z)
+    @layers[z]
   end
 
-  # Retrieves the CellInfo instance (or +nil+) at the specified coordinate.
-  def [](x, y, z)
-    @cells[z][x][y]
+  # Replaces the Layer at the given Z position with a new one.
+  def []=(z, layer)
+    delete_layer(z)
+    insert_layer(z, layer)
   end
 
   # See attribute.
@@ -275,70 +533,22 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     redraw
   end
 
-  # call-seq:
-  #   set_cell(x, y, z, cell_info)
-  #   set_cell(x, y, z, nil)
-  #   set_cell(x, y, z, pixbuf)
-  #   set_cell(x, y, z, pixbuf, data)
-  #
-  # Set the CellInfo instance at the specified coordinate. The first form
-  # is equal to using #[]= and directly assigns a CellInfo instance to
-  # the specified cell coordinate. The second form is equal to using #[]=
-  # with +nil+ as the target argument and erases the specified cell by
-  # removing its content. The third form is a convenience form for contructing
-  # a CellInfo instance around a Gdk::Pixbuf object without adding any
-  # additional data, and the fourth form also sets the data on the CellInfo
-  # instance. This is particularily useful when using this method with
-  # an implicit hash:
-  #
-  #   grid.set_cell(1, 2, my_pixbuf, :foo => "bar", :baz => "blubb")
-  #
-  # The Hash instance will be assigned to the generated CellInfo instance’s
-  # +data+ attribute and can be retrieved like any other data later on.
-  def set_cell(x, y, z, obj, data = nil)
-    if data
-      self[x, y, z] = CellInfo.new(obj, data) # Pixbuf typecheck done in #[]
-    else
-      case obj
-      when Gdk::Pixbuf then self[x, y, z] = CellInfo.new(obj, data) # Some users may want to store `false'
-      when CellInfo    then self[x, y, z] = obj
-      when NilClass    then self[x, y, z] = nil
-      else
-        raise(TypeError, "Neither a CellInfo nor a Gdk::Pixbuf: #{obj.inspect}")
-      end
-    end
-  end
-
-  # For symmetry with #set_cell, equal to #[].
-  def get_cell(x, y, z)
-    self[x, y, z]
-  end
-
   # Iterates over all cells in this grid and yields their
   # coressponding CellInfo and CellPos objects to the block.
-  # +cell+ may be +nil+ for an empty cell.
-  def each
-    @cells.each_with_index do |layer, z|
-      layer.each_with_index do |col, x|
-        col.each_with_index do |cell, y|
-          pos = CellPos.new(x, y, z, x * @cell_width, y * @cell_height)
-          yield(cell, pos)
-        end
-      end
+  # +cell+ may be +nil+ for an empty cell. Non-cell layers
+  # are ignored by this method.
+  def each_table_cell
+    @layers.each_with_index do |layer, z|
+      next unless layer.kind_of?(CellLayer)
+
+      layer.each_with_pos{|cell, pos| yield(cell, pos)}
     end
   end
 
-  # Replace the entire internal array with another. Be *very*
-  # careful when using this method and re-read the notes on
-  # the internal structure of that array in the class docs.
-  def replace(cells)
-    @cells.replace(cells)
-  end
-
-  # Wipe out the internal array of cells. Does not affect
+  # Wipe out the internal array of layers. Does not affect
   # the mask.
   def clear
-    @cells.clear
+    @layers.clear
   end
 
   # True if the grid shall be drawn.
@@ -353,7 +563,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # array is empty, resets the underlying canvas to the default
   # dimensions and redraws it.
   def redraw!
-    if @cells.empty?
+    if @layers.empty?
       @layout.set_size(*DEFAULT_SIZE)
       @layout.queue_draw
       return
@@ -386,135 +596,81 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @layout.queue_draw
   end
 
-  # Calculates the size of the underlying canvas by examining the
-  # internal cells array. Return value is a two-element array
+  # Calculates the width and height of the table by means of the
+  # values you passed to ::new. Return value is a two-element array
   # of form <tt>[width, height]</tt> (both values are pixel values).
   def canvas_size
     # Note this code makes two
     # important assumptions: Each pixbuf has the same dimensions,
     # and the whole table is rectangular, i.e. no row has more columns
     # than another, etc.
-    [@cell_width * @cells.first.count, @cell_height * @cells.first.first.count]
+    [@cell_width * @colnum, @cell_height * @rownum]
   end
 
-  # The number of cell rows in the grid, i.e. how many cells are
-  # in a single column.
-  def row_num
-    return 0 unless @cells.first
-    return 0 unless @cells.first.first
-    @cells.first.first.count
-  end
-
-  # Resets the number of X rows to +val+, creating
-  # empty rows at the bottom end or removing them
-  # from there as necessary. Redraws the canvas.
-  def row_num=(val)
-    return if val == row_num
-
-    # If less than now, cut off. Otherwise, append
-    # empty rows.
-    if val <= row_num
-      @cells.each{|layer| layer.each{|row| row.replace(row[0..val])}}
-    else
-      (val - row_num).times do
-        insert_row(-1)
-      end
-    end
-
-    redraw!
-  end
-
-  # The number of cell columns in the grid, i.e. how many cells are
-  # in a single row.
+  # Number of columns in each cell layer.
   def col_num
-    layer = @cells.first
-    return 0 unless layer
-    layer.count
+    @colnum
   end
 
-  # Resets the number of Y columns to +val+, creating
-  # empty columns at the right end or removing them
-  # from there as necessary. Redraws the canvas.
-  def col_num=(val)
-    return if val == col_num
-
-    # If less than now, cut off. Otherwise, append
-    # empty columns.
-    if val < col_num
-      @cells.each{|layer| layer.replace(layer[0..val])}
-    else
-      (val - col_num).times do
-        insert_col(-1)
-      end
-    end
-
-    redraw!
+  # Number of rows in each cell layer.
+  def row_num
+    @rownum
   end
 
-  # The number of grid layers in the grid, i.e. how many
-  # levels the grid is deep.
+  # The number of layers in the table.
   def layer_num
-    @cells.count
+    @layers.count
   end
 
-  # Resets the number of Z layers to +val+, creating
-  # empty layers at the top or removing them from
-  # there as necessary. Redraws the canvas.
-  def layer_num=(val)
-    return if val == layer_num
+  # Delete the layer at the given Z position; the
+  # layers above that position are shifted down by one.
+  # Does nothing if there is no layer at that position.
+  # Negative values count from the end.
+  def delete_layer(z)
+    z = @layers.count + z if z < 0 # z is negative, hence + (-z) rather than - (-z)
 
-    # If less than now, cut off. Otherwise, append
-    # empty layers.
-    if val < layer_num
-      @cells = @cells[0..layer_num]
-    else
-      (val - layer_num).times do
-        insert_layer(-1)
-      end
-    end
+    @layers.delete(z)
 
-    redraw!
+    # Don’t forget to tell the moved layers their new coordinate
+    @layers[z..-1].each{|layer| layer.z -= 1}
   end
 
-  # Resize the entire internal cells array securely
+  # Resize all layers with cells at once securely
   # at will to the given number of columns (+width+),
   # rows (+height+), and even layers (+depth+, defaulting
   # to the current number of layers). Redraws the canvas.
-  def resize!(width, height, depth = layer_num)
-    self.layer_num = depth  unless depth  == layer_num
-    self.col_num   = width  unless height == col_num
-    self.row_num   = height unless width  == row_num
+  def resize_table!(width, height, depth = layer_num)
+    self.layer_num = depth unless depth == layer_num
+
+    @layers.each do |layer|
+      layer.resize!(width, height)
+    end
 
     redraw!
   end
 
-  # Inserts an empty layer at Z index +z+. All higher
+  # Inserts the given Layer at Z index +z+. All higher
   # layers are shifted up by one. A +z+ of -1 appends
   # the layer onto the top of the layer stack.
-  def insert_layer(z)
-    @cells.insert(z, Array.new(col_num){Array.new(row_num)})
+  def insert_layer(z, layer)
+    @layers.insert(z, layer)
+
+    # Don’t forget to tell the moved layers their new coordinate
+    # (if a layer was appended at the top (z+1)..-1 would evaluate to
+    # 0..-1 which is the entire array. As no Zs need to be changed
+    # in that case anyway we just return.
+    return if z == -1
+    @layers[(z+1)..-1].each{|l| l.z += 1}
   end
 
-  # Insert an empty column at X index +x+ on all layers.
-  # All columns beyond +x+ are moved one to the right.
-  # An +x+ of -1 appends a new column at the right end.
-  def insert_col(x)
-    @cells.each do |layer|
-      layer.insert(x, Array.new(row_num))
-    end
+  # Like #insert_layer, but directly inserts an empty CellLayer.
+  def insert_cell_layer(z)
+    insert_layer(z, CellLayer.new(col_num, row_num, @cell_width, @cell_height))
   end
-  alias insert_column insert_col
 
-  # Insert an empty row at Y index +y+ on all
-  # layers. All rows below +y+ are moved one
-  # to the bottom. A +y+ of -1 appends a new
-  # row at the bottom end.
-  def insert_row(y)
-    @cells.each do |layer|
-      layer.each do |row|
-        row.insert(y, nil)
-      end
-    end
+  # Like #insert_layer, but directly inserts an empty ObjectLayer.
+  def insert_object_layer(z)
+    insert_layer(z, ObjectLayer.new)
   end
 
   # Adds the given CellPos to the current mask and
@@ -651,6 +807,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Implicitely clips the mask to the current canvas size.
   # Automatically redraws the widget.
   def mask_layer(z)
+    raise(KeyError, "Layer ##{z} is not a CellLayer") unless @layers[z].kind_of?(CellLayer)
     @mask.clear
 
     0.upto(col_num) do |y|
@@ -662,6 +819,26 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     end
 
     redraw
+  end
+
+  # Check if the layer +z+ is a CellLayer and if so, returns
+  # the CellInfo at the specified position. Otherwise raises
+  # a KeyError.
+  def get_cell(x, y, z)
+    layer = @layers[z]
+    raise(KeyError, "Layer ##{z} ist not a CellLayer.") unless layer.kind_of?(CellLayer)
+
+    layer[x, y]
+  end
+
+  # Check if the layer +z+ is a CellLayer and if so, sets the
+  # specified cell to the given +value+ (the possible values
+  # can be found in CellLayer#[]=). Otherwise raises a KeyError.
+  def set_cell(x, y, z, value)
+    layer = @layers[z]
+    raise(KeyError, "Layer ##{z} ist not a CellLayer.") unless layer.kind_of?(CellLayer)
+
+    layer[x, y] = value
   end
 
   # Applies the mask for selection on the grid, returning all
@@ -698,7 +875,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Does not clear the mask.
   def apply
     @mask.each do |pos|
-      result = yield(pos, get_cell(pos.cell_x, pos.cell_y, pos.cell_z))
+      result = yield(pos, @layers[post.cell_z][pos.cell_x, pos.cell_y])
       case result
       when CellInfo    then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, result)
       when Gdk::Pixbuf then set_cell(pos.cell_x, pos.cell_y, pos.cell_z, CellInfo.new(result))
@@ -737,7 +914,6 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Event handlers
 
   def on_expose(_, event)
-    return if @cells.empty?
     cc = @layout.bin_window.create_cairo_context
 
     # Allow the user to draw the background the way he likes
@@ -745,6 +921,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
                 :cairo_context => cc,
                 :event => event,
                 :rectangle => Gdk::Rectangle.new(0, 0, col_num * @cell_width, row_num * @cell_height)
+
+    # If there are no layers, we only need the background
+    return if @layers.empty?
 
     # TODO: Only redraw the parts that need to be redrawn,
     # available via `event.region'. The bounding box of all
@@ -757,21 +936,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # may consume extreme amounds depending on number of images,
     # fire a redraw_cell event here so the user can allocate the
     # image required for this cell temporarily.
-    # TODO: Fire a redraw_layer event for non-grid layers.
-    @cells.each_with_index do |layer, z|
-      layer.each_with_index do |col, x|
-        col.each_with_index do |info, y|
-          next if info.nil? # Empty cell
-
-          cc.set_source_pixbuf(info.pixbuf, x * info.pixbuf.width, y * info.pixbuf.height)
-
-          if z > active_layer && @alpha_layers <= 0.99
-            cc.paint(@alpha_layers)
-          else
-            cc.paint
-          end
-        end
-      end
+    @layers.each_with_index do |layer, z|
+      layer.expose(cc,
+                   Gdk::Rectangle.new(0, 0, @colnum * @cell_width, @rownum * @cell_height),
+                   alpha: z > active_layer && @alpha_layers <= 0.99 ? @alpha_layers : false)
     end
 
     # Draw the grid if requested. Note the 0.5px offset when drawing creating
@@ -786,13 +954,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       width, height = canvas_size
 
       # Create the Cairo paths for the vertical lines
-      0.step(width, @cells.first.first.first.pixbuf.width) do |x|
+      0.step(width, @cell_width) do |x|
         cc.move_to(x + 0.5, 0)
         cc.line_to(x + 0.5, height)
       end
 
       # Create the Cairo paths for the horizontal lines
-      0.step(height, @cells.first.first.first.pixbuf.height) do |y|
+      0.step(height, @cell_height) do |y|
         cc.move_to(0, y + 0.5)
         cc.line_to(width, y + 0.5)
       end
@@ -814,13 +982,24 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   def on_button_press(_, event)
-    # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-    pos.x = pos.cell_x * @cell_width
-    pos.y = pos.cell_y * @cell_height
+    if @layers[@active_layer].kind_of?(CellLayer)
+      # Snap click coordinates to cell grid if the active layer is a CellLayer
+      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+      pos.x = pos.cell_x * @cell_width
+      pos.y = pos.cell_y * @cell_height
 
-    # Only care about clicks on the grid, not about those next to it
-    return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      # Only care about clicks on the grid, not about those next to it
+      return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+    else
+      # For other layers, hand the raw coordinates and ommit cell_x and cell_y
+      pos = CellPos.new
+      pos.cell_z = @active_layer
+      pos.x = event.coords[0].to_i
+      pos.y = event.coords[1].to_i
+
+      # But still don’t care for clicks outside the grid
+      return if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+    end
 
     @button_is_down = true
     signal_emit :cell_button_press, :pos => pos, :event => event
@@ -829,13 +1008,24 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def on_motion(_, event)
     return unless @button_is_down
 
-    # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-    pos.x = pos.cell_x * @cell_width
-    pos.y = pos.cell_y * @cell_height
+    # Snap click coordinates to cell grid if the active layer is a CellLayer
+    if @layers[@active_layer].kind_of?(CellLayer)
+      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+      pos.x = pos.cell_x * @cell_width
+      pos.y = pos.cell_y * @cell_height
 
-    # Only care about clicks on the grid, not about those next to it
-    return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      # Only care about clicks on the grid, not about those next to it
+      return if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+    else
+      # For other layers, hand the raw coordinates and ommit cell_x and cell_y
+      pos = CellPos.new
+      pos.cell_z = @active_layer
+      pos.x = event.coords[0].to_i
+      pos.y = event.coords[1].to_i
+
+      # But still don’t care for stuff outside the grid
+      return if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+    end
 
     signal_emit :cell_button_motion, :pos => pos, :event => event
   end
@@ -844,12 +1034,22 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-    pos.x = pos.cell_x * @cell_width
-    pos.y = pos.cell_y * @cell_height
+    if @layers[@active_layer].kind_of?(CellLayer)
+      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+      pos.x = pos.cell_x * @cell_width
+      pos.y = pos.cell_y * @cell_height
 
-    # Don’t provide coordinates outside the cell grid
-    pos = nil if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+      # Don’t provide coordinates outside the cell grid
+      pos = nil if pos.cell_x < 0 or pos.cell_x >= col_num or pos.cell_y < 0 or pos.cell_y >= row_num
+    else
+      pos = CellPos.new
+      pos.cell_z = @active_layer
+      pos.x = event.coords[0].to_i
+      pos.y = event.coords[1].to_i
+
+      # But still don’t care for stuff outside the grid
+      pos = nil if pos.x < 0 or pos.x >= @colnum * @cell_width or pos.y < 0 or pos.y >= @rownum * @cell_height
+    end
 
     signal_emit :cell_button_release, :event => event, :pos => pos
   end
