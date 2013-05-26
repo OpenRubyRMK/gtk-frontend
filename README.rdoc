@@ -4,3 +4,13 @@ This is the GUI frontend component of the OpenRubyRMK, building upon the
 facilities that the
 {openrubyrmk-backend}[http://devel.pegasus-alpha.eu/projects/openrubyrmk-backend]
 library provides.
+
+== How to start the development version
+
+You need to install inkscape[http://www.inkscape.org] and have it
+available in your path for the second step below. After you have
+created the PNG files, you can remove inkscape if you don’t like it.
+
+  $ bundle install
+  $ bundle exec rake pngs
+  $ ./bin/openrubyrmk-gtk
