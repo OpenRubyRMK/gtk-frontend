@@ -33,9 +33,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     # The second column is a the layer name directly as this
     # allows us to use the easier and more performant text
     # renderer instead of a virtual one grabbing that property
-    # from the layer instance. The integer is the Z index of
-    # the layer.
-    @layer_list = Gtk::TreeView.new(Gtk::ListStore.new(TiledTmx::Layer, String))
+    # from the layer instance. The pixbuf is the icon to use
+    # for the layer.
+    @layer_list = Gtk::TreeView.new(Gtk::ListStore.new(TiledTmx::Layer, String, Gdk::Pixbuf))
 
     @add_button.add(icon_image("ui/list-add.png", width: 16))
     @del_button.add(icon_image("ui/list-remove.png", width: 16))
@@ -57,8 +57,11 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
       add(vbox)
     end
 
+    icon_renderer = Gtk::CellRendererPixbuf.new
     item_renderer = Gtk::CellRendererText.new
+    icon_column   = Gtk::TreeViewColumn.new("", icon_renderer, pixbuf: 2) # model[2] The pixbuf to render
     item_column   = Gtk::TreeViewColumn.new("", item_renderer, text: 1) # model[1] => item text
+    @layer_list.append_column(icon_column)
     @layer_list.append_column(item_column)
 
     @layer_list.rules_hint      = true
@@ -93,10 +96,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     end
 
     new_layer = $app.state[:core][:map].add_layer(:tile, :name => td.text)
-
-    row = @layer_list.model.prepend
-    row[0] = new_layer
-    row[1] = new_layer.name
+    prepend_layer(new_layer)
   end
 
   def on_del_button_clicked(event)
@@ -128,9 +128,21 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     return unless map
 
     map.tmx_map.each_layer do |layer|
-      row = @layer_list.model.prepend
-      row[0] = layer
-      row[1] = layer.name
+      prepend_layer(layer)
+    end
+  end
+
+  def prepend_layer(layer)
+    row = @layer_list.model.prepend
+    row[0] = layer
+    row[1] = layer.name
+
+    case layer
+    when TiledTmx::TileLayer   then row[2] = icon_pixbuf("ui/ball.png", width: 16)
+    when TiledTmx::ObjectGroup then row[2] = icon_pixbuf("ui/exclamation.png", width: 16)
+    when TiledTmx::ImageLayer  then row[2] = icon_pixbuf("ui/star.png", width: 16)
+    else
+      raise("Unsupported layer type: #{layer}")
     end
   end
 
