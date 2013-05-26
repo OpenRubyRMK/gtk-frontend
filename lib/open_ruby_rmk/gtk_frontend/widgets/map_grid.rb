@@ -158,8 +158,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     @map.observe(:layer_added) do |event, sender, info|
       case info[:layer]
       when TiledTmx::TileLayer then insert_cell_layer(-1)
-      when TiledTmx::ObjectGroup then insert_object_layer(-1)
-      when TiledTmx::ImageLayer then insert_object_layer(-1)
+      when TiledTmx::ObjectGroup then insert_pixel_layer(-1)
+      when TiledTmx::ImageLayer then insert_pixel_layer(-1)
       else
         raise("Unsupported layer type: #{info[:layer].class}")
       end

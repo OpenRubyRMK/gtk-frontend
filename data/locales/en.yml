@@ -9,6 +9,10 @@ general:
     export: "Export"
     rename: "Rename"
     delete: "Delete"
+  layer_types:
+    tile: "Tile layer"
+    object: "Object layer"
+    image: "Image layer"
 
 dialogs:
   new_project: "Create a new project"
@@ -45,7 +49,8 @@ dialogs:
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"
-    message: "Enter the new layer’s name:"
+    message: "Choose the new layer’s type:"
+    new_layer_name: "New layer"
   add_tileset:
     title: "Add tileset"
     no_tileset_selected: "No tileset selected."

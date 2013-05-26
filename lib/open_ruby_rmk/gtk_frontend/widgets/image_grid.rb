@@ -407,6 +407,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       @objects.each{|obj| yield(obj)}
     end
 
+    def expose(cc, rect, opts)
+      # FIXME
+    end
+
   end
 
   type_register
@@ -716,9 +720,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     insert_layer(z, CellLayer.new(z, col_num, row_num, @cell_width, @cell_height))
   end
 
-  # Like #insert_layer, but directly inserts an empty ObjectLayer.
-  def insert_object_layer(z)
-    insert_layer(z, ObjectLayer.new)
+  # Like #insert_layer, but directly inserts an empty PixelLayer.
+  def insert_pixel_layer(z)
+    insert_layer(z, PixelLayer.new(z))
   end
 
   # Adds the given CellPos to the current mask and

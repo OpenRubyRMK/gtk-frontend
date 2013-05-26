@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
   include Gtk
   include R18n::Helpers
@@ -82,20 +83,24 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
   def on_add_button_clicked(event)
     return unless $app.state[:core][:map]
 
-    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, t.dialogs.add_layer.title, t.dialogs.add_layer.message)
+    td = OpenRubyRMK::GTKFrontend::Dialogs::ChoiceDialog.new(self,
+                                                             t.dialogs.add_layer.title,
+                                                             t.dialogs.add_layer.message,
+                                                             [t.general.layer_types.tile, t.general.layer_types.object, t.general.layer_types.image])
+    td.selection = 0
     td.run
-    return if td.text.nil? or td.text.empty?
+    return if td.selection.nil?
 
-    # We requre unique names for the layers so we can easily
-    # determine the current Z index later on.
-    if $app.state[:core][:map].tmx_map.layers.any?{|l| l.name == td.text}
-      $app.msgbox(sprintf(t.dialogs.layer_name_taken, :name => td.text),
-                  parent: self,
-                  type: :warning)
-      return
+    # These symbols are as undestood by ruby-tmx’ TiledTmx::Map#add_layer
+    case td.selection
+    when 0 then type = :tilelayer
+    when 1 then type = :objectgroup
+    when 2 then type = :imagelayer
+    else
+      raise("[BUG] Unknown layer type ##{td.selection}")
     end
 
-    new_layer = $app.state[:core][:map].add_layer(:tile, :name => td.text)
+    new_layer = $app.state[:core][:map].add_layer(type, :name => t.dialogs.add_layer.new_layer_name)
     prepend_layer(new_layer)
   end
 
@@ -109,13 +114,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
 
   def on_list_cursor_changed(*)
     return unless @layer_list.cursor[0] # If no treepath is available, nothing is selected
-    name = @layer_list.model.get_iter(@layer_list.cursor[0])[1] # model[1] => item text
+    layer = @layer_list.model.get_iter(@layer_list.cursor[0])[0] # model[0] => Layer instance
 
-    # As we require the layer name to be unique, we can
-    # easily find the index of the newly selected layer
-    # in the list of layers by name. That index also is
-    # its Z position.
-    $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l.name == name}
+    $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l == layer}
   end
 
   ########################################
