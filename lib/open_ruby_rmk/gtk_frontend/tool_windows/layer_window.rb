@@ -59,15 +59,16 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     end
 
     icon_renderer = Gtk::CellRendererPixbuf.new
-    item_renderer = Gtk::CellRendererText.new
+    @name_renderer = Gtk::CellRendererText.new # We attach an event to this later, hence ivar
     icon_column   = Gtk::TreeViewColumn.new("", icon_renderer, pixbuf: 2) # model[2] The pixbuf to render
-    item_column   = Gtk::TreeViewColumn.new("", item_renderer, text: 1) # model[1] => item text
+    name_column   = Gtk::TreeViewColumn.new("", @name_renderer, text: 1) # model[1] => layer name
     @layer_list.append_column(icon_column)
-    @layer_list.append_column(item_column)
+    @layer_list.append_column(name_column)
 
     @layer_list.rules_hint      = true
     @layer_list.headers_visible = false
     @layer_list.selection.mode  = Gtk::SELECTION_SINGLE
+    @name_renderer.editable     = true
   end
 
   def setup_event_handlers
@@ -75,6 +76,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     @del_button.signal_connect(:clicked, &method(:on_del_button_clicked))
     @settings_button.signal_connect(:clicked, &method(:on_settings_button_clicked))
     @layer_list.signal_connect(:cursor_changed, &method(:on_list_cursor_changed))
+    @name_renderer.signal_connect(:edited, &method(:on_list_edited))
   end
 
   ########################################
@@ -117,6 +119,12 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     layer = @layer_list.model.get_iter(@layer_list.cursor[0])[0] # model[0] => Layer instance
 
     $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l == layer}
+  end
+
+  def on_list_edited(cell, path, value)
+    row         = @layer_list.model.get_iter(path)
+    row[0].name = value # Layer instance
+    row[1]      = value # Name shortcut for the list
   end
 
   ########################################
