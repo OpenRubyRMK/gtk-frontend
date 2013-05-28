@@ -239,9 +239,11 @@ class OpenRubyRMK::GTKFrontend::App
     # NOTE: If you want to add to this, please always use "orr_" as a prefix
     # for your names. This allows to easily see in-code whether an icon has
     # been added by the ORR code or is a GTK stock builtin.
-    register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.png", t.windows.tileset.labels.freehand)
-    register_stock_icon(:orr_magic_selection, "ui/selection-magic.png", t.windows.tileset.labels.magic)
-    register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.png", t.windows.tileset.labels.rectangle)
+    register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.png", t.tools.selection.freehand)
+    register_stock_icon(:orr_magic_selection, "ui/selection-magic.png", t.tools.selection.magic)
+    register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.png", t.tools.selection.rectangle)
+    register_stock_icon(:orr_character_editor, "ui/editor-character.png", t.tools.editor.character)
+    register_stock_icon(:orr_free_editor,"ui/editor-free.png", t.tools.editor.free)
   end
 
   # Adds a single custom menu item to GTK. +path+ is
@@ -258,12 +260,13 @@ class OpenRubyRMK::GTKFrontend::App
   # Initialise the global state to the default
   # values.
   def init_state
-    @state[:core][:map]            = nil
-    @state[:core][:z_index]        = 0
-    @state[:core][:selection_mode] = :rectangle
+    @state[:core][:map]            = nil         # Active map
+    @state[:core][:z_index]        = 0           # Current layer’s Z index
+    @state[:core][:selection_mode] = :rectangle  # Selection tool in use
+    @state[:core][:objects_mode]   = :character  # Object editor tool in use
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil
-    @state[:core][:test_pid]       = nil
+    @state[:core][:test_pid]       = nil         # Process Identifier of the running game test, if any
   end
 
 end

@@ -137,10 +137,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
           end
         end
       elsif layer.kind_of?(TiledTmx::ObjectGroup)
-        insert_object_layer(mapz)
+        insert_pixel_layer(mapz)
         # FIXME
       elsif layer.kind_of?(TiledTmx::ImageLayer)
-        insert_object_layer(mapz)
+        insert_pixel_layer(mapz)
         # FIXME
       else
         raise("Unsupported layer type: #{layer.class}")

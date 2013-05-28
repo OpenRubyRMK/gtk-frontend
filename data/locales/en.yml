@@ -134,6 +134,20 @@ windows:
       magic: "Magic"
       freehand: "Freehand"
 
+# Toolbar labels. Chances are you will never see them, because
+# GTK+ doesn’t show these by default, you have to explicitely
+# enable them in your GTK+ theme. Also, GNOME folks have thought
+# about generally abandoning the symbol+text display style for
+# toolbars.
+tools:
+  selection:
+    rectangle: "Rectangle"
+    magic: "Magic"
+    freehand: "Freehand"
+  editor:
+    character: "Character"
+    free: "Free"
+
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally
 # underlined in the UI and allow to navigate the menus by only using

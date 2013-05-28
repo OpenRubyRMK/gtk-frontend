@@ -126,16 +126,25 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @toolbar = Toolbar.new
     @tools = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
 
+    @tools[:objects][:character] = RadioToolButton.new(nil, :orr_character_editor)
+    @tools[:objects][:free]      = RadioToolButton.new(@tools[:objects][:character], :orr_free_editor)
+
     @tools[:selection][:rect]  = RadioToolButton.new(nil, :orr_rectangle_selection)
     @tools[:selection][:magic] = RadioToolButton.new(@tools[:selection][:rect], :orr_magic_selection)
     @tools[:selection][:free]  = RadioToolButton.new(@tools[:selection][:rect], :orr_freehand_selection)
 
+    @tools[:objects].each_value do |tool|
+      @toolbar.insert(0, tool)
+      tool.sensitive = false # Start with all tools disabled
+    end
+    @toolbar.insert(0, SeparatorToolItem.new)
     @tools[:selection].each_value do |tool|
       @toolbar.insert(0, tool)
       tool.sensitive = false # Start with all tools disabled
     end
 
-    @tools[:selection][:rect].active = true
+    @tools[:selection][:rect].active    = true
+    @tools[:objects][:character].active = true
   end
 
   # Instanciates the widgets needed for the window.
@@ -196,6 +205,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @tools[:selection][:rect].signal_connect(:toggled, &method(:on_tool_selection_rect))
     @tools[:selection][:magic].signal_connect(:toggled, &method(:on_tool_selection_magic))
     @tools[:selection][:free].signal_connect(:toggled, &method(:on_tool_selection_free))
+    @tools[:objects][:character].signal_connect(:toggled, &method(:on_tool_objects_character))
+    @tools[:objects][:free].signal_connect(:toggled, &method(:on_tool_objects_free))
   end
 
   ########################################
@@ -446,6 +457,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     $app.state[:core][:selection_mode] = :freehand
   end
 
+  def on_tool_objects_character(widget)
+    $app.state[:core][:objects_mode] = :character
+  end
+
+  def on_tool_objects_free(widget)
+    $app.state[:core][:objects_mode] = :free
+  end
+
   ########################################
   # Helpers
 
@@ -480,13 +499,14 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     # Firrst disable everything
     @tools[:selection].each_value{|tool| tool.sensitive = false}
+    @tools[:objects].each_value{|tool| tool.sensitive = false}
 
     # Now enable the fitting tools
     case layer
     when TiledTmx::TileLayer
       @tools[:selection].each_value{|tool| tool.sensitive = true}
     when TiledTmx::ObjectGroup
-      # TODO
+      @tools[:objects].each_value{|tool| tool.sensitive = true}
     when TiledTmx::ImageLayer
       # TODO
     else
