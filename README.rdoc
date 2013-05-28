@@ -7,10 +7,24 @@ library provides.
 
 == How to start the development version
 
-You need to install inkscape[http://www.inkscape.org] and have it
-available in your path for the second step below. After you have
-created the PNG files, you can remove inkscape if you don’t like it.
+=== Development-only prerequisites
+
+The following components are only required for getting the development
+version ready:
+
+* inkscape
+* imagemagick
+
+=== Preparing the program
+
+Install all the dependencies:
 
   $ bundle install
+
+Then create the UI icons from the SVG and PNG sources:
+
   $ bundle exec rake pngs
+
+=== Running it
+
   $ ./bin/openrubyrmk-gtk
