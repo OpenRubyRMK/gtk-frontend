@@ -21,6 +21,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
+    $app.state[:core].observe(:value_set){|even, sender, info| update_layer_tools if info[:key] == :z_index}
   end
 
   # As superclass method, but also calls
@@ -131,6 +132,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     @tools[:selection].each_value do |tool|
       @toolbar.insert(0, tool)
+      tool.sensitive = false # Start with all tools disabled
     end
 
     @tools[:selection][:rect].active = true
@@ -471,5 +473,26 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     end
   end
 
+  # Check the active layer’s type and enable/disable the corresponding
+  # menu entries and toolbar tools.
+  def update_layer_tools
+    layer = $app.state[:core][:map].tmx_map.get_layer($app.state[:core][:z_index])
+
+    # Firrst disable everything
+    @tools[:selection].each_value{|tool| tool.sensitive = false}
+
+    # Now enable the fitting tools
+    case layer
+    when TiledTmx::TileLayer
+      @tools[:selection].each_value{|tool| tool.sensitive = true}
+    when TiledTmx::ObjectGroup
+      # TODO
+    when TiledTmx::ImageLayer
+      # TODO
+    else
+      raise("[BUG] Unsupported layer type: #{layer.inspect}")
+    end
+
+  end
 
 end
