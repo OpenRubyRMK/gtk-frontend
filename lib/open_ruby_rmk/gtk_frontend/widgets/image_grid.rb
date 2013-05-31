@@ -436,6 +436,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
       @info = info
     end
 
+    def inspect
+      "#<#{self.class} (#{x}|#{y}) #{width}x#{height} #{@info.inspect}>"
+    end
+
   end
 
   type_register

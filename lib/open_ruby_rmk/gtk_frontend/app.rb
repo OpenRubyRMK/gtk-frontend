@@ -264,7 +264,7 @@ class OpenRubyRMK::GTKFrontend::App
     @state[:core][:map]            = nil         # Active map
     @state[:core][:z_index]        = 0           # Current layer’s Z index
     @state[:core][:selection_mode] = :rectangle  # Selection tool in use
-    @state[:core][:objects_mode]   = :character  # Object editor tool in use
+    @state[:core][:objects_mode]   = :edit       # Object editor tool in use
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil
     @state[:core][:test_pid]       = nil         # Process Identifier of the running game test, if any

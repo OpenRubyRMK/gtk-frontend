@@ -92,7 +92,15 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       when :free
         # FIXME (use hsh[:event]) for the real coords
       when :edit
-        # FIXME (use hsh[:event]) for the real coords
+        x, y = *hsh[:event].coords
+
+        target = active_layer.find{ |obj| (x >= obj.x && y >= obj.y) && (x < obj.x + obj.width && y < obj.y + obj.height) }
+
+        if target
+          puts "FOUND: #{target.inspect}"
+        else
+          puts "NOT FOUND"
+        end
       end
     end
   end
@@ -159,7 +167,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
         insert_pixel_layer(mapz)
 
         layer.objects.each do |obj|
-          add_pixel_object(mapz, obj.x, obj.y, obj.width, obj.height)
+          add_pixel_object(mapz, obj.x, obj.y, obj.width, obj.height, :object => obj)
         end
       elsif layer.kind_of?(TiledTmx::ImageLayer)
         insert_pixel_layer(mapz)
@@ -228,11 +236,14 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # +type+ is the type of the object (a symbol or string),
   # +name+ the actual name you want.
   def add_object(type, name, x, y, z, width, height)
-    # Add it to the underlying map if requested
-    @map.tmx_map.get_layer(z).objects << TiledTmx::Object.new(name: name, type: type.to_s, x: x, y: y, width: width, height: height)
+    # Create it
+    obj = TiledTmx::Object.new(name: name, type: type.to_s, x: x, y: y, width: width, height: height)
+
+    # Add it to the underlying map
+    @map.tmx_map.get_layer(z).objects << obj
 
     # Add it to the widget
-    add_pixel_object(z, x, y, width, height)
+    add_pixel_object(z, x, y, width, height, :object => obj)
   end
 
 end
