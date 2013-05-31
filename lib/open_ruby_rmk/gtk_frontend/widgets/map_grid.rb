@@ -91,6 +91,8 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
         redraw_area(x, y, width, height)
       when :free
         # FIXME (use hsh[:event]) for the real coords
+      when :edit
+        # FIXME (use hsh[:event]) for the real coords
       end
     end
   end

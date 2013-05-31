@@ -145,6 +145,7 @@ tools:
     magic: "Magic"
     freehand: "Freehand"
   editor:
+    edit: "Edit"
     character: "Character"
     free: "Free"
 

@@ -128,6 +128,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
     @tools[:objects][:character] = RadioToolButton.new(nil, :orr_character_editor)
     @tools[:objects][:free]      = RadioToolButton.new(@tools[:objects][:character], :orr_free_editor)
+    @tools[:objects][:edit]      = RadioToolButton.new(@tools[:objects][:character], :orr_edit_editor)
 
     @tools[:selection][:rect]  = RadioToolButton.new(nil, :orr_rectangle_selection)
     @tools[:selection][:magic] = RadioToolButton.new(@tools[:selection][:rect], :orr_magic_selection)
@@ -143,8 +144,8 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       tool.sensitive = false # Start with all tools disabled
     end
 
-    @tools[:selection][:rect].active    = true
-    @tools[:objects][:character].active = true
+    @tools[:selection][:rect].active = true
+    @tools[:objects][:edit].active   = true
   end
 
   # Instanciates the widgets needed for the window.
@@ -205,6 +206,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @tools[:selection][:rect].signal_connect(:toggled, &method(:on_tool_selection_rect))
     @tools[:selection][:magic].signal_connect(:toggled, &method(:on_tool_selection_magic))
     @tools[:selection][:free].signal_connect(:toggled, &method(:on_tool_selection_free))
+    @tools[:objects][:edit].signal_connect(:toggled, &method(:on_tool_objects_edit))
     @tools[:objects][:character].signal_connect(:toggled, &method(:on_tool_objects_character))
     @tools[:objects][:free].signal_connect(:toggled, &method(:on_tool_objects_free))
   end
@@ -455,6 +457,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
 
   def on_tool_selection_free(widget)
     $app.state[:core][:selection_mode] = :freehand
+  end
+
+  def on_tool_objects_edit(widget)
+    $app.state[:core][:objects_mode] = :edit
   end
 
   def on_tool_objects_character(widget)

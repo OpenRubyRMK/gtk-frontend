@@ -242,6 +242,7 @@ class OpenRubyRMK::GTKFrontend::App
     register_stock_icon(:orr_freehand_selection, "ui/selection-freehand.png", t.tools.selection.freehand)
     register_stock_icon(:orr_magic_selection, "ui/selection-magic.png", t.tools.selection.magic)
     register_stock_icon(:orr_rectangle_selection, "ui/selection-rectangle.png", t.tools.selection.rectangle)
+    register_stock_icon(:orr_edit_editor, "ui/editor-edit.png", t.tools.editor.edit)
     register_stock_icon(:orr_character_editor, "ui/editor-character.png", t.tools.editor.character)
     register_stock_icon(:orr_free_editor,"ui/editor-free.png", t.tools.editor.free)
   end
