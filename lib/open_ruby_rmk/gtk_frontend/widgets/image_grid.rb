@@ -377,38 +377,63 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
 
   end
 
+  # Layer consisting of freely movable “objects”.
   class PixelLayer < Layer
     include Enumerable
 
-    class PixelObject < Gdk::Rectangle
-
-      attr_accessor :info
-
-      def initialize(x, y, width, height, info = {})
-        super(x, y, width, height)
-        @info = info
-      end
-
-    end
-
+    # Create a pixel layer for the given Z index.
     def initialize(z)
       super(z)
 
       @objects = []
     end
 
-    def add_object(x, y, width, height, info = {})
-      @objects << PixelObject.new(x, y, width, height, info.dup)
+    # Human-readable description.
+    def inspect
+      "#<#{self.class} with #{@objects.count} objects>"
     end
 
+    # Add a PixelObject to the layer.
+    def add_object(po)
+      @objects << po
+    end
+
+    # Iterates over all PixelObjects in the layer and
+    # yields them to the block. Don’t assume a specific
+    # order.
     def each
       return enum_for(__method__) unless block_given?
 
       @objects.each{|obj| yield(obj)}
     end
 
+    # Callback called by ImageGrid to draw it on the widget.
     def expose(cc, rect, opts)
-      # FIXME
+      fill_alpha = 0.7 - (opts[:alpha] || 0)
+      line_alpha = 1   - (opts[:alpha] || 0)
+
+      @objects.each do |obj|
+        cc.set_source_rgba(0.3, 0.3, 0.3, fill_alpha)
+        cc.rectangle(obj.x, obj.y, obj.width, obj.height)
+        cc.fill
+
+        cc.set_source_rgba(0, 0, 0, line_alpha)
+        cc.set_line_width(2)
+        cc.rectangle(obj.x, obj.y, obj.width, obj.height)
+        cc.stroke
+      end
+    end
+
+  end
+
+  # Like Gdk::Rectangle, but with an info hash attached to it.
+  class PixelObject < Gdk::Rectangle
+
+    attr_accessor :info
+
+    def initialize(x, y, width, height, info = {})
+      super(x, y, width, height)
+      @info = info
     end
 
   end
@@ -550,7 +575,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Number of columns in the CellLayer layers.
   def col_num
     # FIXME: Use the caching from #canvas_size
-    @layers.find{|l| l.kind_of?(CellLayer)}.col_num
+    if active_layer.kind_of?(CellLayer)
+      active_layer.col_num
+    else
+      @layers.find{|l| l.kind_of?(CellLayer)}.col_num
+    end
   rescue NoMethodError
     0
   end
@@ -558,7 +587,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Number of rows in the CellLayer layers.
   def row_num
     # FIXME: Use the caching from #canvas_size
-    @layers.find{|l| l.kind_of?(CellLayer)}.row_num
+    if active_layer.kind_of?(CellLayer)
+      active_layer.row_num
+    else
+      @layers.find{|l| l.kind_of?(CellLayer)}.row_num
+    end
   rescue NoMethodError
     0
   end
@@ -702,7 +735,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # layers are shifted up by one. A +z+ of -1 appends
   # the layer onto the top of the layer stack.
   # A Z value greater than the number of currently available
-  # layers causes a RangeError.
+  # layers causes a RangeError. Returns +layer+.
   def insert_layer(z, layer)
     raise(RangeError, "Z index #{z} out of bounds (#{@layers.count})!") if z > @layers.count
     @layers.insert(z, layer)
@@ -713,14 +746,18 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     # in that case anyway we just return.
     return if z == -1
     @layers[(z+1)..-1].each{|l| l.z += 1}
+
+    layer
   end
 
   # Like #insert_layer, but directly inserts an empty CellLayer.
+  # Returns the inserted Layer subclass instance.
   def insert_cell_layer(z)
     insert_layer(z, CellLayer.new(z, col_num, row_num, @cell_width, @cell_height))
   end
 
   # Like #insert_layer, but directly inserts an empty PixelLayer.
+  # Returns the inserted Layer subclass instance.
   def insert_pixel_layer(z)
     insert_layer(z, PixelLayer.new(z))
   end
@@ -893,6 +930,29 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     layer[x, y] = value
   end
 
+  #call-seq:
+  #   add_pixel_object(z, po)
+  #   add_pixel_object(z, x, y, width, height, info = {})
+  #
+  # Check if the layer +z+ is a PixelLayer and if so,
+  # adds the specified PixelObject (+po+) instance to it.
+  # Otherwise raises a KeyError. If the second form is
+  # used, implicitely constructs the PixelObject instance
+  # from that information.
+  def add_pixel_object(z, *args)
+    layer = @layers[z]
+    raise(KeyError, "Layer ##{z} is not a PixelLayer.") unless layer.kind_of?(PixelLayer)
+
+    if args.count == 1
+      layer.add_object(args.first)
+    elsif args.count == 4 or args.count == 5
+      po = PixelObject.new(*args)
+      layer.add_object(po)
+    else
+      raise(ArgumentError, "Wrong number of arguments, expected 2, 5, or 6, got #{args.count + 1}!")
+    end
+  end
+
   # Applies the mask for selection on the grid, returning all
   # CellInfo instances that match it. That is, returns
   # all CellInfo objects corresponding to all CellPos objects
@@ -1034,24 +1094,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   end
 
   def on_button_press(_, event)
-    if active_layer.kind_of?(CellLayer)
-      # Snap click coordinates to cell grid if the active layer is a CellLayer
-      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-      pos.x = pos.cell_x * @cell_width
-      pos.y = pos.cell_y * @cell_height
+    # Snap click coordinates to cell grid
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
-      # Only care about clicks on the grid, not about those next to it
-      return if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
-    else
-      # For other layers, hand the raw coordinates and ommit cell_x and cell_y
-      pos = CellPos.new
-      pos.cell_z = @active_layer
-      pos.x = event.coords[0].to_i
-      pos.y = event.coords[1].to_i
-
-      # But still don’t care for clicks outside the grid
-      return if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
-    end
+    # Only care about clicks on the grid, not about those next to it
+    return if pos.cell_x < 0 or pos.cell_x >= self.col_num or pos.cell_y < 0 or pos.cell_y >= self.row_num
 
     @button_is_down = true
     signal_emit :cell_button_press, :pos => pos, :event => event
@@ -1060,25 +1109,16 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   def on_motion(_, event)
     return unless @button_is_down
 
-    # Snap click coordinates to cell grid if the active layer is a CellLayer
-    if active_layer.kind_of?(CellLayer)
-      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-      pos.x = pos.cell_x * @cell_width
-      pos.y = pos.cell_y * @cell_height
+    # Snap click coordinates to cell grid
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
-      # Only care about clicks on the grid, not about those next to it
-      return if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
-    else
-      # For other layers, hand the raw coordinates and ommit cell_x and cell_y
-      pos = CellPos.new
-      pos.cell_z = @active_layer
-      pos.x = event.coords[0].to_i
-      pos.y = event.coords[1].to_i
+    # Only care about clicks on the grid, not about those next to it
+    return if pos.cell_x < 0 or pos.cell_x >= self.col_num or pos.cell_y < 0 or pos.cell_y >= self.row_num
 
-      # But still don’t care for stuff outside the grid
-      return if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
-    end
-
+    # FIXME: Filter out duplicate motion events inside a single cell
+    # for CellLayers!
     signal_emit :cell_button_motion, :pos => pos, :event => event
   end
 
@@ -1086,22 +1126,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     return unless @button_is_down
     @button_is_down = false
 
-    if active_layer.kind_of?(CellLayer)
-      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-      pos.x = pos.cell_x * @cell_width
-      pos.y = pos.cell_y * @cell_height
+    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+    pos.x = pos.cell_x * @cell_width
+    pos.y = pos.cell_y * @cell_height
 
-      # Don’t provide coordinates outside the cell grid
-      pos = nil if pos.cell_x < 0 or pos.cell_x >= active_layer.col_num or pos.cell_y < 0 or pos.cell_y >= active_layer.row_num
-    else
-      pos = CellPos.new
-      pos.cell_z = @active_layer
-      pos.x = event.coords[0].to_i
-      pos.y = event.coords[1].to_i
-
-      # But still don’t care for stuff outside the grid
-      pos = nil if pos.x < 0 or pos.x >= col_num * @cell_width or pos.y < 0 or pos.y >= row_num * @cell_height
-    end
+    # Don’t provide coordinates outside the cell grid
+    pos = nil if pos.cell_x < 0 or pos.cell_x >= self.col_num or pos.cell_y < 0 or pos.cell_y >= self.row_num
 
     signal_emit :cell_button_release, :event => event, :pos => pos
   end

@@ -33,26 +33,30 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   def on_cell_button_press(_, hsh)
     return unless @map
 
+    @pressed_button = hsh[:event].button
     if active_layer.kind_of?(CellLayer)
-      @pressed_button = hsh[:event].button
       return unless hsh[:event].button == 3 # Secondary mouse button
 
       clear_mask
       add_to_mask(hsh[:pos])
-      @first_selection = hsh[:pos]
     end
+
+    @first_selection = hsh[:pos]
   end
 
   def on_cell_button_motion(_, hsh)
     return unless @map
-    return unless @pressed_button == 3 # Secondary mouse button
 
     if active_layer.kind_of?(CellLayer)
+      return unless @pressed_button == 3 # Secondary mouse button
       # Mask adjustments for those selection modes that are motion-aware
       case $app.state[:core][:selection_mode]
       when :rectangle then mask_rectangle(@first_selection, hsh[:pos])
       when :freehand  then add_to_mask(hsh[:pos])
       end
+    elsif active_layer.kind_of?(PixelLayer)
+      ## Ignore ImageLayers, there are no actions one could apply to them
+      #return unless @map.tmx_map.get_layer($app.state[:core][:z_index]).kind_of?(TiledTmx::ObjectGroup)
     end
   end
 
@@ -74,6 +78,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       @first_selection = nil
       when 2 then # Middle mouse button
         # TODO: Something useful?
+      end
+    elsif active_layer.kind_of?(PixelLayer)
+      # Ignore ImageLayers, there are no actions one could apply to them
+      return unless @map.tmx_map.get_layer(hsh[:pos].cell_z).kind_of?(TiledTmx::ObjectGroup)
+
+      case $app.state[:core][:objects_mode]
+      when :character then
+        x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
+
+        add_object(:character, "New character", x, y,z,  width, height)
+        redraw_area(x, y, width, height)
+      when :free
+        # FIXME (use hsh[:event]) for the real coords
       end
     end
   end
@@ -138,7 +155,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
         end
       elsif layer.kind_of?(TiledTmx::ObjectGroup)
         insert_pixel_layer(mapz)
-        # FIXME
+
+        layer.objects.each do |obj|
+          add_pixel_object(mapz, obj.x, obj.y, obj.width, obj.height)
+        end
       elsif layer.kind_of?(TiledTmx::ImageLayer)
         insert_pixel_layer(mapz)
         # FIXME
@@ -200,6 +220,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       # with the pixbuf for the respective tile on the tileset.
       $app.state[:core][:brush_pixbuf].dup
     end
+  end
+
+  # Add an object (on a PixelLayer) to the map and the widget.
+  # +type+ is the type of the object (a symbol or string),
+  # +name+ the actual name you want.
+  def add_object(type, name, x, y, z, width, height)
+    # Add it to the underlying map if requested
+    @map.tmx_map.get_layer(z).objects << TiledTmx::Object.new(name: name, type: type.to_s, x: x, y: y, width: width, height: height)
+
+    # Add it to the widget
+    add_pixel_object(z, x, y, width, height)
   end
 
 end
