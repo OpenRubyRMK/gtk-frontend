@@ -8,7 +8,7 @@ GIT
 
 GIT
   remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 350bebf82f67376f350dfc2d61613005c913b710
+  revision: 9f4443c49d293dc1bd5f767332fec9c3557cbf86
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
@@ -31,7 +31,9 @@ GEM
       atk (>= 1.2.6)
       gdk_pixbuf2 (>= 1.2.6)
       pango (>= 1.2.6)
-    nokogiri (1.5.9)
+    mini_portile (0.5.1)
+    nokogiri (1.6.0)
+      mini_portile (~> 0.5.0)
     paint (0.8.6)
     pango (1.2.6)
       cairo (>= 1.10.0)

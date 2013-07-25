@@ -126,6 +126,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @toolbar = Toolbar.new
     @tools = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
 
+    @tools[:objects][:chartype]  = ToolItem.new.tap{|item| item.add(OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox.new)}
     @tools[:objects][:character] = RadioToolButton.new(nil, :orr_character_editor)
     @tools[:objects][:free]      = RadioToolButton.new(@tools[:objects][:character], :orr_free_editor)
     @tools[:objects][:edit]      = RadioToolButton.new(@tools[:objects][:character], :orr_edit_editor)
