@@ -148,6 +148,10 @@ tools:
     edit: "Edit"
     character: "Character"
     free: "Free"
+  general:
+    save: "Save project"
+    open: "Open project"
+    new: "New project"
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally

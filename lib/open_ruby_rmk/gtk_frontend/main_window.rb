@@ -19,6 +19,11 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     create_extra_windows
     setup_event_handlers
 
+    # Enable/Disable menu entries at the beginning for the currently
+    # loaded project (which is nil if no project path was passed via
+    # commandline).
+    update_menu_entries($app.project)
+
     # Refresh the menu entries when the selected project changes.
     $app.observe(:project_changed){|event, emitter, info| update_menu_entries(info[:project])}
     $app.state[:core].observe(:value_set){|even, sender, info| update_layer_tools if info[:key] == :z_index}
@@ -115,11 +120,6 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     menu @menubar, t.menus.help.name do |help|
       append_menu_item help, t.menus.help.entries.about, :help_about
     end
-
-    # Enable/Disable menu entries at the beginning for the currently
-    # loaded project (which is nil if no project path was passed via
-    # commandline).
-    update_menu_entries($app.project)
   end
 
   def create_toolbar
@@ -134,12 +134,23 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @tools[:selection][:magic] = RadioToolButton.new(@tools[:selection][:rect], :orr_magic_selection)
     @tools[:selection][:free]  = RadioToolButton.new(@tools[:selection][:rect], :orr_freehand_selection)
 
+    @tools[:general][:save] = ToolButton.new(:orr_save)
+    @tools[:general][:open] = ToolButton.new(:orr_open)
+    @tools[:general][:new] = ToolButton.new(:orr_new)
+
     @tools[:objects].each_value do |tool|
       @toolbar.insert(0, tool)
       tool.sensitive = false # Start with all tools disabled
     end
     @toolbar.insert(0, SeparatorToolItem.new)
+
     @tools[:selection].each_value do |tool|
+      @toolbar.insert(0, tool)
+      tool.sensitive = false # Start with all tools disabled
+    end
+    @toolbar.insert(0, SeparatorToolItem.new)
+
+    @tools[:general].each_value do |tool|
       @toolbar.insert(0, tool)
       tool.sensitive = false # Start with all tools disabled
     end
@@ -209,6 +220,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @tools[:objects][:edit].signal_connect(:toggled, &method(:on_tool_objects_edit))
     @tools[:objects][:character].signal_connect(:toggled, &method(:on_tool_objects_character))
     @tools[:objects][:free].signal_connect(:toggled, &method(:on_tool_objects_free))
+    @tools[:general][:new].signal_connect(:clicked, &method(:on_menu_file_new))
+    @tools[:general][:open].signal_connect(:clicked, &method(:on_menu_file_open))
+    @tools[:general][:save].signal_connect(:clicked, &method(:on_menu_file_save))
   end
 
   ########################################
@@ -486,6 +500,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:edit_resources].sensitive        = true
       menu_items[:edit_project_settings].sensitive = true
       menu_items[:edit_categories].sensitive       = true
+
+      @tools[:general][:new].sensitive  = false
+      @tools[:general][:open].sensitive = false
+      @tools[:general][:save].sensitive = true
     else
       menu_items[:file_new].sensitive              = true
       menu_items[:file_open].sensitive             = true
@@ -495,6 +513,10 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       menu_items[:edit_resources].sensitive        = false
       menu_items[:edit_project_settings].sensitive = false
       menu_items[:edit_categories].sensitive       = false
+
+      @tools[:general][:new].sensitive  = true
+      @tools[:general][:open].sensitive = true
+      @tools[:general][:save].sensitive = false
     end
   end
 

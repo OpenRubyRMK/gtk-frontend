@@ -245,6 +245,9 @@ class OpenRubyRMK::GTKFrontend::App
     register_stock_icon(:orr_edit_editor, "ui/editor-edit.png", t.tools.editor.edit)
     register_stock_icon(:orr_character_editor, "ui/editor-character.png", t.tools.editor.character)
     register_stock_icon(:orr_free_editor,"ui/editor-free.png", t.tools.editor.free)
+    register_stock_icon(:orr_save, "ui/document-save.png", t.tools.general.save)
+    register_stock_icon(:orr_open, "ui/document-open.png", t.tools.general.open)
+    register_stock_icon(:orr_new, "ui/document-new.png", t.tools.general.new)
   end
 
   # Adds a single custom menu item to GTK. +path+ is
