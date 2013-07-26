@@ -10,7 +10,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
     pack_start(renderer, true)
     set_attributes(renderer, :text => 1)
 
-    $app.project.templates.each{|template| add_template(template)}
+    $app.project.templates.each{|template| add_template(template)} if $app.project
     $app.observe(:project_changed) do |event, sender, info|
       model.clear
 
