@@ -127,6 +127,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
     @tools = Hash.new{|hsh, k| hsh[k] = Hash.new(&hsh.default_proc)}
 
     @tools[:objects][:chartype]  = ToolItem.new.tap{|item| item.add(OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox.new)}
+    @tools[:objects][:chartypel] = ToolItem.new.tap{|item| item.add(Label.new(t.tools.chartype.label))}
     @tools[:objects][:character] = RadioToolButton.new(nil, :orr_character_editor)
     @tools[:objects][:free]      = RadioToolButton.new(@tools[:objects][:character], :orr_free_editor)
     @tools[:objects][:edit]      = RadioToolButton.new(@tools[:objects][:character], :orr_edit_editor)
@@ -155,6 +156,9 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
       @toolbar.insert(0, tool)
       tool.sensitive = false # Start with all tools disabled
     end
+
+    @tools[:objects][:chartype].sensitive  = true
+    @tools[:objects][:chartypel].sensitive = true
 
     @tools[:selection][:rect].active = true
     @tools[:objects][:edit].active   = true

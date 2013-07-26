@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
   include Gtk
   include R18n::Helpers
@@ -13,6 +15,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
     $app.project.templates.each{|template| add_template(template)} if $app.project
     $app.observe(:project_changed) do |event, sender, info|
       model.clear
+
 
       if info[:project]
         info[:project].templates.each{|template| add_template(template)}

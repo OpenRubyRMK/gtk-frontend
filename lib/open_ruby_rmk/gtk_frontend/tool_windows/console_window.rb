@@ -166,7 +166,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::ConsoleWindow < Gtk::Window
         greeting = sprintf(t.console.greeter,
                            :frontendversion => OpenRubyRMK::GTKFrontend.version,
                            :backendversion  => OpenRubyRMK::Backend.version,
-                           :copyrightyear   => 2012)
+                           :copyrightyear   => 2013)
         greeting << "\n" << Paint[RUBY_DESCRIPTION, :red] << "\n\n"
         @terminal.feed(greeting.gsub("\n", "\r\n"))
 

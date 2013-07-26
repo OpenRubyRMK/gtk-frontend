@@ -14,6 +14,7 @@ general:
     object: "Object layer"
     image: "Image layer"
 
+# All the dialogue windows everywhere.
 dialogs:
   new_project: "Create a new project"
   not_empty: "The directory %{dir} is not empty."
@@ -152,6 +153,8 @@ tools:
     save: "Save project"
     open: "Open project"
     new: "New project"
+  chartype:
+    label: "Template: "
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally
@@ -193,6 +196,16 @@ menus:
     name: _Help
     entries:
       about: A_bout…
+
+# Special section for template names. These terms are
+# used to translate template names mainly in the
+# combobox for the template in the toolbar; they
+# are looked up by the template’s #name attribute
+# as the translation key. If no translation is found
+# in the section below, that attribute is simply
+# capitalized and then used directly.
+templates:
+  dummy: "Useless dummy"
 
 # This section contains all the stuff that didn’t fit
 # in anywhere else.
