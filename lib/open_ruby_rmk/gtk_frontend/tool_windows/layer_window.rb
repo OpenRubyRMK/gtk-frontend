@@ -118,7 +118,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     return unless @layer_list.cursor[0] # If no treepath is available, nothing is selected
     layer = @layer_list.model.get_iter(@layer_list.cursor[0])[0] # model[0] => Layer instance
 
-    $app.state[:core][:z_index] = $app.state[:core][:map].tmx_map.layers.to_a.index{|l| l == layer}
+    $app.state[:core][:z_index] = $app.state[:core][:map].layers.to_a.index{|l| l == layer}
   end
 
   def on_list_edited(cell, path, value)
@@ -136,7 +136,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::LayerWindow < Gtk::Window
     @layer_list.model.clear
     return unless map
 
-    map.tmx_map.each_layer do |layer|
+    map.each_layer do |layer|
       prepend_layer(layer)
     end
   end

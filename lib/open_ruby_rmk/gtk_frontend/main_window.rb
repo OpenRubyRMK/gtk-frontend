@@ -528,7 +528,7 @@ class OpenRubyRMK::GTKFrontend::MainWindow < Gtk::Window
   # Check the active layer’s type and enable/disable the corresponding
   # menu entries and toolbar tools.
   def update_layer_tools
-    layer = $app.state[:core][:map].tmx_map.get_layer($app.state[:core][:z_index])
+    layer = $app.state[:core][:map].get_layer($app.state[:core][:z_index])
 
     # Firrst disable everything
     @tools[:selection].each_value{|tool| tool.sensitive = false}

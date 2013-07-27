@@ -56,7 +56,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       end
     elsif active_layer.kind_of?(PixelLayer)
       ## Ignore ImageLayers, there are no actions one could apply to them
-      #return unless @map.tmx_map.get_layer($app.state[:core][:z_index]).kind_of?(TiledTmx::ObjectGroup)
+      #return unless @map.get_layer($app.state[:core][:z_index]).kind_of?(TiledTmx::ObjectGroup)
     end
   end
 
@@ -81,7 +81,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       end
     elsif active_layer.kind_of?(PixelLayer)
       # Ignore ImageLayers, there are no actions one could apply to them
-      return unless @map.tmx_map.get_layer(hsh[:pos].cell_z).kind_of?(TiledTmx::ObjectGroup)
+      return unless @map.get_layer(hsh[:pos].cell_z).kind_of?(TiledTmx::ObjectGroup)
 
       case $app.state[:core][:objects_mode]
       when :character then
@@ -124,12 +124,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   def update_map(map)
     @map = map
     @tileset_pixbufs.clear
-    self.cell_width  = @map.tmx_map.tilewidth
-    self.cell_height = @map.tmx_map.tileheight
+    self.cell_width  = @map.tilewidth
+    self.cell_height = @map.tileheight
 
     # Preload all tileset images, so we don’t have to do this
     # when rendering.
-    @map.tmx_map.each_tileset do |first_gid, tileset|
+    @map.each_tileset do |first_gid, tileset|
       @tileset_pixbufs[tileset] = Gdk::Pixbuf.new(tileset.source.to_s)
     end
 
@@ -140,7 +140,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     # above lower ones. Note that the Pixbuf instanciation below is actually
     # a clipping operation on the tileset Pixbuf, and therefore a very fast
     # operation.
-    @map.tmx_map.each_layer.with_index do |layer, mapz|
+    @map.each_layer.with_index do |layer, mapz|
       if layer.kind_of?(TiledTmx::TileLayer)
         insert_cell_layer(mapz)
 
@@ -221,9 +221,9 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       # instead of calculating this ourself. Note that the
       # following calculation does ONLY work for tilesets
       # WITHOUT spacing and the-like!
-      index = cell_pos.cell_x + @map.tmx_map.width * cell_pos.cell_y
+      index = cell_pos.cell_x + @map.width * cell_pos.cell_y
 
-      layer        = @map.tmx_map.get_layer(cell_pos.cell_z)
+      layer        = @map.get_layer(cell_pos.cell_z)
       layer[index] = $app.state[:core][:brush_gid]
 
       # Instruct ImageGrid to replace this cell’s pixbuf
@@ -240,7 +240,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     obj = TiledTmx::Object.new(name: name, type: type.to_s, x: x, y: y, width: width, height: height)
 
     # Add it to the underlying map
-    @map.tmx_map.get_layer(z).objects << obj
+    @map.get_layer(z).objects << obj
 
     # Add it to the widget
     add_pixel_object(z, x, y, width, height, :object => obj)

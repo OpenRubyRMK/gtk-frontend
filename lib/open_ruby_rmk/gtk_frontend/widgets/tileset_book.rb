@@ -17,7 +17,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TilesetBook < Gtk::Notebook
     return unless @map # Allow setting to nil
 
     # Add tabs for all tilesets we have *now*
-    map.tmx_map.each_tileset do |start_id, tileset|
+    map.each_tileset do |start_id, tileset|
       add_tileset_tab(start_id, tileset)
     end
 
@@ -72,7 +72,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TilesetBook < Gtk::Notebook
     # Create the widget and the pixbuf for the
     # entire tileset image.
     tileset_pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)
-    tileset_grid   = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(@map.tmx_map.tilewidth, @map.tmx_map.tileheight)
+    tileset_grid   = OpenRubyRMK::GTKFrontend::Widgets::ImageGrid.new(@map.tilewidth, @map.tileheight)
     tileset_grid.draw_grid = true
     tileset_grid.insert_cell_layer(-1)
 

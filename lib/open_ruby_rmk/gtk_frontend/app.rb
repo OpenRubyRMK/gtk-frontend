@@ -263,6 +263,13 @@ class OpenRubyRMK::GTKFrontend::App
 
   # Initialise the global state to the default
   # values.
+  # NOTE: This list should be exhaustive! If you add any
+  # new item to the :core state, ensure you initialise
+  # it to a default value here; this allows plugin
+  # writers (and your later self) to get an easy overview
+  # of all global core state variables. Please also
+  # place a short comment next to the initialisation
+  # to indicate for what the entry gets used.
   def init_state
     @state[:core][:map]            = nil         # Active map
     @state[:core][:z_index]        = 0           # Current layer’s Z index
