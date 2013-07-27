@@ -88,7 +88,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
         x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
 
         if $app.state[:core][:template]
-          add_object($app.state[:core][:template].name, "New character", x, y,z,  width, height)
+          add_object($app.state[:core][:template].name, x, y,z,  width, height)
           redraw_area(x, y, width, height)
         else
           raise(NotImplementedError, "TODO: Can’t create generic character events yet")
@@ -245,12 +245,12 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
   # Add an object (on a PixelLayer) to the map and the widget.
   # +type+ is the type of the object (a symbol or string),
   # +name+ the actual name you want.
-  def add_object(type, name, x, y, z, width, height)
+  def add_object(type, x, y, z, width, height)
     # Create it
-    obj = TiledTmx::Object.new(name: name, type: type.to_s, x: x, y: y, width: width, height: height)
+    obj = TiledTmx::Object.new(type: type.to_s, x: x, y: y, width: width, height: height)
 
     # Add it to the underlying map
-    @map.get_layer(z).objects << obj
+    @map.add_object(z, obj)
 
     # Add it to the widget
     add_pixel_object(z, x, y, width, height, :object => obj)

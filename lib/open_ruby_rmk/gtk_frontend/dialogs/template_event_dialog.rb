@@ -3,11 +3,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   include R18n::Helpers
 
   def initialize(tmx_object)
-    @tmx_object = tmx_object
-    @template   = $app.project.templates.find{|template| template.name == @tmx_object.type}
+    @map_object = OpenRubyRMK::Backend::MapObject.from_tmx_object(tmx_object)
+    @template   = $app.project.templates.find{|template| template.name == @map_object.type}
 
     unless @template
-      raise(OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate.new(@tmx_object.type))
+      raise(OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate.new(@map_object.type))
     end
 
     tname = t["templates"][@template.name] | @template.name.capitalize # Single | intended, this is a feature of R18n
@@ -31,9 +31,18 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   private
 
   def create_widgets
+    @name_field = Entry.new
+    @name_field.text = @map_object.custom_name
   end
 
   def create_layout
+    HBox.new.tap do |hbox|
+      hbox.pack_start(Label.new("Name:"), false, false)
+      hbox.pack_start(@name_field, false, false, $app.space)
+      hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
+
+      vbox.pack_start(hbox, false, false)
+    end
   end
 
   def setup_event_handlers
