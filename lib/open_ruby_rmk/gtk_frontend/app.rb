@@ -271,6 +271,7 @@ class OpenRubyRMK::GTKFrontend::App
     @state[:core][:brush_gid]      = nil
     @state[:core][:brush_pixbuf]   = nil
     @state[:core][:test_pid]       = nil         # Process Identifier of the running game test, if any
+    @state[:core][:template]       = nil         # The Backend::Template corresponding to the template name in the dropdown
   end
 
 end

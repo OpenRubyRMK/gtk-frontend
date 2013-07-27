@@ -47,6 +47,10 @@ dialogs:
     errors:
       no_name: "No name given"
       no_attrs: "No attributes defined"
+  template_event:
+    # `tname' is something from "templates" below; see
+    # the comment there for further information.
+    title: "Edit templated event: %{tname}"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"
