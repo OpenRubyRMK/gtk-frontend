@@ -8,4 +8,20 @@ module OpenRubyRMK::GTKFrontend::Errors
   class ValidationError < GTKFrontendError
   end
 
+  # Raised when we encounter a template name and are
+  # unable to map that name to a specific Backend::Template
+  # instance.
+  class UnknownTemplate < GTKFrontendError
+
+    # The identifier we were unable to map.
+    attr_reader :identifier
+
+    # Create a new exception of this type.
+    def initialize(ident, msg = "Can't find a template named `#{ident}'!")
+      @identifier = ident
+      super(msg)
+    end
+
+  end
+
 end

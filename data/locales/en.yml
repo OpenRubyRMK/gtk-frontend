@@ -51,6 +51,8 @@ dialogs:
     # `tname' is something from "templates" below; see
     # the comment there for further information.
     title: "Edit templated event: %{tname}"
+    # `identifier' is the untranslated internal template name.
+    template_not_found: "Template not found: %{identifier}"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"

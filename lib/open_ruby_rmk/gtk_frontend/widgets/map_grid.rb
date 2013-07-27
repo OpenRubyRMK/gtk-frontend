@@ -87,21 +87,31 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
       when :character then
         x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
 
-        add_object(:character, "New character", x, y,z,  width, height)
-        redraw_area(x, y, width, height)
+        if $app.state[:core][:template]
+          add_object($app.state[:core][:template].name, "New character", x, y,z,  width, height)
+          redraw_area(x, y, width, height)
+        else
+          raise(NotImplementedError, "TODO: Can’t create generic character events yet")
+        end
+
       when :free
         # FIXME (use hsh[:event]) for the real coords
+
       when :edit
         x, y = *hsh[:event].coords
 
         target = active_layer.find{ |obj| (x >= obj.x && y >= obj.y) && (x < obj.x + obj.width && y < obj.y + obj.height) }
 
         if target
-          puts "FOUND: #{target.inspect}"
-        else
-          puts "NOT FOUND"
-        end
-      end
+          begin
+            td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
+            td.run
+            #TODO: Do something useful here?
+          rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
+            warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
+          end #begin/rescue
+        end #if target
+      end #case
     end
   end
 
