@@ -16,7 +16,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
           [Stock::CANCEL, Dialog::RESPONSE_REJECT])
-    set_default_size 600, 600
+    set_default_size 500, 500
 
     create_widgets
     create_layout
@@ -33,15 +33,25 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   def create_widgets
     @name_field = Entry.new
     @name_field.text = @map_object.custom_name
+    @sourcecode_fields = @template.pages.map{|page| TextView.new}
   end
 
   def create_layout
+    vbox.spacing = $app.space
+
     HBox.new.tap do |hbox|
+      # Top widgets for name and ID
       hbox.pack_start(Label.new("Name:"), false, false)
       hbox.pack_start(@name_field, false, false, $app.space)
       hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
-
       vbox.pack_start(hbox, false, false)
+
+      # The pages
+      Notebook.new.tap do |nbook|
+        build_pages(nbook)
+        vbox.pack_start(nbook, true, true)
+      end
+
     end
   end
 
@@ -52,6 +62,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   def on_response(_, res)
     # TODO: Something useful?
     destroy
+  end
+
+  # Fill the Gtk::Notebook +nbook+ with pages for the
+  # template pages found in @template.
+  def build_pages(nbook)
+    @template.pages.each_with_index do |page, index|
+      VBox.new.tap do |pagevbox|
+        sw = ScrolledWindow.new
+        sw.add(@sourcecode_fields[index])
+        pagevbox.pack_start(sw, true, true)
+
+        nbook.append_page(pagevbox,
+                          Label.new(sprintf(t.dialogs.template_event.labels.page,
+                                            :num => page.number)))
+      end
+    end
   end
 
 end
