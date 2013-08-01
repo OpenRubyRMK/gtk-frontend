@@ -31,9 +31,15 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   private
 
   def create_widgets
-    @name_field = Entry.new
-    @name_field.text = @map_object.custom_name
-    @sourcecode_fields = @template.pages.map{|page| TextView.new}
+    @name_field        = Entry.new
+    @name_field.text   = @map_object.custom_name
+
+    @sourcecode_fields = @template.pages.map do |page|
+      t             = TextView.new # FIXME: Use SourceView!
+      t.buffer.text = page.code
+      t.sensitive   = false # Template code is not editable here. Change the template itself!
+      t
+    end
   end
 
   def create_layout
@@ -69,14 +75,34 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   def build_pages(nbook)
     @template.pages.each_with_index do |page, index|
       VBox.new.tap do |pagevbox|
-        sw = ScrolledWindow.new
-        sw.add(@sourcecode_fields[index])
-        pagevbox.pack_start(sw, true, true)
+        HBox.new.tap do |hbox|
+          hbox.spacing = $app.space
 
-        nbook.append_page(pagevbox,
-                          Label.new(sprintf(t.dialogs.template_event.labels.page,
-                                            :num => page.number)))
-      end
+          # Parameters
+          VBox.new.tap do |subvbox|
+            build_parameters(page, subvbox)
+            hbox.pack_start(subvbox, true, true)
+          end
+
+          # Sourcecode
+          sw = ScrolledWindow.new
+          sw.add(@sourcecode_fields[index])
+          hbox.pack_start(sw, true, true)
+
+          pagevbox.pack_start(hbox, true, true)
+        end
+
+          nbook.append_page(pagevbox,
+                            Label.new(sprintf(t.dialogs.template_event.labels.page,
+                                              :num => page.number)))
+        end
+    end
+  end
+
+  def build_parameters(page, subvbox)
+    page.parameters.each do |param|
+      subvbox.pack_start(Label.new(sprintf(t.dialogs.template_event.labels.parameter,
+                                           :name => param.name)), false, false)
     end
   end
 

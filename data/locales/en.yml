@@ -53,6 +53,7 @@ dialogs:
     title: "Edit templated event: %{tname}"
     labels:
       page: "Page %{num}"
+      parameter: "%{name}:"
     # `identifier' is the untranslated internal template name.
     template_not_found: "Template not found: %{identifier}"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
