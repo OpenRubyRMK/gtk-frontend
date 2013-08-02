@@ -57,6 +57,12 @@ module OpenRubyRMK::GTKFrontend::Widgets::Parameters
       apply_default unless no_default?
     end
 
+    # Override in a subclass. Return the value for
+    # the parameter the user entered.
+    def value
+      raise(NotImplementedError, "Override this in a subclass.")
+    end
+
     private
 
     # Override in a subclass. Fill the #widget with
@@ -74,6 +80,10 @@ module OpenRubyRMK::GTKFrontend::Widgets::Parameters
       super(label, Gtk::Entry.new)
     end
 
+    def value
+      widget.text
+    end
+
     private
 
     def apply_default
@@ -87,6 +97,12 @@ module OpenRubyRMK::GTKFrontend::Widgets::Parameters
     def initialize(label, default = NO_DEFAULT_VALUE)
       super(label, Gtk::SpinButton.new)
     end
+
+    def value
+      widget.value.to_i
+    end
+
+    private
 
     def apply_default
       widget.value = default.to_i

@@ -40,6 +40,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
       t.sensitive   = false # Template code is not editable here. Change the template itself!
       t
     end
+
+    @parameter_fields = {}
   end
 
   def create_layout
@@ -73,6 +75,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   # template pages found in @template.
   def build_pages(nbook)
     @template.pages.each_with_index do |page, index|
+      @parameter_fields[page.number] = {} # Prepare for parameter widgets
+
       VBox.new.tap do |pagevbox|
         HBox.new.tap do |hbox|
           hbox.spacing = $app.space
@@ -95,7 +99,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
           nbook.append_page(pagevbox,
                             Label.new(sprintf(t.dialogs.template_event.labels.page,
                                               :num => page.number)))
-        end
+      end
     end
   end
 
@@ -110,6 +114,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
       parameter = klass.new(param.name)
       parameter.default = param.default_value unless param.required?
       subvbox.pack_start(parameter, false, false)
+
+      # Ensure we find the widget later for value extraction
+      @parameter_fields[page.number][param.name] = parameter
     end
   end
 
