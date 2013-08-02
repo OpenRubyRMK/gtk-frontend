@@ -90,6 +90,11 @@ module OpenRubyRMK
 
     # Namespace containing additional widgets.
     module Widgets
+
+      # Namespace containing widgets for parameters.
+      module Parameters
+      end
+
     end
 
     # Namespace containing floating tool windows.
@@ -134,6 +139,7 @@ require_relative "gtk_frontend/widgets/ruby_terminal"
 require_relative "gtk_frontend/widgets/recent_open"
 require_relative "gtk_frontend/widgets/tileset_book"
 require_relative "gtk_frontend/widgets/template_combobox"
+require_relative "gtk_frontend/widgets/parameters"
 require_relative "gtk_frontend/tool_windows/map_window"
 require_relative "gtk_frontend/tool_windows/tileset_window"
 require_relative "gtk_frontend/tool_windows/layer_window"

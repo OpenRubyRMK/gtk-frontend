@@ -79,6 +79,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
 
           # Parameters
           VBox.new.tap do |subvbox|
+            subvbox.spacing = $app.space
             build_parameters(page, subvbox)
             hbox.pack_start(subvbox, true, true)
           end
@@ -100,8 +101,15 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
 
   def build_parameters(page, subvbox)
     page.parameters.each do |param|
-      subvbox.pack_start(Label.new(sprintf(t.dialogs.template_event.labels.parameter,
-                                           :name => param.name)), false, false)
+      if OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_defined?(param.type.capitalize)
+        klass = OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_get(param.type.capitalize)
+      else
+        raise("Unknown parameter type: #{param.type}")
+      end
+
+      parameter = klass.new(param.name)
+      parameter.default = param.default_value unless param.required?
+      subvbox.pack_start(parameter, false, false)
     end
   end
 
