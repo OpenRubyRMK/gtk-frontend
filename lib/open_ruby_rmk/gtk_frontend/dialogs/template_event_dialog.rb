@@ -36,7 +36,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
     @name_field.text   = @map_object.custom_name
 
     @sourcecode_fields = @template.pages.map do |page|
-      t             = TextView.new # FIXME: Use SourceView!
+      t             = TextView.new
       t.buffer.text = page.code
       # t.sensitive   = false # Template code is not editable here. Change the template itself!
       t

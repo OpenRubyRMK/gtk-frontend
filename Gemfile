@@ -8,6 +8,7 @@ gem "openrubyrmk-backend", :git => "file:///home/quintus/repos/privat/ruby/backe
 
 # GUI
 gem "gtk2"
+gem "gtksourceview2"
 gem "vte"
 gem "ripl"
 gem "ripl-multi_line"

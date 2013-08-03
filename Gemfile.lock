@@ -31,6 +31,8 @@ GEM
       atk (>= 1.2.6)
       gdk_pixbuf2 (>= 1.2.6)
       pango (>= 1.2.6)
+    gtksourceview2 (1.2.6)
+      gtk2 (>= 1.2.6)
     mini_portile (0.5.1)
     nokogiri (1.6.0)
       mini_portile (~> 0.5.0)
@@ -58,6 +60,7 @@ PLATFORMS
 
 DEPENDENCIES
   gtk2
+  gtksourceview2
   openrubyrmk-backend!
   paint
   r18n-desktop
