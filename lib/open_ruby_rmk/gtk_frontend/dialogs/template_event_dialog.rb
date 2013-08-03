@@ -38,7 +38,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
     @sourcecode_fields = @template.pages.map do |page|
       t             = TextView.new
       t.buffer.text = page.code
-      # t.sensitive   = false # Template code is not editable here. Change the template itself!
+      t.modify_font(Pango::FontDescription.new("monospace"))
+      t.sensitive   = false # Template code is not editable here. Change the template itself!
       t
     end
 
@@ -146,6 +147,25 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
         end
       else
         parameter.default = param.default_value unless param.required?
+      end
+
+      buffer = @sourcecode_fields[page.number].buffer
+      buffer.create_tag("param_mark", :foreground => "red", :weight => Pango::FontDescription::WEIGHT_BOLD)
+
+      target = "%{#{param.name}}"
+      index  = buffer.text.index(target)
+      start  = buffer.get_iter_at_offset(index)
+      stop   = buffer.get_iter_at_offset(index + target.chars.count)
+
+      parameter.widget.signal_connect(:focus_in_event) do
+        buffer.apply_tag("param_mark", start, stop)
+
+        false
+      end
+      parameter.widget.signal_connect(:focus_out_event) do
+        buffer.remove_all_tags(start, stop)
+
+        false
       end
 
       # Ensure we find the widget later for value extraction
