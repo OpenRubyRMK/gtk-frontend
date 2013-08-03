@@ -37,7 +37,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
     @sourcecode_fields = @template.pages.map do |page|
       t             = TextView.new # FIXME: Use SourceView!
       t.buffer.text = page.code
-      t.sensitive   = false # Template code is not editable here. Change the template itself!
+      # t.sensitive   = false # Template code is not editable here. Change the template itself!
       t
     end
 
@@ -87,6 +87,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
             build_parameters(page, subvbox)
             hbox.pack_start(subvbox, true, true)
           end
+
+          hbox.pack_start(VSeparator.new, false, false)
 
           # Sourcecode
           sw = ScrolledWindow.new
