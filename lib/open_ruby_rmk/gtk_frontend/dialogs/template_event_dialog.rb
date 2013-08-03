@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
@@ -67,7 +68,22 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   end
 
   def on_response(_, res)
-    # TODO: Something useful?
+    if res == Gtk::Dialog::RESPONSE_ACCEPT
+      ary = []
+
+      @parameter_fields.each_pair do |pagenum, params|
+        hsh = {}
+
+        params.each_pair do |key, widget|
+          hsh[key] = widget.value
+        end
+
+        ary[pagenum] = hsh
+      end
+
+      @map_object.modify_params(ary)
+    end
+
     destroy
   end
 
@@ -106,6 +122,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
   end
 
   def build_parameters(page, subvbox)
+    values = @map_object.params
+    values.each{|hsh| hsh.default = OpenRubyRMK::GTKFrontend::Widgets::Parameters::NO_DEFAULT_VALUE} # Marker so we know when we’ve hit an unset parameter
+
     page.parameters.each do |param|
       if OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_defined?(param.type.capitalize)
         klass = OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_get(param.type.capitalize)
@@ -114,8 +133,20 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
       end
 
       parameter = klass.new(param.name)
-      parameter.default = param.default_value unless param.required?
       subvbox.pack_start(parameter, false, false)
+
+      # Prefill the widget with the last value, and if there is none,
+      # with the default value stated by the template we’re based on.
+      if values[page.number]
+        val = values[page.number][param.name]
+        if val == OpenRubyRMK::GTKFrontend::Widgets::Parameters::NO_DEFAULT_VALUE
+          parameter.default = param.default_value unless param.required?
+        else
+          parameter.default = val
+        end
+      else
+        parameter.default = param.default_value unless param.required?
+      end
 
       # Ensure we find the widget later for value extraction
       @parameter_fields[page.number][param.name] = parameter

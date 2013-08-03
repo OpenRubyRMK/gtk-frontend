@@ -1,6 +1,6 @@
 GIT
   remote: file:///home/quintus/repos/privat/ruby/backend
-  revision: f317864655ce68f485f9e790ec7854cb12e2e536
+  revision: 8bef3522ae9c7846f64d3bf7b55890428bea5e73
   specs:
     openrubyrmk-backend (0.0.1.dev)
       nokogiri
