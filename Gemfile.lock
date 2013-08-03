@@ -1,18 +1,18 @@
 GIT
+  remote: file:///home/quintus/repos/privat/ruby/backend
+  revision: f317864655ce68f485f9e790ec7854cb12e2e536
+  specs:
+    openrubyrmk-backend (0.0.1.dev)
+      nokogiri
+      ruby-tmx
+
+GIT
   remote: git://github.com/Hanmac/tmx-ruby.git
   revision: 585a6404c1b5386a72861fcf5eade487d2f09775
   specs:
     ruby-tmx (0.0.1.dev)
       nokogiri
       rbtree
-
-GIT
-  remote: git://github.com/OpenRubyRMK/backend.git
-  revision: 2ca7caa54ffb9341485ef6bfa1aaa8da8a386857
-  specs:
-    openrubyrmk-backend (0.0.1.dev)
-      nokogiri
-      ruby-tmx
 
 GEM
   remote: http://rubygems.org/
