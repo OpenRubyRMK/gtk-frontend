@@ -152,16 +152,20 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
       buffer = @sourcecode_fields[page.number].buffer
       buffer.create_tag("param_mark", :foreground => "red", :weight => Pango::FontDescription::WEIGHT_BOLD)
 
+      # Find the boundaries of the parameter in the code so
+      # we can highlight it below.
       target = "%{#{param.name}}"
       index  = buffer.text.index(target)
       start  = buffer.get_iter_at_offset(index)
       stop   = buffer.get_iter_at_offset(index + target.chars.count)
 
+      # Highlight on focus
       parameter.widget.signal_connect(:focus_in_event) do
         buffer.apply_tag("param_mark", start, stop)
 
         false
       end
+      # Unhighlight on focus loss
       parameter.widget.signal_connect(:focus_out_event) do
         buffer.remove_all_tags(start, stop)
 

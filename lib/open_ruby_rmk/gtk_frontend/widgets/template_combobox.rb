@@ -21,9 +21,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
     # and load the templates already defined at this point (only
     # if there’s a project at all, of course).
     if $app.project
+      # The <none> entry
+      row = model.append
+      row[0] = ""
+      row[1] = t.misc.no_template
+      row[2] = nil # nil = use generic event
+
       $app.project.templates.each{|template| add_template(template)}
       $app.project.observe(:template_added, &template_added)
       $app.project.observe(:template_removed, &template_removed)
+
+      self.active_iter = model.iter_first
     end
 
     # We also want to get notified when the project as such changes.
@@ -34,10 +42,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
       # the current project above (and here we need the event handlers
       # again)
       if info[:project]
+        row = model.append
+        row[0] = ""
+        row[1] = t.misc.no_template
+        row[2] = nil
+
         info[:project].templates.each{|template| add_template(template)}
 
         info[:project].observe(:template_added, &template_added)
         info[:project].observe(:template_removed, &template_removed)
+
+        self.active_iter = model.iter_first
       end
     end
 
@@ -47,6 +62,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
 
   def add_template(template)
     iter = model.append
+
     iter[0] = template.name
     iter[1] = t["templates"][template.name] | template.name.capitalize # Single | intended, this is a feature of R18n
     iter[2] = template

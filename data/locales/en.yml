@@ -219,3 +219,5 @@ templates:
 # This section contains all the stuff that didn’t fit
 # in anywhere else.
 misc:
+  # The label for the combobox entry for "no template"
+  no_template: "<none>"
