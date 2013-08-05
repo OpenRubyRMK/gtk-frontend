@@ -470,6 +470,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # Set to +true+ if you want to draw visual lines between the cells.
   attr_writer :draw_grid
 
+  # Set to +true+ if you want to highlight the cell the cursor is
+  # currently placed above. This currently heavily exercises your
+  # CPU by redrawing the entire map on every mouse motion.
+  attr_writer :show_active_cell
+
   # Set to a value between 0 and 1, denoting the alpha value to
   # apply to higher layers. Defaults to 0.5.
   attr_accessor :alpha_layers
@@ -495,8 +500,10 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     @cell_width     = cell_width
     @cell_height    = cell_height
     @draw_grid      = false
+    @show_active_cell = false
     @alpha_layers   = 0.5
     @grid_color     = [0.5, 0, 1, 1]
+    @hovered_cell   = nil
     @mask           = []
     @button_is_down = false # Set to true while a mouse button is down
     @__first_cell_layer = nil
@@ -633,6 +640,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
   # True if the grid shall be drawn.
   def draw_grid?
     @draw_grid
+  end
+
+  # True if the cell we hover over should be marked.
+  def show_active_cell?
+    @show_active_cell
   end
 
   # Recalculate the width and height of the canvas by examining
@@ -1094,6 +1106,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     cc.set_source_rgba(1, 0, 0, 0.5)
     cc.fill
 
+    # If requested, highlight the hovered cell.
+    if @show_active_cell && @hovered_cell
+      cc.rectangle(@hovered_cell.x, @hovered_cell.y, @cell_width, @cell_height)
+      cc.set_source_rgba(0, 0, 0, 0.5)
+      cc.fill
+    end
+
     true # Event completely handled
   end
 
@@ -1110,16 +1129,39 @@ class OpenRubyRMK::GTKFrontend::Widgets::ImageGrid < Gtk::ScrolledWindow
     signal_emit :cell_button_press, :pos => pos, :event => event
   end
 
+  # This signal handler is run for *every* mouse motion. Be
+  # careful to keep it as thin as possible, because it has
+  # heavy impact on the application performance!
   def on_motion(_, event)
+
+    if @show_active_cell || @button_is_down
+      # Snap coordinates to cell grid
+      pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
+      pos.x = pos.cell_x * @cell_width
+      pos.y = pos.cell_y * @cell_height
+
+      outofbounds = pos.cell_x < 0 or pos.cell_x >= self.col_num or pos.cell_y < 0 or pos.cell_y >= self.row_num
+    end
+
+    if @show_active_cell
+      # Clear the last known position
+      redraw_area(@hovered_cell.x, @hovered_cell.y, @cell_width, @cell_height) if @hovered_cell
+
+      # Update with the new position if necessary
+      if outofbounds
+        @hovered_cell = nil
+      else
+        @hovered_cell = pos
+        redraw_area(pos.x, pos.y, @cell_width, @cell_height)
+      end
+      # TODO: Merge the two calls to #redraw_area into a single one
+      # to leighten this event handler.
+    end
+
     return unless @button_is_down
 
-    # Snap click coordinates to cell grid
-    pos   = CellPos.new(event.coords[0].to_i / @cell_width, event.coords[1].to_i / @cell_height, @active_layer)
-    pos.x = pos.cell_x * @cell_width
-    pos.y = pos.cell_y * @cell_height
-
     # Only care about clicks on the grid, not about those next to it
-    return if pos.cell_x < 0 or pos.cell_x >= self.col_num or pos.cell_y < 0 or pos.cell_y >= self.row_num
+    return if outofbounds
 
     # FIXME: Filter out duplicate motion events inside a single cell
     # for CellLayers!

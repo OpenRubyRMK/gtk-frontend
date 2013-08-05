@@ -13,7 +13,7 @@
 # Locale to display the GUI in. Leave empty to determine the
 # value from the environment. Example:
 # locale: de
-## locale:
+## (empty)
 locale:
 
 # Wether or not to display the map grid by default.
@@ -31,3 +31,10 @@ remember_window_positions: off
 # to fade out.
 ## on
 alpha_layers: on
+
+# Activating this option makes the map highlight
+# the cell the cursor is currently hovering over.
+# Note activating this option currently is very
+# intense on your CPU, hence off by default.
+## off
+show_active_cell: off
