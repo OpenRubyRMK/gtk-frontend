@@ -66,52 +66,13 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     return unless @pressed_button == hsh[:event].button # Shouldn’t happen
 
     if active_layer.kind_of?(CellLayer)
-      # Mask adjustments for those selection modes that aren’t motion-aware
-      case $app.state[:core][:selection_mode]
-      when :magic then mask_adjascent(@first_selection)
-      end
+      handle_cell_layer_button_release(hsh)
 
-      case @pressed_button
-      when 1 then # Primary mouse button
-        fill_mask
-      when 3 then # Secondary mouse button
-      @first_selection = nil
-      when 2 then # Middle mouse button
-        # TODO: Something useful?
-      end
     elsif active_layer.kind_of?(PixelLayer)
       # Ignore ImageLayers, there are no actions one could apply to them
       return unless @map.get_layer(hsh[:pos].cell_z).kind_of?(TiledTmx::ObjectGroup)
 
-      case $app.state[:core][:objects_mode]
-      when :character then
-        x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
-
-        if $app.state[:core][:template]
-          add_object($app.state[:core][:template].name, x, y,z,  width, height)
-          redraw_area(x, y, width, height)
-        else
-          raise(NotImplementedError, "TODO: Can’t create generic character events yet")
-        end
-
-      when :free
-        # FIXME (use hsh[:event]) for the real coords
-
-      when :edit
-        x, y = *hsh[:event].coords
-
-        target = active_layer.find{ |obj| (x >= obj.x && y >= obj.y) && (x < obj.x + obj.width && y < obj.y + obj.height) }
-
-        if target
-          begin
-            td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
-            td.run
-            #TODO: Do something useful here?
-          rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
-            warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
-          end #begin/rescue
-        end #if target
-      end #case
+      handle_object_layer_button_release(hsh)
     end
   end
 
@@ -254,6 +215,60 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
 
     # Add it to the widget
     add_pixel_object(z, x, y, width, height, :object => obj)
+  end
+
+  def handle_cell_layer_button_release(hsh)
+    # Mask adjustments for those selection modes that aren’t motion-aware
+    case $app.state[:core][:selection_mode]
+    when :magic then mask_adjascent(@first_selection)
+    end
+
+    case @pressed_button
+    when 1 then # Primary mouse button
+      fill_mask
+    when 3 then # Secondary mouse button
+      @first_selection = nil
+    when 2 then # Middle mouse button
+      # TODO: Something useful?
+    end
+  end
+
+  def handle_object_layer_button_release(hsh)
+    case $app.state[:core][:objects_mode]
+    when :character then handle_character_button_release(hsh)
+    when :free      then handle_free_button_release(hsh)
+    when :edit      then handle_edit_button_release(hsh)
+    end
+  end
+
+  def handle_character_button_release(hsh)
+    x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
+
+    if $app.state[:core][:template]
+      add_object($app.state[:core][:template].name, x, y,z,  width, height)
+      redraw_area(x, y, width, height)
+    else
+      raise(NotImplementedError, "TODO: Can’t create generic character events yet")
+    end
+  end
+
+  def handle_free_button_release(hsh)
+    # FIXME (use hsh[:event]) for the real coords
+  end
+
+  def handle_edit_button_release(hsh)
+    x, y = *hsh[:event].coords
+
+    target = active_layer.find{ |obj| (x >= obj.x && y >= obj.y) && (x < obj.x + obj.width && y < obj.y + obj.height) }
+
+    if target
+      begin
+        td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
+        td.run
+      rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
+        warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
+      end #begin/rescue
+    end #if target
   end
 
 end
