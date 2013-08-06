@@ -245,10 +245,11 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     x, y, z, width, height = hsh[:pos].x, hsh[:pos].y, hsh[:pos].cell_z, self.cell_width, self.cell_height
 
     if $app.state[:core][:template]
-      add_object($app.state[:core][:template].name, x, y,z,  width, height)
+      add_object($app.state[:core][:template].name, x, y, z, width, height)
       redraw_area(x, y, width, height)
     else
-      raise(NotImplementedError, "TODO: Can’t create generic character events yet")
+      add_object(OpenRubyRMK::Backend::MapObject::GENERIC_OBJECT_TYPENAME, x, y, z, width, height)
+      redraw_area(x, y, width, height)
     end
   end
 
@@ -262,12 +263,17 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
     target = active_layer.find{ |obj| (x >= obj.x && y >= obj.y) && (x < obj.x + obj.width && y < obj.y + obj.height) }
 
     if target
-      begin
-        td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
-        td.run
-      rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
-        warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
-      end #begin/rescue
+      if target.info[:object].type == OpenRubyRMK::Backend::MapObject::GENERIC_OBJECT_TYPENAME
+        ed = OpenRubyRMK::GTKFrontend::Dialogs::EventDialog.new(target.info[:object])
+        ed.run
+      else
+        begin
+          td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
+          td.run
+        rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
+          warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
+        end #begin/rescue
+      end
     end #if target
   end
 
