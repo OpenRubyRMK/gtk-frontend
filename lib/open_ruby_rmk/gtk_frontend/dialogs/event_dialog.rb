@@ -25,9 +25,20 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
   private
 
   def create_widgets
+    @name_field = Entry.new
+    @name_field.text = @map_object.custom_name
   end
 
   def create_layout
+    vbox.spacing = $app.space
+
+    # Top widgets for name and ID
+    HBox.new.tap do |hbox|
+      hbox.pack_start(@name_field, false, false, $app.space)
+      hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
+
+      vbox.pack_start(hbox, false, false)
+    end
   end
 
   def setup_event_handlers

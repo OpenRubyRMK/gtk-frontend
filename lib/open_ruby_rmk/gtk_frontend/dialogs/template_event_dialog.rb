@@ -55,12 +55,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
       hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
       vbox.pack_start(hbox, false, false)
 
-      # The pages
-      Notebook.new.tap do |nbook|
-        build_pages(nbook)
-        vbox.pack_start(nbook, true, true)
-      end
+    end
 
+    # The pages
+    Notebook.new.tap do |nbook|
+      build_pages(nbook)
+      vbox.pack_start(nbook, true, true)
     end
   end
 
