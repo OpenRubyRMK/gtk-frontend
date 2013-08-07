@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
@@ -28,7 +29,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
 
   def create_widgets
     @list = TreeView.new(ListStore.new(String, OpenRubyRMK::Backend::Template))
-    @codeview = SourceView.new
 
     @list.rules_hint = true
     @list.headers_visible = false
@@ -37,20 +37,13 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     @listrenderer.editable = true
     @list.append_column(TreeViewColumn.new("", @listrenderer, text: 0))
 
-    @codeview.show_line_numbers = true
-    @codeview.insert_spaces_instead_of_tabs = true
-    @codeview.indent_width = 2
-    @codeview.show_right_margin = true
-    @codeview.right_margin_position = 80
-    @codeview.buffer.language = SourceLanguageManager.new.get_language("ruby")
-    @codeview.buffer.highlight_syntax = true
-    @codeview.buffer.highlight_matching_brackets = true
+    @codepages = Notebook.new
   end
 
   def create_layout
     HBox.new.tap do |hbox|
       hbox.pack_start(@list, false, false)
-      hbox.pack_start(@codeview, true, true)
+      hbox.pack_start(@codepages, true, true)
 
       vbox.pack_start(hbox, true, true)
     end
@@ -69,8 +62,21 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   end
 
   def on_list_cursor_changed(*)
-    # TODO: Pages!
-    @codeview.buffer.text = current_list_iter[1].pages.first.code
+    # Clear the notebook for the new template’s pages
+    @codepages.n_pages.times{@codepages.remove_page(-1)}
+
+    return unless current_list_iter[1]
+
+    template = current_list_iter[1]
+    template.pages.each do |page|
+      sourceview = OpenRubyRMK::GTKFrontend::Widgets::RubySourceView.new
+      sourceview.buffer.text = page.code
+
+      @codepages.append_page(sourceview,
+                             Label.new(sprintf(t.dialogs.template_event.labels.page,
+                                               :num => page.number)))
+    end
+    @codepages.show_all
   end
 
   ########################################
