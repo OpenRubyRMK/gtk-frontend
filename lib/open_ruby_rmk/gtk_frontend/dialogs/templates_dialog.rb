@@ -39,9 +39,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     @list.rules_hint = true
     @list.headers_visible = false
     @list.selection.mode = SELECTION_SINGLE
-    @listrenderer = CellRendererText.new
-    @listrenderer.editable = true
-    @list.append_column(TreeViewColumn.new("", @listrenderer, text: 0))
+    @list.append_column(TreeViewColumn.new("", CellRendererText.new, text: 0))
 
     @add_template_button.add(icon_image("ui/list-add.png", width: 16))
     @del_template_button.add(icon_image("ui/list-remove.png", width: 16))
