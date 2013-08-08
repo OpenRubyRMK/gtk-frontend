@@ -95,20 +95,19 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     template.pages.each do |page|
       # Make the widgets
       sourceview = OpenRubyRMK::GTKFrontend::Widgets::RubySourceView.new
-      paraview   = TreeView.new(ListStore.new(String, String, String, OpenRubyRMK::Backend::Template::Parameter))
+      paraview   = TreeView.new(ListStore.new(String, String, OpenRubyRMK::Backend::Template::Parameter))
 
       # Tell the parameter list what to display
       paraview.append_column(TreeViewColumn.new("Name", CellRendererText.new, text: 0))
-      paraview.append_column(TreeViewColumn.new("Type", CellRendererText.new, text: 1))
-      paraview.append_column(TreeViewColumn.new("Default value", CellRendererText.new, text: 2))
+      paraview.append_column(TreeViewColumn.new("Default value", CellRendererText.new, text: 1))
 
       # Fill in parameters and code for this template page
       sourceview.buffer.text = page.code
       page.parameters.each do |param|
         row = paraview.model.append
         row[0] = param.name
-        row[1] = param.type
-        row[2] = param.default_value || "(required)"
+        row[1] = param.required? ? "(required)" : param.default_value
+        row[2] = param
       end
 
       # Add the widgets to the notebook page
