@@ -69,10 +69,19 @@ class OpenRubyRMK::GTKFrontend::Widgets::TemplateCombobox < Gtk::ComboBox
   end
 
   def remove_template(template)
-    self.active_iter = model.iter_first # may be nil if the last template is removed; issues :changed event
+    iter = model.iter_first
+    loop do
+      if iter.next!
+        break if iter[2] == template
+      else
+        warn("Did not find template #{template.inspect} in the template combobox, ignoring.")
+        return
+      end # If we don’t have that iter (whyever), ignore that.
+    end
 
-    # TODO
-    raise(NotImplementedError, "TODO: Can't remove templates yet")
+    model.remove(iter)
+
+    self.active_iter = model.iter_first # may be nil if the last template is removed; issues :changed event
   end
 
   private

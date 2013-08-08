@@ -89,9 +89,9 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     # Clear the notebook for the new template’s pages
     @codepages.n_pages.times{@codepages.remove_page(-1)}
 
-    return unless current_list_iter[1]
+    return unless current_template_list_iter[1]
 
-    template = current_list_iter[1]
+    template = current_template_list_iter[1]
     template.pages.each do |page|
       # Make the widgets
       sourceview = OpenRubyRMK::GTKFrontend::Widgets::RubySourceView.new
@@ -128,11 +128,17 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   end
 
   def on_add_template_button_clicked(*)
-    
+    t = OpenRubyRMK::Backend::Template.new("newparameter")
+    $app.project.add_template(t)
+    append_template(t)
   end
 
   def on_del_template_button_clicked(*)
+    iter = current_template_list_iter
+    return unless iter
 
+    $app.project.remove_template(iter[1])
+    @list.model.remove(iter)
   end
 
   ########################################
@@ -146,7 +152,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     row[1] = template
   end
 
-  def current_list_iter
+  def current_template_list_iter
     return nil unless @list.cursor[0]
     @list.model.get_iter(@list.cursor[0])
   end

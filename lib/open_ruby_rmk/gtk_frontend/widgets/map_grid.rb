@@ -2,6 +2,7 @@
 
 # This is the widget that displays the map on the main window.
 class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Widgets::ImageGrid
+  include R18n::Helpers
 
   # Creates a new instance. All arguments are forwarded to ImageGrid::new.
   def initialize(*)
@@ -271,7 +272,7 @@ class OpenRubyRMK::GTKFrontend::Widgets::MapGrid < OpenRubyRMK::GTKFrontend::Wid
           td = OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog.new(target.info[:object])
           td.run
         rescue OpenRubyRMK::GTKFrontend::Errors::UnknownTemplate => e
-          warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
+          $app.warnbox(sprintf(t.dialogs.template_event.template_not_found, :identifier => e.identifier))
         end #begin/rescue
       end
     end #if target
