@@ -165,12 +165,16 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     paraview   = TreeView.new(ListStore.new(String, String, OpenRubyRMK::Backend::Template::Parameter))
     add_param_button = Button.new
     del_param_button = Button.new
+    name_renderer = CellRendererText.new
+    defval_renderer = CellRendererText.new
 
-    # Images for the param buttons
+    # Widget configuration
     add_param_button.add(icon_image("ui/list-add.png", width: 16))
     del_param_button.add(icon_image("ui/list-remove.png", width: 16))
+    name_renderer.editable = true
+    defval_renderer.editable = true
 
-    # Event handling for the param buttons
+    # Event handling
     add_param_button.signal_connect(:clicked) do
       param = OpenRubyRMK::Backend::Template::Parameter.new("myparameter", true)
       page.insert_parameter(param, page.parameters.count)
@@ -186,10 +190,31 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
         paraview.model.remove(iter)
       end
     end
+    name_renderer.signal_connect(:edited) do |_, path, value|
+      value = value.strip
+
+      iter = paraview.model.get_iter(path)
+      iter[0] = value
+      iter[2].name = value
+    end
+    defval_renderer.signal_connect(:edited) do |_, path, value|
+      value = value.strip
+      iter = paraview.model.get_iter(path)
+
+      if value.empty?
+        iter[1]               = "(required)"
+        iter[2].required      = true
+        iter[2].default_value = ""
+      else
+        iter[1]               = value
+        iter[2].required      = false
+        iter[2].default_value = value
+      end
+    end
 
     # Tell the parameter list what to display
-    paraview.append_column(TreeViewColumn.new("Name", CellRendererText.new, text: 0))
-    paraview.append_column(TreeViewColumn.new("Default value", CellRendererText.new, text: 1))
+    paraview.append_column(TreeViewColumn.new("Name", name_renderer, text: 0))
+    paraview.append_column(TreeViewColumn.new("Default value", defval_renderer, text: 1))
 
     # Fill in parameters and code for this template page
     sourceview.buffer.text = page.code
