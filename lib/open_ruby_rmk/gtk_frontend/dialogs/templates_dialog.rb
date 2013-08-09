@@ -11,6 +11,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
           [Stock::CLOSE, Dialog::RESPONSE_ACCEPT])
 
     set_default_size 700, 400
+    @last_template = nil
 
     create_widgets
     create_layout
@@ -47,7 +48,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     @del_page_button.add(icon_image("ui/list-remove.png", width: 16))
 
     @sourceviews = []
-    @paraviews = []
   end
 
   def create_layout
@@ -96,18 +96,31 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   # Event handlers
 
   def on_response(_, res)
+    # Before exiting, save the current template’s page codes
+    if @last_template
+      @last_template.pages[@codepages.page].code = @sourceviews[@codepages.page].buffer.text.strip
+    end
+
     destroy
   end
 
   def on_list_cursor_changed(*)
+    # Save the pre-change template’s page codes
+    if @last_template
+      @sourceviews.each_with_index do |sourceview, index|
+        @last_template.pages[index].code = sourceview.buffer.text
+      end
+    end
+
     # Clear the notebook for the new template’s pages
+    @sourceviews.clear
     @codepages.n_pages.times{@codepages.remove_page(-1)}
 
-    return unless current_template_list_iter[1]
+    @last_template = current_template_list_iter[1]
+    return unless @last_template
 
-    template = current_template_list_iter[1]
-    template.pages.each do |page|
-      insert_page(template, page)
+    @last_template.pages.each do |page|
+      insert_page(@last_template, page)
     end
     @codepages.show_all
   end
@@ -167,6 +180,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     del_param_button = Button.new
     name_renderer = CellRendererText.new
     defval_renderer = CellRendererText.new
+    @sourceviews[page.number] = sourceview
 
     # Widget configuration
     add_param_button.add(icon_image("ui/list-add.png", width: 16))
