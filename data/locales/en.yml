@@ -56,6 +56,18 @@ dialogs:
       parameter: "%{name}:"
     # `identifier' is the untranslated internal template name.
     template_not_found: "Template not found: %{identifier}"
+  templates:
+    title: "Templates"
+    labels:
+      name: "Name"
+      default_value: "Default value"
+    # Generated name for new parameters. Must not contain spaces.
+    newparameter: "newparameter"
+    # Marker for a required parameter where otherwise the default value would be.
+    required: "(required)"
+    enter_name:
+      title: "Choose a name"
+      text: "Enter the new template’s name:"
   delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
   add_layer:
     title: "Add a new layer"

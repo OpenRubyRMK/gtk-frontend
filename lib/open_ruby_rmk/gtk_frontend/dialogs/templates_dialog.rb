@@ -5,7 +5,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   include OpenRubyRMK::GTKFrontend::Helpers::Icons
 
   def initialize
-    super("Templates",
+    super(t.dialogs.templates.title,
           $app.mainwindow,
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_ACCEPT])
@@ -126,7 +126,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   end
 
   def on_add_template_button_clicked(*)
-    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, "Choose a name", "Enter the new template’s name:")
+    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, t.dialogs.templates.enter_name.title, t.dialogs.templates.enter_name.text)
     td.run
     return if td.text.nil? # Cancel pressed
 
@@ -148,7 +148,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
 
     page = OpenRubyRMK::Backend::Template::TemplatePage.new(0)
     page.instance_eval do
-      parameter "myparameter"
+      parameter t.dialogs.templates.newparameter
       code('puts "Hello World!"')
     end
 
@@ -194,11 +194,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
 
     # Event handling
     add_param_button.signal_connect(:clicked) do
-      param = OpenRubyRMK::Backend::Template::Parameter.new("myparameter", true)
+      param = OpenRubyRMK::Backend::Template::Parameter.new(t.dialogs.templates.newparameter, true)
       page.insert_parameter(param, page.parameters.count)
       row = paraview.model.append
       row[0] = param.name
-      row[1] = "(required)"
+      row[1] = t.dialogs.templates.required
       row[2] = param
     end
     del_param_button.signal_connect(:clicked) do
@@ -220,7 +220,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
       iter = paraview.model.get_iter(path)
 
       if value.empty?
-        iter[1]               = "(required)"
+        iter[1]               = t.dialogs.templates.required
         iter[2].required      = true
         iter[2].default_value = ""
       else
@@ -231,15 +231,15 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     end
 
     # Tell the parameter list what to display
-    paraview.append_column(TreeViewColumn.new("Name", name_renderer, text: 0))
-    paraview.append_column(TreeViewColumn.new("Default value", defval_renderer, text: 1))
+    paraview.append_column(TreeViewColumn.new(t.dialogs.templates.labels.name, name_renderer, text: 0))
+    paraview.append_column(TreeViewColumn.new(t.dialogs.templates.labels.default_value, defval_renderer, text: 1))
 
     # Fill in parameters and code for this template page
     sourceview.buffer.text = page.code
     page.parameters.each do |param|
       row = paraview.model.append
       row[0] = param.name
-      row[1] = param.required? ? "(required)" : param.default_value
+      row[1] = param.required? ? t.dialogs.templates.required : param.default_value
       row[2] = param
     end
 
