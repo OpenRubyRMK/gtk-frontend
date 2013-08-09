@@ -1,7 +1,40 @@
 # English locale for the GTK GUI of the OpenRubyRMK.
 # Everything should be encoded in UTF-8.
+#
+# Copyright © 2013 The OpenRubyRMK Team
+#
+# Translation mailing list: orr-discuss@lists.openrubyrmk.org
+# Issue tracker: https://github.com/OpenRubyRMK/gtk-frontend/issues
+# Last translator: Marvin Gülker <quintus@quintilianus.eu>
+#
+########################################
+#
+# ORR translation files are written in YAML format
+# (http://www.yaml.org). You may find this useful,
+# but generally the syntax should be pretty self-
+# explaining. Be sure to keep the proper amount of
+# spaces at the beginnings of the lines, they are
+# syntactically important.
+#
+# YAML supports two kinds of multi-line strings: With
+# hard line breaks and without. Hard line breaks look
+# like this:
+#
+#   mykey: |
+#     This is line one.
+#     This is line two.
+#
+# “Soft” line breaks are swallowed, creating
+# a single-line string:
+#
+#   mykey: >-
+#     This is line one. This is
+#     still line one.
+#     And once again this is still line one.
 
-# General stuff needed at different places
+########################################
+# General
+
 general:
   application_name: "OpenRubyRMK (GTK frontend)"
   actions:
@@ -14,13 +47,18 @@ general:
     object: "Object layer"
     image: "Image layer"
 
-# All the dialogue windows everywhere.
+########################################
+# Dialogue windows
+
 dialogs:
   new_project: "Create a new project"
   not_empty: "The directory %{dir} is not empty."
   dir_not_found: "The directory %{dir} couldn’t be found."
   file_not_found: "The file %{file} couldn’t be found."
   layer_name_taken: "The layer name “%{name}” is already taken."
+  delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
+  package: "Select a target directory"
+
   map_settings:
     name: "Map settings"
     labels:
@@ -30,8 +68,10 @@ dialogs:
       width_height: "Width ✕ Height"
     errors:
       map_name_empty: "The map name cannot be empty."
+
   categories:
     name: "Configure categories"
+
   category_settings:
     name: "Category settings"
     new_category_name: "New category"
@@ -47,6 +87,7 @@ dialogs:
     errors:
       no_name: "No name given"
       no_attrs: "No attributes defined"
+
   template_event:
     # `tname' is something from "templates" below; see
     # the comment there for further information.
@@ -56,6 +97,7 @@ dialogs:
       parameter: "%{name}:"
     # `identifier' is the untranslated internal template name.
     template_not_found: "Template not found: %{identifier}"
+
   templates:
     title: "Templates"
     labels:
@@ -68,14 +110,16 @@ dialogs:
     enter_name:
       title: "Choose a name"
       text: "Enter the new template’s name:"
-  delete_map: "Are you sure you want to delete the map “%{name}” (ID %{id})?"
+
   add_layer:
     title: "Add a new layer"
     message: "Choose the new layer’s type:"
     new_layer_name: "New layer"
+
   add_tileset:
     title: "Add tileset"
     no_tileset_selected: "No tileset selected."
+
   resources:
     name: "Resources"
     labels:
@@ -88,8 +132,10 @@ dialogs:
       license: "License"
       copyright_year: "Copyright year"
       copyright_holder: "Copyright holder"
+
   resource_preview:
     title: "Resource preview"
+
   settings:
     title: "Settings"
     labels:
@@ -115,21 +161,48 @@ dialogs:
         sound: "Soundeffects"
     hints:
       detailed:
-        concept: "What makes your game special. What overall concept does it have?\n (Maybe famous examples?)"
-        story: "If it's an RPG: How does your adventure begin?\n What will happen during the game?"
-        objective: "What is the player's goal and why would they want to accomplish it?"
-        gameplay: "How does the game works (maybe the well-known run-around-and-fight-in-a-special-turnbased-combat-screen type)?\n Are there Levels or Chapters or is it OpenWorld?"
-        intro: "Is there a (animated) title screen?\n Are there any options available?\n What happens by 'starting a new game': Any video or text explaining your goal?"
-        additonal: "All the additonal stuff not mentioned before. (e.g.: Gamedifficulty or Average playtime)"
+        concept: >-
+          What makes your game special. What overall concept
+          does it have? (Maybe famous examples?)
+        story: >-
+          If it’s an RPG: How does your adventure begin?
+          What will hapen during the game?
+        objective: >-
+          What is the player’s goal and why would they want
+          to accomplish it?
+        gameplay: >-
+          How does the game work (maybe the well-known
+          run-around-and-fight-in-a-special-turnbased-combat-screen
+          type? Are there Levels or Chapters or is it OpenWorld?
+        intro: >-
+          Is there a (animated) title screen? Are there any options
+          available? What happens by “starting a new game”: Any
+          video or text explaining your goal?
+        additional: >-
+          All the additional stuff not mentioned before (e.g.
+          game difficulty or average playtime).
       product_design:
-        characters: "Who are the main charakters? (role in story, skills, their own story)"
-        world: "Which scene(s) are out there, waiting to be explored?\nHow does the world looks like?\nAny historic relations?"
-        controls: "Are there any special controls, like mouse-input, jumps or multitouch gestures?"
-        interface: "How does the interface looks like. Any bars, displaying information?\nWhat kind of menu awaits the player?"
-        sound: "Whats the general music-sound-usage concept.\nIs the whole game flavoured with random or scene-related background music?\nAre there sounds for skills, walking or events?\nWhat music style will be used?"
-  package: "Select a target directory"
+        characters: >-
+          Who are the main characters (role in story, skills,
+          their own story)?
+        world: >-
+          Which scene(s) are out there, waiting to be explored?
+          How does the world look like? Any historic relations?
+        controls: >-
+          Are there any special controls like mouse input, jumps
+          or multitouch gestures?
+        interface: >-
+          How does the interface look like? Any bars displaying
+          information? What kind of menu awaits the player?
+        sound: >-
+          What’s the general music-sound usage concept? Is the
+          whole game flavoured with random or scene-related
+          background music? Are there sounds for skills, walking
+          or events? What music style will be used?  
 
-# Texts for the debugging console.
+########################################
+# Debugging console
+
 console:
   title: "Debugging console"
   # Note: Don’t make lines longer than 80 characters here,
@@ -143,18 +216,25 @@ console:
     This is free software, and you are welcome to redistribute it
     under certain conditions; see COPYING for details.
 
+########################################
+# Floating tool windows
+
 windows:
   map_tree:
     title: "Map tree"
     labels:
       map_name: "Map name"
       map_id: "Map ID"
+
   tileset:
     title: "Tileset"
     labels:
       rectangle: "Rectangle"
       magic: "Magic"
       freehand: "Freehand"
+
+########################################
+# Toolbar labels
 
 # Toolbar labels. Chances are you will never see them, because
 # GTK+ doesn’t show these by default, you have to explicitely
@@ -166,16 +246,22 @@ tools:
     rectangle: "Rectangle"
     magic: "Magic"
     freehand: "Freehand"
+
   editor:
     edit: "Edit"
     character: "Character"
     free: "Free"
+
   general:
     save: "Save project"
     open: "Open project"
     new: "New project"
+
   chartype:
     label: "Template: "
+
+########################################
+# Menu entries
 
 # Menu entries. Pro tip: Prefixing a letter with an underscore
 # (_) makes that letter a so-called "mnemonic". These are generally
@@ -196,6 +282,7 @@ menus:
       test: Test
       package: P_ackage…
       quit: _Quit
+
   edit:
     name: E_dit
     entries:
@@ -203,10 +290,12 @@ menus:
       project_settings: P_roject settings…
       categories: Cate_gories…
       templates: Tem_plates…
+
   view:
     name: _View
     entries:
       grid: Toggle _grid
+
   windows:
     name: _Windows
     entries:
@@ -214,10 +303,14 @@ menus:
       console: "C_onsole"
       tileset: "T_ileset"
       layer: "L_ayer"
+
   help:
     name: _Help
     entries:
       about: A_bout…
+
+########################################
+# Templates
 
 # Special section for template names. These terms are
 # used to translate template names mainly in the
@@ -229,8 +322,9 @@ menus:
 templates:
   dummy: "Useless dummy"
 
-# This section contains all the stuff that didn’t fit
-# in anywhere else.
+########################################
+# Miscellaneous
+
 misc:
   # The label for the combobox entry for "no template"
   no_template: "<none>"
