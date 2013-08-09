@@ -97,7 +97,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
 
   def on_response(_, res)
     # Before exiting, save the current template’s page codes
-    if @last_template
+    if @last_template && !@sourceviews.empty? # We may have no pages at all
       @last_template.pages[@codepages.page].code = @sourceviews[@codepages.page].buffer.text.strip
     end
 
@@ -106,7 +106,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
 
   def on_list_cursor_changed(*)
     # Save the pre-change template’s page codes
-    if @last_template
+    if @last_template && !@sourceviews.empty? # We may have no pages at all
       @sourceviews.each_with_index do |sourceview, index|
         @last_template.pages[index].code = sourceview.buffer.text
       end
@@ -126,7 +126,11 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
   end
 
   def on_add_template_button_clicked(*)
-    t = OpenRubyRMK::Backend::Template.new("newparameter")
+    td = OpenRubyRMK::GTKFrontend::Dialogs::TextDialog.new(self, "Choose a name", "Enter the new template’s name:")
+    td.run
+    return if td.text.nil? # Cancel pressed
+
+    t = OpenRubyRMK::Backend::Template.new(td.text.strip)
     $app.project.add_template(t)
     append_template(t)
   end
