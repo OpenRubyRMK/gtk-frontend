@@ -163,6 +163,29 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
     # Make the widgets
     sourceview = OpenRubyRMK::GTKFrontend::Widgets::RubySourceView.new
     paraview   = TreeView.new(ListStore.new(String, String, OpenRubyRMK::Backend::Template::Parameter))
+    add_param_button = Button.new
+    del_param_button = Button.new
+
+    # Images for the param buttons
+    add_param_button.add(icon_image("ui/list-add.png", width: 16))
+    del_param_button.add(icon_image("ui/list-remove.png", width: 16))
+
+    # Event handling for the param buttons
+    add_param_button.signal_connect(:clicked) do
+      param = OpenRubyRMK::Backend::Template::Parameter.new("myparameter", true)
+      page.insert_parameter(param, page.parameters.count)
+      row = paraview.model.append
+      row[0] = param.name
+      row[1] = "(required)"
+      row[2] = param
+    end
+    del_param_button.signal_connect(:clicked) do
+      if paraview.cursor[0]
+        iter = paraview.model.get_iter(paraview.cursor[0])
+        page.delete_parameter(iter[2])
+        paraview.model.remove(iter)
+      end
+    end
 
     # Tell the parameter list what to display
     paraview.append_column(TreeViewColumn.new("Name", CellRendererText.new, text: 0))
@@ -183,8 +206,16 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
       scroller2 = ScrolledWindow.new
       scroller1.add(paraview)
       scroller2.add(sourceview)
-      vbox2.pack_start(scroller1, false)
-      vbox2.pack_start(scroller2, true, true)
+      vbox2.pack_start(scroller1, false, false)
+
+      HBox.new.tap do |hbox2|
+        hbox2.pack_start(add_param_button, false, false, $app.space)
+        hbox2.pack_start(del_param_button, false, false)
+
+        vbox2.pack_start(hbox2, false, false, $app.space)
+      end
+
+      vbox2.pack_start(scroller2, true, true, $app.space)
 
       @codepages.insert_page(index, vbox2,
                              Label.new(sprintf(t.dialogs.template_event.labels.page,
