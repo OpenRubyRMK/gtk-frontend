@@ -17,7 +17,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
           [Stock::CANCEL, Dialog::RESPONSE_REJECT])
-    set_default_size 500, 500
+    set_default_size 700, 500
 
     create_widgets
     create_layout
@@ -124,23 +124,20 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
 
   def build_parameters(page, subvbox)
     values = @map_object.params
-    values.each{|hsh| hsh.default = OpenRubyRMK::GTKFrontend::Widgets::Parameters::NO_DEFAULT_VALUE} # Marker so we know when we’ve hit an unset parameter
+    values.each{|hsh| hsh.default = OpenRubyRMK::GTKFrontend::Widgets::TemplatePageParameter::NO_DEFAULT_VALUE} # Marker so we know when we’ve hit an unset parameter
 
     page.parameters.each do |param|
-      if OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_defined?(param.type.capitalize)
-        klass = OpenRubyRMK::GTKFrontend::Widgets::Parameters.const_get(param.type.capitalize)
-      else
-        raise("Unknown parameter type: #{param.type}")
-      end
 
-      parameter = klass.new(param.name)
+      parameter = OpenRubyRMK::GTKFrontend::Widgets::TemplatePageParameter.new(param.name)
       subvbox.pack_start(parameter, false, false)
 
       # Prefill the widget with the last value, and if there is none,
-      # with the default value stated by the template we’re based on.
+      # with the default value stated by the template we’re based on
+      # (unless it’s a required parameter, in which case we leave the
+      # widget empty).
       if values[page.number]
         val = values[page.number][param.name]
-        if val == OpenRubyRMK::GTKFrontend::Widgets::Parameters::NO_DEFAULT_VALUE
+        if val == OpenRubyRMK::GTKFrontend::Widgets::TemplatePageParameter::NO_DEFAULT_VALUE
           parameter.default = param.default_value unless param.required?
         else
           parameter.default = val
