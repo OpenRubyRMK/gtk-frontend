@@ -79,17 +79,19 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
   def on_add_page_button_click(*)
     page = OpenRubyRMK::Backend::MapObject::Page.new
     @map_object.add_page(page)
-    add_page(page)
+    add_page(page, @map_object.pages.count - 1)
   end
 
   def on_del_page_button_click(*)
+    @map_object.delete_page(@map_object.pages.count - 1)
+    @notebook.remove_page(-1)
   end
 
 
   ########################################
   # Helpers
 
-  def add_page(page)
+  def add_page(page, pagenum)
     HBox.new.tap do |hbox|
       hbox.spacing = $app.space
       hsh = {}
@@ -168,7 +170,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
       #################### Finalising ####################
       @page_widgets << hsh
       hbox.show_all
-      @notebook.append_page(hbox, Label.new(sprintf(t.dialogs.event.labels.page, :num => page.number)))
+      @notebook.append_page(hbox, Label.new(sprintf(t.dialogs.event.labels.page, :num => pagenum)))
     end
   end
 
