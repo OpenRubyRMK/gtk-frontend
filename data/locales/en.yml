@@ -88,6 +88,11 @@ dialogs:
       no_name: "No name given"
       no_attrs: "No attributes defined"
 
+  event:
+    title: "Edit generic event"
+    labels:
+      page: "Page %{num}"
+
   template_event:
     # `tname' is something from "templates" below; see
     # the comment there for further information.
