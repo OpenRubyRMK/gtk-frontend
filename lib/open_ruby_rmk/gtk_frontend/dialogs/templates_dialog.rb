@@ -10,7 +10,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::CLOSE, Dialog::RESPONSE_ACCEPT])
 
-    set_default_size 700, 400
+    set_default_size 700, 500
     @last_template = nil
 
     create_widgets
@@ -55,11 +55,12 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
       hbox.spacing = $app.space
 
       VBox.new.tap do |vbox2|
+        @list.width_request = 100
         vbox2.pack_start(@list, true, true)
 
         HBox.new.tap do |hbox2|
           hbox2.pack_start(@add_template_button, false, false)
-          hbox2.pack_end(@del_template_button, false, false)
+          hbox2.pack_start(@del_template_button, false, false, $app.space)
 
           vbox2.pack_start(hbox2, false, false)
         end
@@ -249,6 +250,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplatesDialog < Gtk::Dialog
       scroller2 = ScrolledWindow.new
       scroller1.add(paraview)
       scroller2.add(sourceview)
+
+      scroller1.height_request = 150
       vbox2.pack_start(scroller1, false, false)
 
       HBox.new.tap do |hbox2|
