@@ -17,7 +17,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
     create_layout
     setup_event_handlers
 
-    @map_object.pages.each{|page| add_page(page)}
+    @map_object.pages.each_with_index{|page, i| add_page(page, i)}
   end
 
   def run(*)
@@ -70,7 +70,27 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
 
   def on_response(_, res)
     if res == Gtk::Dialog::RESPONSE_ACCEPT
-    else
+      @map_object.clear_pages
+      0.upto(@notebook.n_pages - 1) do |i|
+        page = OpenRubyRMK::Backend::MapObject::Page.new
+
+        # TODO: Save graphic path
+        #page.graphic = ""
+
+        if @page_widgets[i][:trigger_buttons][0].active?
+          page.trigger = :activate
+        elsif @page_widgets[i][:trigger_buttons][1].active?
+          page.trigger = :immediate
+        elsif @page_widgets[i][:trigger_buttons][2].active?
+          page.trigger = :none
+        else
+          warn("Unknown trigger button, skipping.")
+        end
+
+        page.code = @page_widgets[i][:sourceview].buffer.text
+
+        @map_object.add_page(page)
+      end
     end
 
     destroy
