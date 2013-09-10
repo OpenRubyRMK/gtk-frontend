@@ -52,9 +52,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::TemplateEventDialog < Gtk::Dialog
     HBox.new.tap do |hbox|
       # Top widgets for name and ID
       hbox.pack_start(@name_field, false, false, $app.space)
-      hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
+      hbox.pack_start(Label.new(sprintf(t.dialogs.template_event.labels.id, :id => @map_object.formatted_id)), false, false)
       vbox.pack_start(hbox, false, false)
-
     end
 
     # The pages

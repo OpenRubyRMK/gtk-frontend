@@ -91,13 +91,23 @@ dialogs:
   event:
     title: "Edit generic event"
     labels:
+      # `id' is the ID as a hex string.
+      id: "ID: %{id}"
       page: "Page %{num}"
+      graphic: "Graphic"
+      trigger: "Trigger"
+    triggers:
+      activate: "Activate"
+      immediate: "Immediate"
+      none: "None"
 
   template_event:
     # `tname' is something from "templates" below; see
     # the comment there for further information.
     title: "Edit templated event: %{tname}"
     labels:
+      # `id' is the ID as a hex string.
+      id: "ID: %{id}"
       page: "Page %{num}"
       parameter: "%{name}:"
     # `identifier' is the untranslated internal template name.

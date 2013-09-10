@@ -6,7 +6,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
   def initialize(tmx_object)
     @map_object = OpenRubyRMK::Backend::MapObject.from_tmx_object(tmx_object)
 
-    super("Edit generic event",
+    super(t.dialogs.event.title,
           $app.mainwindow,
           Dialog::MODAL | Dialog::DESTROY_WITH_PARENT,
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
@@ -45,7 +45,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
     # Top widgets for name and ID
     HBox.new.tap do |hbox|
       hbox.pack_start(@name_field, false, false, $app.space)
-      hbox.pack_start(Label.new("ID: #{@map_object.formatted_id}"), false, false)
+      hbox.pack_start(Label.new(sprintf(t.dialogs.event.labels.id, :id => @map_object.formatted_id)), false, false)
 
       vbox.pack_start(hbox, false, false)
     end
@@ -121,7 +121,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
         VBox.new.tap do |left_vbox|
           HBox.new.tap do |hbox1|
 
-            Frame.new("Graphic").tap do |frame|
+            Frame.new(t.dialogs.event.labels.graphic).tap do |frame|
               VBox.new.tap do |graphicvbox|
                 graphicvbox.spacing = $app.space
 
@@ -137,14 +137,14 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
               hbox1.pack_start(frame, false, false, $app.space)
             end
 
-            Frame.new("Trigger").tap do |frame|
+            Frame.new(t.dialogs.event.labels.trigger).tap do |frame|
               VBox.new.tap do |triggervbox|
                 triggervbox.spacing = $app.space
 
                 ary = []
-                ary << RadioButton.new("Activate")
-                ary << RadioButton.new(ary.first, "Immediate")
-                ary << RadioButton.new(ary.first, "None")
+                ary << RadioButton.new(t.dialogs.event.triggers.activate)
+                ary << RadioButton.new(ary.first, t.dialogs.event.triggers.immediate)
+                ary << RadioButton.new(ary.first, t.dialogs.event.triggers.none)
 
                 case page.trigger
                 when :activate  then ary[0].active = true
@@ -168,7 +168,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
 
           # TODO: Add some useful widgets instead of this frame
           # that currently acts just as a placeholder.
-          Frame.new("Stuff").tap do |frame|
+          Frame.new("Stuff to come").tap do |frame|
             left_vbox.pack_start(frame, true, true)
           end
 
