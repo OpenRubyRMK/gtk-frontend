@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 # Generic resource selection dialog. This class needs to be subclassed
 # and the following methods need to be overridden:
 #
@@ -35,7 +37,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog < Gtk::Dialog
   # [title]
   #   Title for the dialog.
   # [resource_dir]
-  #   Resource *subdirectory* relative to the main resources path
+  #   Resource *subdirectory* relative to the project’s <tt>data/<tt> path
   #   to allow selection from.
   # [parent]
   #   Parent window to be modal to. You can set this to $app.mainwindow.

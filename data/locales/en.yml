@@ -131,7 +131,7 @@ dialogs:
     message: "Choose the new layer’s type:"
     new_layer_name: "New layer"
 
-  add_tileset:
+  select_tileset:
     title: "Add tileset"
     no_tileset_selected: "No tileset selected."
 

@@ -84,7 +84,7 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
 
   def on_add_button_clicked(event)
     return unless $app.state[:core][:map]
-    ad = OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog.new($app.state[:core][:map])
+    ad = OpenRubyRMK::GTKFrontend::Dialogs::TilesetSelectionDialog.new($app.mainwindow)
     ad.run
     return if ad.path.nil?
 
