@@ -91,6 +91,8 @@ class OpenRubyRMK::GTKFrontend::Dialogs::EventDialog < Gtk::Dialog
 
         @map_object.add_page(page)
       end
+
+      @map_object.custom_name = @name_field.text.strip
     end
 
     destroy
