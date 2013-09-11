@@ -21,11 +21,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog < OpenRubyRMK::GTKFron
     end
   end
 
-  def handle_accept(selected_path)
-    tileset = TiledTmx::Tileset.load_xml(selected_path)
-    @map.add_tileset(tileset)
-  end
-
   def handle_cursor_changed(selected_path)
     tileset = TiledTmx::Tileset.load_xml(@directory_tree.selected_path)
     @image.pixbuf = Gdk::Pixbuf.new(tileset.source.to_s)

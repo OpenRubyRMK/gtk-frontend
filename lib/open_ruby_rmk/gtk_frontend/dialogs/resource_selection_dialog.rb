@@ -10,9 +10,6 @@
 #   Return the widget for the preview of the resource. It will
 #   be added to a Gtk::HBox via #pack_start with the second
 #   parameter set to true.
-# [handle_accept]
-#   User clicked the OK button. This method gets passed the selected
-#   path as a Pathname instance.
 # [handle_cursor_changed]
 #   User selected another path from thre tree view. This method gets
 #   passed the selected path as a Pathname instance.
@@ -22,11 +19,16 @@
 #
 # Additionally, this class mixes in the Validatable module and
 # the OK button signal handler queries the validations. You can therefore
-# set up your +validate+ blocks as expected
+# set up your +validate+ blocks as expected.
 class OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog < Gtk::Dialog
   include Gtk
   include R18n::Helpers
   include OpenRubyRMK::GTKFrontend::Validatable
+
+  # The path the user selected, or +nil+ if none was selected
+  # or the dialog was aborted.
+  # Set after the click on the OK button.
+  attr_reader :path
 
   # Create a new generic resource selection dialog.
   # == Parameters
@@ -46,6 +48,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog < Gtk::Dialog
           [Stock::OK, Dialog::RESPONSE_ACCEPT],
           [Stock::CANCEL, Dialog::RESPONSE_REJECT])
 
+    @path = nil
     @resource_dir = resource_dir
     set_default_size 500, 300
 
@@ -87,7 +90,7 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog < Gtk::Dialog
   def on_response(_, res)
     if res == Gtk::Dialog::RESPONSE_ACCEPT
       $app.warnbox(validation_summary) and return unless valid?
-      handle_accept(@directory_tree.selected_path)
+      @path = @directory_tree.selected_path
     end
 
     destroy
@@ -105,10 +108,6 @@ class OpenRubyRMK::GTKFrontend::Dialogs::ResourceSelectionDialog < Gtk::Dialog
   end
 
   def get_preview_widget
-    # Must be overridden
-  end
-
-  def handle_accept
     # Must be overridden
   end
 

@@ -86,6 +86,9 @@ class OpenRubyRMK::GTKFrontend::ToolWindows::TilesetWindow < Gtk::Window
     return unless $app.state[:core][:map]
     ad = OpenRubyRMK::GTKFrontend::Dialogs::AddTilesetDialog.new($app.state[:core][:map])
     ad.run
+    return if ad.path.nil?
+
+    $app.state[:core][:map].add_tileset(TiledTmx::Tileset.load_xml(ad.path))
   end
 
   def on_del_button_clicked(event)
